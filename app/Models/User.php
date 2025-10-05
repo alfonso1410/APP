@@ -2,26 +2,25 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    // Combina los traits en una sola línea para mayor limpieza
+    use HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $fillable = [
-        'name',          // Asegúrate de que el nombre aquí coincida con tu campo de BD
-        'apellido_paterno', // <-- ¡AGREGA ESTE CAMPO!
-        'apellido_materno', // <-- ¡AGREGA ESTE CAMPO! (Si quieres guardarlo)
-        'rol',              // <-- ¡AGREGA ESTE CAMPO!
+        'name',
+        'apellido_paterno',
+        'apellido_materno',
         'email',
         'password',
         'activo',
@@ -30,7 +29,7 @@ class User extends Authenticatable
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var list<string>
+     * @var array<string, int>
      */
     protected $hidden = [
         'password',
