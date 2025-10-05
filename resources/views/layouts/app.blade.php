@@ -15,10 +15,11 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
+      
         <div class="min-h-screen bg-gray-100">
         
         {{-- ¡Aquí incluimos el nuevo Sidebar! --}}
-        @include('layouts.side') 
+          @include('layouts.side') 
 
         {{-- Contenedor del contenido principal. 
            CLAVE: El 'sm:ml-64' hace el espacio para el sidebar fijo. --}}
