@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 use App\Models\User; 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -31,7 +33,26 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'apellido_paterno' => ['required', 'string', 'max:100'],
+            'apellido_materno' => ['required', 'string', 'max:100'],
+            'rol' => ['required', 'string', 'max:25'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'activo' => ['required', 'boolean'],
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'apellido_paterno' => $request->apellido_paterno,
+            'apellido_materno' => $request->apellido_materno,
+            'rol' => $request->rol,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'activo' => $request->activo,
+        ]);
+        return redirect()->route('users.index')->with('status', 'Usuario creado exitosamente.');
     }
 
     /**

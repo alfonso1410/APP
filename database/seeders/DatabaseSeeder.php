@@ -3,10 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,24 +13,26 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        // User::factory(10)->create();
 
-        // Crear Roles
-        $roleAdmin = Role::create(['name' => 'Admin']);
-        $roleMaestro = Role::create(['name' => 'Maestro']);
-
-        // Crear tu Usuario Administrador
-        $adminUser = User::create([
-            'name' => 'Pavel Noel',
-            'apellido_paterno' => 'Domínguez',
-            'apellido_materno' => 'Reyes',
-            'email' => 'noel02_2003@hotmail.com',
-            'password' => Hash::make('password'),
-            'activo' => 1,
+    
+        $this->call([
+            Userseeder::class,
+            NivelSeeder::class,
+            GradoSeeder::class,
+            CampoFormativosSeeder::class,
+            MateriaSeeder::class,
+            PeriodoSeeder::class,
+            CatalogoCriteriosSeeder::class,
+            AlumnoSeeder::class,
+            GrupoSeeder::class,
+            EstructuraCurricularSeeder::class,
+            MateriaCriteriosSeeder::class,
+            GrupoMateriaMaestroSeeder::class,
+            AsignacionGrupalSeeder::class,
+            CalificacionSeeder::class,
+            RegistroAsistenciaSeeder::class,
+            
         ]);
-
-        // Asignar Rol de Admin
-        $adminUser->assignRole($roleAdmin);
     }
 }

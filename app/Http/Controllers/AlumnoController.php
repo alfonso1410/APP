@@ -2,17 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Alumno;
+// El modelo se importa en singular y PascalCase
+use App\Models\Alumno; 
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule; // Importante para la validación de 'unique'
+use Illuminate\Validation\Rule;
 
+/**
+ * Controlador para gestionar el CRUD de Alumnos.
+ */
 class AlumnoController extends Controller
 {
     /**
-     * Muestra una lista de todos los alumnos.
+     * Muestra una lista paginada de todos los alumnos.
      */
     public function index()
     {
+        // Se usa el Modelo (Alumno) para consultar la tabla (alumnos)
         $alumnos = Alumno::latest()->paginate(10);
         return view('alumnos.index', compact('alumnos'));
     }
@@ -30,15 +35,17 @@ class AlumnoController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'nombre' => 'required|string|max:255',
+        $validatedData = $request->validate([
+            'nombres'          => 'required|string|max:255',
             'apellido_paterno' => 'required|string|max:255',
             'apellido_materno' => 'required|string|max:255',
             'fecha_nacimiento' => 'required|date',
-            'curp' => 'required|string|unique:alumnos,curp|size:18',
+            'curp'             => 'required|string|unique:alumnos,curp|size:18',
+            'estado_alumno'    => 'required|boolean',
         ]);
 
-        Alumno::create($request->all());
+        // CORRECCIÓN: Se llama al método create() sobre el Modelo 'Alumno'.
+        Alumno::create($validatedData);
 
         return redirect()->route('alumnos.index')
                          ->with('success', 'Alumno creado exitosamente.');
@@ -47,6 +54,7 @@ class AlumnoController extends Controller
     /**
      * Muestra el formulario para editar un alumno existente.
      */
+    // CORRECCIÓN: El type-hint debe ser el nombre de la clase del Modelo 'Alumno'.
     public function edit(Alumno $alumno)
     {
         return view('alumnos.edit', compact('alumno'));
@@ -55,35 +63,39 @@ class AlumnoController extends Controller
     /**
      * Actualiza un alumno en la base de datos.
      */
+    // CORRECCIÓN: El type-hint debe ser el nombre de la clase del Modelo 'Alumno'.
     public function update(Request $request, Alumno $alumno)
     {
-        $request->validate([
-            'nombre' => 'required|string|max:255',
+        $validatedData = $request->validate([
+            'nombres'          => 'required|string|max:255',
             'apellido_paterno' => 'required|string|max:255',
             'apellido_materno' => 'required|string|max:255',
             'fecha_nacimiento' => 'required|date',
-            'curp' => [
+            'curp'             => [
                 'required',
                 'string',
                 'size:18',
-                Rule::unique('alumnos')->ignore($alumno->id), // Ignora la CURP del propio alumno al validar
+                Rule::unique('alumnos')->ignore($alumno->id),
             ],
+            'estado_alumno'    => 'required|boolean',
         ]);
 
-        $alumno->update($request->all());
+        $alumno->update($validatedData);
 
         return redirect()->route('alumnos.index')
                          ->with('success', 'Alumno actualizado exitosamente.');
     }
 
     /**
-     * Elimina un alumno de la base de datos.
+     * "Elimina" un alumno de forma lógica (inactivar).
      */
+    // CORRECCIÓN: El type-hint debe ser el nombre de la clase del Modelo 'Alumno'.
     public function destroy(Alumno $alumno)
     {
-        $alumno->delete();
+        $alumno->estado_alumno = false;
+        $alumno->save();
 
         return redirect()->route('alumnos.index')
-                         ->with('success', 'Alumno eliminado exitosamente.');
+                         ->with('success', 'Alumno inactivado exitosamente.');
     }
 }

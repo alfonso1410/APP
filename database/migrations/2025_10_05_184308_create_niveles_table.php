@@ -10,21 +10,19 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('grupos', function (Blueprint $table) {
-        $table->id();
-        $table->string('nombre');
-        $table->string('ciclo_escolar');
-        $table->boolean('activo')->default(true);
-        $table->timestamps();
-    });
-}
+    {
+        Schema::create('niveles', function (Blueprint $table) {
+            $table->id('nivel_id');
+            $table->string('nombre', 50)->unique();
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('grupos');
+        Schema::dropIfExists('niveles');
     }
 };
