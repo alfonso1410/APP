@@ -20,7 +20,7 @@ class AlumnoSeeder extends Seeder
                 'apellido_materno' => 'Pérez',
                 'fecha_nacimiento' => Carbon::parse('2018-03-10'),
                 'curp' => 'GOSP010310HDFNNN01', // CURP simulado
-                'estado_alumno' => 'ACTIVO',
+                'estado_alumno' => '1',
             ],
             [
                 'alumno_id' => 2,
@@ -29,7 +29,7 @@ class AlumnoSeeder extends Seeder
                 'apellido_materno' => 'López',
                 'fecha_nacimiento' => Carbon::parse('2017-11-20'),
                 'curp' => 'HELN021120HDFNNN02',
-                'estado_alumno' => 'ACTIVO',
+                'estado_alumno' => '1',
             ],
             [
                 'alumno_id' => 3,
@@ -38,7 +38,7 @@ class AlumnoSeeder extends Seeder
                 'apellido_materno' => 'Suarez',
                 'fecha_nacimiento' => Carbon::parse('2019-06-05'),
                 'curp' => 'VAFE030605HDFNNN03',
-                'estado_alumno' => 'INACTIVO',
+                'estado_alumno' => '0',
             ],
         ];
 

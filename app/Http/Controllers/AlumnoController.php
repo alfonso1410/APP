@@ -15,11 +15,27 @@ class AlumnoController extends Controller
     /**
      * Muestra una lista paginada de todos los alumnos.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Se usa el Modelo (Alumno) para consultar la tabla (alumnos)
-        $alumnos = Alumno::latest()->paginate(10);
-        return view('alumnos.index', compact('alumnos'));
+        $search = $request->input('search');
+
+        $alumnos = Alumno::query()
+            // 2. Aplica el filtro de búsqueda si existe
+            ->when($search, function ($query, $search) {
+                return $query->where('nombres', 'like', "%{$search}%")
+                             ->orWhere('apellido_paterno', 'like', "%{$search}%")
+                             ->orWhere('apellido_materno', 'like', "%{$search}%")
+                             ->orWhere('curp', 'like', "%{$search}%");
+            })
+            // 1. Ordena por apellidos y nombre
+            ->orderBy('apellido_paterno')
+            ->orderBy('apellido_materno')
+            ->orderBy('nombres')
+            ->paginate(10)
+            // 3. Conserva el query de búsqueda en la paginación
+            ->withQueryString();
+
+        return view('alumnos.index', compact('alumnos', 'search'));
     }
 
     /**
@@ -75,7 +91,7 @@ class AlumnoController extends Controller
                 'required',
                 'string',
                 'size:18',
-                Rule::unique('alumnos')->ignore($alumno->id),
+                Rule::unique('alumnos')->ignore($alumno->alumno_id, 'alumno_id'),
             ],
             'estado_alumno'    => 'required|boolean',
         ]);
