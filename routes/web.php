@@ -3,6 +3,8 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AlumnoController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -10,9 +12,7 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // 1. Ruta del Dashboard
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // 2. Rutas de Gestión de Usuarios (Route::resource)
     Route::resource('users', UserController::class); // <-- ¡ESTE ES EL CAMBIO CLAVE!
@@ -20,6 +20,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
      Route::get('/prueba', function () {
         return view('users.prueba');
     })->name('prueba');
+
+    Route::resource('alumnos', AlumnoController::class);
 });
 
 

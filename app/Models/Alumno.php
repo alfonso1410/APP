@@ -23,4 +23,12 @@ class Alumno extends Model
                     ->withPivot('es_actual')
                     ->withTimestamps();
     }
+    protected $fillable = [
+        'nombres',
+        'apellido_paterno',
+        'apellido_materno',
+        'fecha_nacimiento',
+        'curp',
+        'estado_alumno',
+    ];
 }

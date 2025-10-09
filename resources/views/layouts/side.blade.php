@@ -39,13 +39,14 @@
                <span class="flex-1 ms-3 whitespace-nowrap">Gestionar Usuarios</span>
             </a>
          </li>
+
          <li>
-            <a href="{{ route('prueba') }}" class="flex items-center p-2 text-white rounded-lg dark:text-white hover:bg-gray-700 dark:hover:bg-gray-700 group">
+            <a href="{{ route('alumnos.index') }}" class="flex items-center p-2 text-white rounded-lg dark:text-white hover:bg-gray-700 dark:hover:bg-gray-700 group">
                {{-- Aquí iría el SVG de Users --}}
                <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white">
                   <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-user"> </use>
                </svg>
-               <span class="flex-1 ms-3 whitespace-nowrap">prueba</span>
+               <span class="flex-1 ms-3 whitespace-nowrap">Gestionar Alumnos</span>
             </a>
          </li>
            <li>
