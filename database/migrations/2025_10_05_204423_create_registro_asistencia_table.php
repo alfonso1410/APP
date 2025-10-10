@@ -21,6 +21,7 @@ return new class extends Migration
             
             // Dato Transaccional
             $table->date('fecha');
+            $table->string('turno', 20);
             $table->string('tipo_asistencia', 20); // 'PRESENTE', 'FALTA', 'RETARDO', etc.
 
             // Definición de Claves Foráneas
@@ -28,7 +29,7 @@ return new class extends Migration
             $table->foreign('grupo_id')->references('grupo_id')->on('grupos')->onDelete('restrict');
             
             // Restricción ÚNICA LÓGICA: Un alumno solo puede tener un registro de asistencia por grupo por día.
-            $table->unique(['alumno_id', 'grupo_id', 'fecha'], 'unique_asistencia_alumno_grupo_fecha');
+            $table->unique(['alumno_id', 'grupo_id', 'fecha', 'turno'], 'unique_asistencia_completa');
             
             $table->timestamps();
         });

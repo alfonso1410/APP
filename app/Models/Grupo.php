@@ -33,7 +33,17 @@ class Grupo extends Model
                     ->withPivot('es_actual')
                     ->withTimestamps();
     }
-    
+
+
+    public function coTitulares(): BelongsToMany
+{
+    // 1. Modelo relacionado
+    // 2. Nombre de la tabla pivot
+    // 3. Clave foránea de Grupo en la pivot
+    // 4. Clave foránea de User en la pivot
+    return $this->belongsToMany(User::class, 'grupo_titular', 'grupo_id', 'maestro_id')
+                ->withTimestamps(); // Incluye created_at y updated_at
+}
     public function asignacionesMaestros(): HasMany
     {
         return $this->hasMany(GrupoMateriaMaestro::class, 'grupo_id', 'grupo_id');
