@@ -17,7 +17,7 @@ class DashboardController extends Controller
     public function index()
     {
         // 1. Contamos solo los alumnos cuyo estado es 'activo' (true).
-        $totalAlumnos = Alumno::where('estado_alumno', true)->count();
+        $totalAlumnos = Alumno::where('estado_alumno', 'activo')->count();
 
         // 2. Contamos los usuarios que tienen el rol de 'maestro'.
         $totalMaestros = User::where('rol', 'maestro')->count();

@@ -14,72 +14,89 @@
             @endif
 
             <div class="flex items-center justify-between mb-4 gap-4">
-                
+                {{-- Barra de Búsqueda --}}
                 <div class="w-full sm:w-2/3">
-                    <x-search-bar 
-                        action="{{ route('alumnos.index') }}" 
-                        :value="$search ?? ''"
-                        placeholder="Buscar por nombre, apellidos o CURP..."
-                    />
+                    <form action="{{ route('alumnos.index') }}" method="GET">
+                         <input type="text" name="search" value="{{ $search ?? '' }}" placeholder="Buscar por nombre, apellidos o CURP..." class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                    </form>
                 </div>
+                {{-- Botón para agregar --}}
                 <a href="{{ route('alumnos.create') }}" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded whitespace-nowrap">
                     Agregar Alumno
                 </a>
             </div>
 
+            {{-- Aquí se inserta el componente de filtro reutilizable --}}
+            {{-- Le pasamos la ruta de esta página y el ID del nivel seleccionado desde el controlador --}}
+            <x-level-filter :route="'alumnos.index'" :selectedNivel="$nivel_id" />
+
             <div class="bg-white shadow-sm overflow-hidden sm:rounded-lg">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre Completo (por Apellido)</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CURP</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @forelse ($alumnos as $alumno)
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    {{ $alumno->apellido_paterno }} {{ $alumno->apellido_materno }} {{ $alumno->nombres }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $alumno->curp }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    @if ($alumno->estado_alumno)
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activo</span>
-                                    @else
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Inactivo</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <div class="flex items-center justify-center space-x-2">
-                                        <a href="{{ route('alumnos.edit', $alumno) }}" 
-                                           class="p-2 flex items-center justify-center rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 hover:scale-150 transition-transform" 
-                                           title="Editar Alumno">
-                                            <svg class="size-5"><use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-edit"></use></svg>
-                                        </a>
-                                        <form method="POST" action="{{ route('alumnos.destroy', $alumno) }}" class="inline-block" onsubmit="return confirm('¿Estás seguro de que deseas INACTIVAR a este alumno?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" 
-                                                    class="p-2 flex items-center justify-center rounded-full bg-red-100 text-red-800 hover:bg-red-200 hover:scale-150 transition-transform" 
-                                                    title="Inactivar Alumno"
-                                                    onsubmit="return confirm('¿Estás seguro de que deseas INACTIVAR a este alumno?');">
-                                                <svg class="size-5"><use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-delete"></use></svg>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre Completo</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CURP</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grado</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grupo</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Extracurricular</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="px-6 py-4 text-center text-gray-500">
-                                    No se encontraron alumnos.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @forelse ($alumnos as $alumno)
+                                @php
+                                    $grupoRegular = $alumno->grupos->firstWhere('tipo_grupo', 'REGULAR');
+                                    $grupoExtra = $alumno->grupos->firstWhere('tipo_grupo', 'EXTRA');
+                                @endphp
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {{ $alumno->apellido_paterno }} {{ $alumno->apellido_materno }} {{ $alumno->nombres }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $alumno->curp }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ $grupoRegular?->grado?->nombre ?? 'Sin asignar' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ $grupoRegular?->nombre ?? 'Sin asignar' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ $grupoExtra?->nombre ?? 'N/A' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        @if ($alumno->estado_alumno === 'ACTIVO')
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activo</span>
+                                        @else
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Inactivo</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex items-center justify-center space-x-2">
+                                            <a href="{{ route('alumnos.edit', $alumno) }}" class="p-2 flex items-center justify-center rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition" title="Editar Alumno">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path></svg>
+                                            </a>
+                                            <form method="POST" action="{{ route('alumnos.destroy', $alumno) }}" onsubmit="return confirm('¿Estás seguro de que deseas INACTIVAR a este alumno?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="p-2 flex items-center justify-center rounded-full bg-red-100 text-red-800 hover:bg-red-200 transition" title="Inactivar Alumno">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    {{-- El colspan es 7 para que ocupe todo el ancho de la tabla --}}
+                                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                                        No se encontraron alumnos para el nivel seleccionado.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
                 <div class="bg-white px-4 py-3 border-t">
                     {{ $alumnos->links() }}
                 </div>

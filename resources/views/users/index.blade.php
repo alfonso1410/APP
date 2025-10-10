@@ -15,7 +15,6 @@
                 Agregar Usuario
             </button>
         </div>
-    </div>
 
     @if ($errors->any())
     <div class="p-4 mb-4 text-sm text-red-800 bg-red-100 rounded-lg">
@@ -90,26 +89,45 @@
                     </td>
 
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                       <section class="flex gap-2 justify-center ">
+                       <section x-data="{}" class="flex gap-2 justify-center ">
                      {{-- Botones de acción: Editar y Eliminar --}}
-                        <a href="{{ route('users.edit', $user) }}" class="bg-princeton text-white p-1 flex size-4 sm:size-6 items-center 
-                        justify-center rounded-full hover:scale-150 transition-transform">
-                            <svg class="size-6">
-                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-edit"> </use>
-                        </svg>
-                        </a>
+                        <button
+        type="button"
+        x-on:click.prevent="$dispatch('open-modal', 'editar-usuario-{{ $user->id }}')" 
+        class="bg-blue-100 text-blue-800 p-1 flex size-4 sm:size-6 items-center justify-center rounded-full hover:scale-150 transition-transform"
+        title="Editar Usuario"
+    >
+        <svg class="size-6">
+            <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-edit"></use>
+        </svg>
+        </button>
 
-                         <a href="{{ route('users.edit', $user) }}" class="p-1 flex size-4 sm:size-6 text-white items-center 
-                        justify-center rounded-full hover:scale-150 transition-transform bg-princeton">
-                            <svg class="size-6">
-                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-delete"> </use>
-                        </svg>
-                        </a>
-                        {{-- ... formulario para eliminar ... --}}    
-                    
+        
+                        <x-user-eliminate-form
+            :action="route('users.destroy', $user)"
+            confirm-message="¿Deseas desactivar a {{ $user->name }}? No podrá iniciar sesión."
+            class="bg-red-100"
+        >
+            {{-- Inyectamos el icono SVG en el slot --}}
+            <svg class="size-6">
+                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-delete"></use>
+            </svg>
+        </x-user-eliminate-form>
                     </section>
                     </td>
-                    
+
+        {{-- Modal para editar usuario --}}
+                    <x-modal name="editar-usuario-{{ $user->id }}" 
+         :show="$errors->hasAny(['name', 'email', 'password', 'rol', 'activo', 'apellido_paterno', 'apellido_materno']) && old('user_id') == $user->id" 
+         focusable>
+        <div class="p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Editar Usuario: {{ $user->name }}</h2>     
+        {{-- Usamos el componente de Edición --}}
+        <x-user-edit-form 
+            :user="$user"                                  {{-- Pasamos el objeto $user --}}
+            action="{{ route('users.update', $user) }}"  {{-- Ruta al método update --}}       />
+        </div>
+</x-modal>
                 </tr>
             @endforeach
 

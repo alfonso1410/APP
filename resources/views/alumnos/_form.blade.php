@@ -36,11 +36,25 @@
 <div class="mt-4">
     <x-input-label for="estado_alumno" :value="__('Estado del Alumno')" />
     <select name="estado_alumno" id="estado_alumno" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-        <option value="1" {{ old('estado_alumno', $alumno->estado_alumno) == 1 ? 'selected' : '' }}>Activo</option>
-        <option value="0" {{ old('estado_alumno', $alumno->estado_alumno) == 0 ? 'selected' : '' }}>Inactivo</option>
+        
+        {{-- Opción ACTIVO: El valor debe ser la CADENA 'ACTIVO' --}}
+        <option 
+            value="ACTIVO" 
+            {{ old('estado_alumno', $alumno->estado_alumno) === 'ACTIVO' ? 'selected' : '' }}
+        >
+            Activo
+        </option>
+        
+        {{-- Opción INACTIVO: El valor debe ser la CADENA 'INACTIVO' --}}
+        <option 
+            value="INACTIVO" 
+            {{ old('estado_alumno', $alumno->estado_alumno) === 'INACTIVO' ? 'selected' : '' }}
+        >
+            Inactivo
+        </option>
     </select>
 </div>
 @else
-{{-- En el formulario de creación, se envía el estado como activo por defecto --}}
-<input type="hidden" name="estado_alumno" value="1">
+{{-- En el formulario de creación, se envía el estado por defecto: 'ACTIVO' --}}
+<input type="hidden" name="estado_alumno" value="ACTIVO">
 @endisset

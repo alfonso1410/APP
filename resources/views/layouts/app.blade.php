@@ -15,18 +15,19 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
+      
         <div class="min-h-screen bg-gray-100">
         
         {{-- ¡Aquí incluimos el nuevo Sidebar! --}}
-        @include('layouts.side') 
+          @include('layouts.side') 
 
         {{-- Contenedor del contenido principal. 
            CLAVE: El 'sm:ml-64' hace el espacio para el sidebar fijo. --}}
-        <div class="p-4 sm:ml-64"> 
+        <div class="p-4 ml-0 sm:ml-64"> 
             <!-- Page Heading -->
             @isset($header)
                 <header>
-                    <div class="max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
+                    <div class="max-w-7xl py-6 px-4 sm:px-6 lg:px-8 ">
                         {{ $header }}
                     </div>
                 </header>

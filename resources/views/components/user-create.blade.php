@@ -109,14 +109,21 @@
     {{-- Mostrar errores de validación si existen para 'is_active' --}}
     <x-input-error :messages="$errors->get('is_active')" class="mt-2" />
 </div>
-    <div class="flex items-center justify-end mt-4">
-        {{-- Botón para cerrar la modal, solo si lo pones dentro del componente del form --}}
-        {{-- Nota: El $dispatch debe apuntar al nombre de tu modal, en este caso 'agregar-usuario' --}}
-        <button type="button" x-on:click.prevent="$dispatch('close-modal', 'agregar-usuario')" class="px-4 py-2 text-sm font-medium text-gray-700">
+<div class="flex items-center justify-end mt-6 mb-2 mr-2"> 
+        {{-- Aumentamos el margen superior a mt-6 para separarlo del formulario --}}
+
+        {{-- Botón Cancelar (Debe tener padding para igualar altura al otro botón) --}}
+        <button type="button" 
+                x-on:click.prevent="$dispatch('close-modal', 'agregar-usuario')" 
+                class="px-4 py-2 bg-princeton text-sm font-semibold text-white hover:bg-gray-100 rounded-md transition-colors"
+        >
             Cancelar
         </button>
 
-        <button type="submit" class="ms-4 pb-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        {{-- Botón Guardar (Eliminamos el 'pb-1' para evitar desalineación) --}}
+        <button type="submit" 
+                class="ms-4 bg-princeton hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
             Guardar Usuario
         </button>
     </div>

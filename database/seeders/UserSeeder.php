@@ -20,7 +20,7 @@ class UserSeeder extends Seeder
                 'name' => 'Pavel Noel',
                 'apellido_paterno' => 'Domínguez',
                 'apellido_materno' => 'Reyes',
-                'rol' => 'DIRECTOR', // Rol clave
+                'rol' => 'COORDINADOR', // Rol clave
                 'password' => Hash::make('password'), // ¡IMPORTANTE! Contraseña encriptada
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
