@@ -16,32 +16,42 @@ class AlumnoController extends Controller
         
         // Si no se encuentra un 'nivel' en la URL, se establece '1' (Preescolar) por defecto.
         $nivel_id = $request->input('nivel', 1);
+        
+       $alumnosQuery = Alumno::query();
 
-        $alumnos = Alumno::query()
-            ->when($nivel_id, function ($query) use ($nivel_id) {
-                return $query->whereHas('grupos.grado', function ($q) use ($nivel_id) {
-                    $q->where('nivel_id', $nivel_id);
-                });
-            })
-            ->with(['grupos' => function ($query) {
-                $query->wherePivot('es_actual', true)
-                      ->with('grado')
-                      ->orderBy('tipo_grupo', 'asc');
-            }])
-            ->when($search, function ($query, $search) {
-                return $query->where(function ($q) use ($search) {
-                    $q->where('nombres', 'like', "%{$search}%")
-                      ->orWhere('apellido_paterno', 'like', "%{$search}%")
-                      ->orWhere('apellido_materno', 'like', "%{$search}%")
-                      ->orWhere('curp', 'like', "%{$search}%");
-                });
-            })
-            ->orderBy('apellido_paterno')
-            ->orderBy('apellido_materno')
-            ->orderBy('nombres')
-            ->paginate(10)
-            ->withQueryString();
+    // --- LÓGICA DE FILTRADO MODIFICADA ---
+    if ($nivel_id > 0) {
+       $alumnosQuery->whereHas('grupos', function ($groupQuery) use ($nivel_id) {
+        $groupQuery->where('tipo_grupo', 'REGULAR') // <-- Condición clave añadida
+                   ->whereHas('grado', function ($gradeQuery) use ($nivel_id) {
+                       $gradeQuery->where('nivel_id', $nivel_id);
+                   });
+    });
+    } else {
+        // Si el ID es 0, busca alumnos que NO TIENEN ningún grupo asignado.
+        $alumnosQuery->whereDoesntHave('grupos');
+    }
+    // --- FIN DE LA MODIFICACIÓN ---
 
+    // El resto de la consulta continúa encadenándose
+    $alumnos = $alumnosQuery->with(['grupos' => function ($query) {
+            $query->wherePivot('es_actual', true)
+                  ->with('grado')
+                  ->orderBy('tipo_grupo', 'asc');
+        }])
+        ->when($search, function ($query, $search) {
+            return $query->where(function ($q) use ($search) {
+                $q->where('nombres', 'like', "%{$search}%")
+                  ->orWhere('apellido_paterno', 'like', "%{$search}%")
+                  ->orWhere('apellido_materno', 'like', "%{$search}%")
+                  ->orWhere('curp', 'like', "%{$search}%");
+            });
+        })
+        ->orderBy('apellido_paterno')
+        ->orderBy('apellido_materno')
+        ->orderBy('nombres')
+        ->paginate(10)
+        ->withQueryString();
         $niveles = Nivel::all();
 
         // Se añade 'nivel_id' para pasarlo a la vista y que el componente sepa qué botón resaltar

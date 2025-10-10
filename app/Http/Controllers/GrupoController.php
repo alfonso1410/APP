@@ -32,7 +32,7 @@ class GrupoController extends Controller
         // 1. Validamos los datos del formulario.
         $validated = $request->validate([
             'grado_id'      => 'required|exists:grados,grado_id',
-            'nombre'        => 'required|string|max:50',
+            'nombre_grupo'        => 'required|string|max:50',
             'ciclo_escolar' => 'required|string|max:10',
             'tipo_grupo'    => 'required|string|in:REGULAR,EXTRA',
         ]);

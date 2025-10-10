@@ -19,8 +19,8 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label for="nombre" class="block font-medium text-sm text-gray-700">Nombre del Grupo (Ej: A, B, C)</label>
-                                <input id="nombre" name="nombre" type="text" value="{{ old('nombre') }}" required autofocus
+                                <label for="nombre_grupo" class="block font-medium text-sm text-gray-700">Nombre del Grupo (Ej: A, B, C)</label>
+                                <input id="nombre_grupo" name="nombre_grupo" type="text" value="{{ old('nombre_grupo') }}" required autofocus
                                        class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                             </div>
 

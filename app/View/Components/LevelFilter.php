@@ -1,5 +1,4 @@
 <?php
-
 namespace App\View\Components;
 
 use App\Models\Nivel;
@@ -12,18 +11,17 @@ class LevelFilter extends Component
     public Collection $niveles;
 
     /**
-     * El constructor ahora acepta la ruta y el ID del nivel seleccionado.
+     * El constructor ahora acepta una opción para mostrar el filtro "Sin Asignar".
      */
     public function __construct(
         public string $route, 
-        public int $selectedNivel
+        public int $selectedNivel,
+        // --- AÑADE ESTA LÍNEA ---
+        public bool $showUnassigned = true // Por defecto, siempre se muestra
     ) {
         $this->niveles = Nivel::all();
     }
 
-    /**
-     * Get the view / contents that represent the component.
-     */
     public function render(): View
     {
         return view('components.level-filter');

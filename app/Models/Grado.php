@@ -11,22 +11,19 @@ class Grado extends Model
 
     protected $table = 'grados';
     protected $primaryKey = 'grado_id';
-
-    /**
-     * The attributes that are mass assignable.
-     * @var array<int, string>
-     */
-    protected $fillable = [
+    
+     protected $fillable = [
         'nombre',
         'nivel_id',
     ];
-
+    // 3. Definir la relación con Nivel: Un Grado pertenece a UN Nivel
     public function nivel()
     {
         return $this->belongsTo(Nivel::class, 'nivel_id', 'nivel_id');
     }
 
-    public function grupos(): HasMany
+    // 4. PREPARACIÓN: Un Grado también tendrá muchos Grupos
+   public function grupos(): HasMany
     {
         return $this->hasMany(Grupo::class, 'grado_id', 'grado_id');
     }

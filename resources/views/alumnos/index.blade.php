@@ -59,10 +59,10 @@
                                         {{ $grupoRegular?->grado?->nombre ?? 'Sin asignar' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ $grupoRegular?->nombre ?? 'Sin asignar' }}
+                                        {{ $grupoRegular?->nombre_grupo ?? 'Sin asignar' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ $grupoExtra?->nombre ?? 'N/A' }}
+                                        {{ $grupoExtra?->nombre_grupo ?? 'N/A' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         @if ($alumno->estado_alumno === 'ACTIVO')

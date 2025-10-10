@@ -6,8 +6,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\GradoController;
-use App\Http\Controllers\GrupoController; // <-- 1. Importamos el controlador que faltaba
-
+use App\Http\Controllers\GrupoController;
+use App\Http\Controllers\MaestroController;
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -19,12 +19,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Rutas de tipo "Resource" para los módulos CRUD
     Route::resource('users', UserController::class);
     Route::resource('alumnos', AlumnoController::class);
-    
-    // 2. AÑADIMOS LA RUTA PARA GRUPOS QUE SOLUCIONA EL ERROR
-    Route::resource('grupos', GrupoController::class); 
+
+       Route::resource('grupos', GrupoController::class); 
 
     // Ruta para la vista de Grados (solo necesitamos la vista principal por ahora)
-    Route::get('/grados', [GradoController::class, 'index'])->name('grados.index');
+    Route::resource('grados', GradoController::class);
+    Route::resource('maestros', MaestroController::class);
 });
 
 

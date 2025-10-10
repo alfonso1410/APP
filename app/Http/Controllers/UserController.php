@@ -14,7 +14,10 @@ class UserController extends Controller
     public function index()
     {
          
-         $users = User::orderBy('apellido_paterno')->paginate(10);
+         $users = User::whereNot('rol', 'MAESTRO') // 1. Excluye a los maestros
+                 ->orderBy('apellido_paterno')     // 2. Ordena por el apellido paterno
+                 ->paginate(10);                   // 3. Pagina los resultados
+
         return view('users.index', [
             'users' => $users // El nombre 'users' será la variable en tu Blade
         ]);

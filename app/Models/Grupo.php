@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
 class Grupo extends Model
 {
     use HasFactory;
@@ -15,18 +14,14 @@ class Grupo extends Model
     protected $table = 'grupos';
     protected $primaryKey = 'grupo_id';
 
-    /**
-     * The attributes that are mass assignable.
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'grado_id',
-        'nombre',
+      protected $fillable = [
+        'grado_id', // ¡El que faltaba!
+        'nombre_grupo',
         'ciclo_escolar',
-        'tipo_grupo',
         'estado',
+        'tipo_grupo',
     ];
-
+    // 1. Relación con Grado (M-a-1)
     public function grado(): BelongsTo
     {
         return $this->belongsTo(Grado::class, 'grado_id', 'grado_id');
