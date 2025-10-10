@@ -37,6 +37,10 @@ class GrupoSeeder extends Seeder
                 'tipo_grupo' => 'EXTRA',
                 'estado' => 'ACTIVO',
             ],
+              // --- Grupos de Tercer Grado (grado_id: 6) ---
+            ['grado_id' => 6, 'nombre_grupo' => 'A', 'ciclo_escolar' => '2025-2026', 'tipo_grupo' => 'REGULAR', 'estado' => 'ACTIVO'], // ID Asignado: 3
+            //extracurricular
+            ['grado_id' => 5, 'nombre_grupo' => 'Fútbol', 'ciclo_escolar' => '2025-2026', 'tipo_grupo' => 'EXTRA', 'estado' => 'ACTIVO'], 
         ];
 
         foreach ($grupos as $grupo) {

@@ -21,10 +21,12 @@ class AlumnoController extends Controller
 
     // --- LÓGICA DE FILTRADO MODIFICADA ---
     if ($nivel_id > 0) {
-        // Si el ID es mayor a 0, busca por nivel como antes.
-        $alumnosQuery->whereHas('grupos.grado', function ($q) use ($nivel_id) {
-            $q->where('nivel_id', $nivel_id);
-        });
+       $alumnosQuery->whereHas('grupos', function ($groupQuery) use ($nivel_id) {
+        $groupQuery->where('tipo_grupo', 'REGULAR') // <-- Condición clave añadida
+                   ->whereHas('grado', function ($gradeQuery) use ($nivel_id) {
+                       $gradeQuery->where('nivel_id', $nivel_id);
+                   });
+    });
     } else {
         // Si el ID es 0, busca alumnos que NO TIENEN ningún grupo asignado.
         $alumnosQuery->whereDoesntHave('grupos');

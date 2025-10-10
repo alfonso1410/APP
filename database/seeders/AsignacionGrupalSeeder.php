@@ -14,32 +14,34 @@ class AsignacionGrupalSeeder extends Seeder
     {
        // Alumnos de prueba (ID 1 y 2)
         $asignaciones = [
-            // Alumno 1 en Grupo Regular 1
+            // Alumnos en Primero 'A' (grupo_id: 1)
             ['alumno_id' => 1, 'grupo_id' => 1, 'es_actual' => true],
-            // Alumno 2 en Grupo Regular 1
             ['alumno_id' => 2, 'grupo_id' => 1, 'es_actual' => true],
-            ['alumno_id' => 10, 'grupo_id' => 1, 'es_actual' => true],// Diego
+            ['alumno_id' => 3, 'grupo_id' => 1, 'es_actual' => true],
 
-             // --- Alumnos de Segundo "A" (grupo_id: 2) ---
-            ['alumno_id' => 4, 'grupo_id' => 2, 'es_actual' => true], // Mateo
-            ['alumno_id' => 5, 'grupo_id' => 2, 'es_actual' => true], // Valentina
+            // Alumnos en Segundo 'B' (grupo_id: 2)
+            ['alumno_id' => 4, 'grupo_id' => 2, 'es_actual' => true],
+            ['alumno_id' => 5, 'grupo_id' => 2, 'es_actual' => true],
+            ['alumno_id' => 6, 'grupo_id' => 2, 'es_actual' => true],
 
-            // --- Alumnos de Tercero "A" (grupo_id: 3) ---
-            ['alumno_id' => 6, 'grupo_id' => 3, 'es_actual' => true], // Leonardo
-            ['alumno_id' => 7, 'grupo_id' => 3, 'es_actual' => true], // Isabella
-            ['alumno_id' => 8, 'grupo_id' => 3, 'es_actual' => true], // Santiago
-            ['alumno_id' => 9, 'grupo_id' => 3, 'es_actual' => true], // Camila
+            // Alumnos en Tercero 'A' (grupo_id: 4)
+            ['alumno_id' => 7, 'grupo_id' => 4, 'es_actual' => true],
+            ['alumno_id' => 8, 'grupo_id' => 4, 'es_actual' => true],
+            ['alumno_id' => 9, 'grupo_id' => 4, 'es_actual' => true],
+            ['alumno_id' => 10, 'grupo_id' => 4, 'es_actual' => true],
 
-            // Alumno 1 también toma el grupo Extra 3 (Ajedrez)
+            // --- GRUPOS EXTRACURRICULARES (SOLO 5 ALUMNOS) ---
+
+            // Alumnos en Ajedrez (grupo_id: 3)
             ['alumno_id' => 1, 'grupo_id' => 3, 'es_actual' => true],
-            ['alumno_id' => 10, 'grupo_id' => 4, 'es_actual' => true], // Diego (1ro)
-            ['alumno_id' => 5, 'grupo_id' => 4, 'es_actual' => true],  // Valentina (2do)
+            ['alumno_id' => 5, 'grupo_id' => 3, 'es_actual' => true],
+            ['alumno_id' => 8, 'grupo_id' => 3, 'es_actual' => true],
 
-            // --- Fútbol (grupo_id: 5) ---
-            ['alumno_id' => 4, 'grupo_id' => 5, 'es_actual' => true],  // Mateo (2do)
-            ['alumno_id' => 6, 'grupo_id' => 5, 'es_actual' => true],  // Leonardo (3ro)
-            ['alumno_id' => 9, 'grupo_id' => 5, 'es_actual' => true],  // Camila (3ro)
+            // Alumnos en Fútbol (grupo_id: 5)
+            ['alumno_id' => 2, 'grupo_id' => 5, 'es_actual' => true],
+            ['alumno_id' => 7, 'grupo_id' => 5, 'es_actual' => true],
         ];
+
 
         foreach ($asignaciones as $asignacion) {
             DB::table('asignacion_grupal')->updateOrInsert(
