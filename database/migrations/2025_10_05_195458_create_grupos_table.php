@@ -20,7 +20,7 @@ return new class extends Migration
             
             // === CORRECCIÓN PRINCIPAL ===
             // Se cambió el nombre de la columna para seguir la convención.
-            $table->string('nombre', 50); // Ej: "A", "B", "Ajedrez"
+            $table->string('nombre_grupo', 50); // Ej: "A", "B", "Ajedrez"
             
             $table->string('ciclo_escolar', 10); // Ej: "2025-2026"
 
@@ -35,7 +35,7 @@ return new class extends Migration
 
             // === CORRECCIÓN EN LA RESTRICCIÓN ÚNICA ===
             // La restricción ahora usa la columna corregida 'nombre'.
-            $table->unique(['nombre', 'grado_id', 'ciclo_escolar']);
+            $table->unique(['nombre_grupo', 'grado_id', 'ciclo_escolar']);
 
             // Definición de la Clave Foránea
             $table->foreign('grado_id')
