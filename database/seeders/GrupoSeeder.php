@@ -12,52 +12,33 @@ class GrupoSeeder extends Seeder
      */
     public function run(): void
     {
-         $grupos = [
-            // Grupo de Primero de Primaria (asumiendo grado_id 4)
-            [
-                'grado_id' => 4, 
-                'nombre_grupo' => 'A',
-                'ciclo_escolar' => '2025-2026',
-                'tipo_grupo' => 'REGULAR',
-                'estado' => 'ACTIVO',
-            ],
-            // Grupo de Segundo de Primaria (asumiendo grado_id 5)
-            [
-                'grado_id' => 5, 
-                'nombre_grupo' => 'B',
-                'ciclo_escolar' => '2025-2026',
-                'tipo_grupo' => 'REGULAR',
-                'estado' => 'ACTIVO',
-            ],
-            // Grupo Extracurricular (asumiendo grado_id 5, por ejemplo, pero puede ser cualquiera)
-            [
-                'grado_id' => 5, 
-                'nombre_grupo' => 'Ajedrez',
-                'ciclo_escolar' => '2025-2026',
-                'tipo_grupo' => 'EXTRA',
-                'estado' => 'ACTIVO',
-            ],
-              // --- Grupos de Tercer Grado (grado_id: 6) ---
-            ['grado_id' => 6, 'nombre_grupo' => 'A', 'ciclo_escolar' => '2025-2026', 'tipo_grupo' => 'REGULAR', 'estado' => 'ACTIVO'], // ID Asignado: 3
-            //extracurricular
-            ['grado_id' => 5, 'nombre_grupo' => 'Fútbol', 'ciclo_escolar' => '2025-2026', 'tipo_grupo' => 'EXTRA', 'estado' => 'ACTIVO'], 
+        // IDs de los grados se asumen en orden de creación del GradoSeeder
+        $grupos = [
+            // --- GRUPOS REGULARES ---
+            ['grado_id' => 1, 'nombre_grupo' => 'A', 'tipo_grupo' => 'REGULAR'], // Para 'Primero Preescolar'
+            ['grado_id' => 2, 'nombre_grupo' => 'A', 'tipo_grupo' => 'REGULAR'], // Para 'Segundo Preescolar'
+            ['grado_id' => 4, 'nombre_grupo' => 'A', 'tipo_grupo' => 'REGULAR'], // Para 'Primero' de Primaria
+            ['grado_id' => 4, 'nombre_grupo' => 'B', 'tipo_grupo' => 'REGULAR'], // Para 'Primero' de Primaria
+            ['grado_id' => 5, 'nombre_grupo' => 'A', 'tipo_grupo' => 'REGULAR'], // Para 'Segundo' de Primaria
+
+            // --- GRUPOS EXTRACURRICULARES ---
+            ['grado_id' => 10, 'nombre_grupo' => 'Único', 'tipo_grupo' => 'EXTRA'],// Para 'Yoga Preescolar'
+            ['grado_id' => 12, 'nombre_grupo' => 'A', 'tipo_grupo' => 'EXTRA'],    // Para 'Yoga (1° y 2°)'
+            ['grado_id' => 12, 'nombre_grupo' => 'B', 'tipo_grupo' => 'EXTRA'],    // Para 'Yoga (1° y 2°)'
+            ['grado_id' => 14, 'nombre_grupo' => 'Único', 'tipo_grupo' => 'EXTRA'],// Para 'Deporte (3° y 4°)'
         ];
 
-        foreach ($grupos as $grupo) {
-            // Buscamos por la clave compuesta para idempotencia
-            DB::table('grupos')->updateOrInsert(
-                [
-                    'nombre_grupo' => $grupo['nombre_grupo'],
-                    'grado_id' => $grupo['grado_id'],
-                    'ciclo_escolar' => $grupo['ciclo_escolar'],
-                ],
-                [
-                    'tipo_grupo' => $grupo['tipo_grupo'],
-                    'estado' => $grupo['estado'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
-            );
-        }
+        // Preparamos los datos para una única inserción, añadiendo los campos comunes
+        $dataToInsert = array_map(function ($grupo) {
+            // AQUÍ SE AÑADEN LOS CAMPOS FALTANTES A CADA REGISTRO
+            $grupo['ciclo_escolar'] = '2025-2026';
+            $grupo['estado'] = 'ACTIVO';
+            $grupo['created_at'] = now();
+            $grupo['updated_at'] = now();
+            return $grupo;
+        }, $grupos);
+
+        // Insertamos todos los registros en una sola consulta
+        DB::table('grupos')->insert($dataToInsert);
     }
 }

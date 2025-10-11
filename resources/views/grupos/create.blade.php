@@ -30,14 +30,7 @@
                                        class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                             </div>
 
-                            <div>
-                                <label for="tipo_grupo" class="block font-medium text-sm text-gray-700">Tipo de Grupo</label>
-                                <select id="tipo_grupo" name="tipo_grupo" required
-                                        class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                                    <option value="REGULAR" {{ old('tipo_grupo') == 'REGULAR' ? 'selected' : '' }}>Regular</option>
-                                    <option value="EXTRA" {{ old('tipo_grupo') == 'EXTRA' ? 'selected' : '' }}>Extracurricular</option>
-                                </select>
-                            </div>
+                           
                         </div>
 
                         <div class="flex items-center justify-end mt-6">

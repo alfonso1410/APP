@@ -26,9 +26,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('alumnos', AlumnoController::class);
 
        Route::resource('grupos', GrupoController::class); 
-
+Route::get('/grupos-archivados', [GrupoController::class, 'indexArchivados'])->name('grupos.archivados');
+Route::patch('/grupos/{grupo}/archivar', [GrupoController::class, 'archivar'])->name('grupos.archivar');
+Route::get('/grupos/{grupo}/alumnos', [GrupoController::class, 'showAlumnos'])->name('grupos.alumnos');
+Route::post('/grupos/{grupo}/alumnos', [GrupoController::class, 'storeAlumnos'])->name('grupos.storeAlumnos');
     // Ruta para la vista de Grados (solo necesitamos la vista principal por ahora)
     Route::resource('grados', GradoController::class);
+    Route::get('/grados/{grado}/mapear', [GradoController::class, 'showMapeo'])->name('grados.mapeo');
+Route::post('/grados/{grado}/mapear', [GradoController::class, 'storeMapeo'])->name('grados.storeMapeo');
+
     Route::resource('maestros', MaestroController::class);
 });
 

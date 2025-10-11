@@ -3,8 +3,9 @@
 namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Grado extends Model
 {
    use HasFactory;
@@ -15,9 +16,11 @@ class Grado extends Model
     // 2. Especificar la clave primaria:
     protected $primaryKey = 'grado_id';
     
-     protected $fillable = [
+    protected $fillable = [
         'nombre',
         'nivel_id',
+        'orden',      // <-- Añadir
+        'tipo_grado', // <-- Añadir
     ];
     // 3. Definir la relación con Nivel: Un Grado pertenece a UN Nivel
     public function nivel()
@@ -37,5 +40,15 @@ class Grado extends Model
     public function estructuraCurricular(): HasMany
     {
         return $this->hasMany(EstructuraCurricular::class, 'grado_id', 'grado_id');
+    }
+
+    public function gradosRegularesAplicables(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Grado::class,
+            'grado_mapeo',
+            'extra_grado_id',
+            'regular_grado_id'
+        );
     }
 }

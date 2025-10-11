@@ -28,5 +28,6 @@
             </a>
         @endforeach
         
+         {{ $slot }}
     </form>
 </div>
