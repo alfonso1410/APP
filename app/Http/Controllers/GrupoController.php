@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB; 
 use App\Models\Alumno;
+use App\Models\Materia; 
 
 class GrupoController extends Controller
 {
@@ -117,123 +118,61 @@ public function indexArchivados()
     // Vista temporal para mantenimiento
     $gruposArchivados = Grupo::where('estado', 'ARCHIVADO')
                              // ¡Añadimos todas las relaciones que la modal necesita!
-                             ->with('grado.nivel', 'grado.gradosRegularesAplicables')
+                             ->with('grado.nivel', 'grado.gradosRegularesMapeados')
                              ->latest()
                              ->paginate(25);
 
     return view('grupos.archivados', compact('gruposArchivados'));
 }
-
-public function showAlumnos(Grupo $grupo)
+public function mostrarAlumnos(Grupo $grupo, Request $request)
 {
-    // Obtenemos los IDs de los alumnos que YA ESTÁN en este grupo.
-    $idsAlumnosAsignados = $grupo->alumnos()->pluck('alumnos.alumno_id')->toArray();
+    // Ya no necesitamos la lógica de búsqueda aquí, ni la paginación.
+    // Simplemente obtenemos TODOS los alumnos del grupo con sus calificaciones.
+    $alumnos = $grupo->alumnosActuales()
+                     ->with(['calificaciones', 'grupos.materias'])
+                     ->orderBy('apellido_paterno')
+                     ->orderBy('apellido_materno')
+                     ->get(); // <-- Cambiamos paginate(10) por get()
 
-    // Ahora, decidimos qué otros alumnos elegibles mostrar según el TIPO de grupo.
-    if ($grupo->tipo_grupo === 'REGULAR') {
-        
-        // --- LÓGICA PARA GRUPOS REGULARES ---
-        // Buscamos alumnos activos que NO tengan un grupo regular activo.
-        $alumnosElegibles = Alumno::where('estado_alumno', 'ACTIVO')
-            ->whereDoesntHave('grupos', function ($query) {
-                $query->where('tipo_grupo', 'REGULAR')->where('asignacion_grupal.es_actual', true);
-            })
-            ->with('grupos.grado') // Eager loading para mostrar la columna 'Extracurricular'
-            ->get();
-
-    } else { // ($grupo->tipo_grupo === 'EXTRA')
-
-        // --- LÓGICA PARA GRUPOS EXTRACURRICULARES ---
-        // 1. Obtenemos los IDs de los grados regulares permitidos por el mapeo.
-        $idsGradosRegularesPermitidos = $grupo->grado->gradosRegularesAplicables()->pluck('grados.grado_id');
-
-        if ($idsGradosRegularesPermitidos->isEmpty()) {
-            $alumnosElegibles = collect(); // Si no hay grados mapeados, nadie es elegible.
-        } else {
-            // 2. Buscamos alumnos que cumplan TODAS las reglas:
-            $alumnosElegibles = Alumno::where('estado_alumno', 'ACTIVO')
-                // a) DEBE tener un grupo regular activo.
-                ->whereHas('grupos', function ($query) {
-                    $query->where('tipo_grupo', 'REGULAR')->where('asignacion_grupal.es_actual', true);
-                })
-                // b) NO DEBE tener ya otro grupo extracurricular activo.
-                ->whereDoesntHave('grupos', function ($query) {
-                    $query->where('tipo_grupo', 'EXTRA')->where('asignacion_grupal.es_actual', true);
-                })
-                // c) Su grupo regular DEBE estar en la lista de grados permitidos.
-                ->whereHas('grupos', function ($query) use ($idsGradosRegularesPermitidos) {
-                    $query->where('tipo_grupo', 'REGULAR')->whereIn('grado_id', $idsGradosRegularesPermitidos);
-                })
-                ->with('grupos.grado')
-                ->get();
-        }
-    }
-        
-    // --- PREPARACIÓN FINAL DE DATOS PARA LA VISTA ---
-    
-    // Obtenemos la colección completa de los alumnos que ya estaban asignados.
-    $alumnosYaAsignados = Alumno::whereIn('alumno_id', $idsAlumnosAsignados)->with('grupos.grado')->get();
-    
-    // Juntamos las dos listas: los elegibles + los que ya estaban.
-    // unique() se asegura de no tener duplicados si un alumno estaba en ambas listas.
-    $alumnosDisponibles = $alumnosElegibles->merge($alumnosYaAsignados)
-                                           ->unique('alumno_id')
-                                           ->sortBy('apellido_paterno');
-
-    return view('grupos.alumnos', compact('grupo', 'alumnosDisponibles', 'idsAlumnosAsignados'));
+    return view('grupos.alumnos-index', compact('grupo', 'alumnos'));
 }
     /**
      * Guarda las asignaciones de alumnos para un grupo.
      */
-   public function storeAlumnos(Request $request, Grupo $grupo)
-{
-    $alumnosIds = $request->input('alumnos', []);
-    
-    // 1. Sincronizamos los alumnos como antes, pero guardamos los cambios.
-    $changes = $grupo->alumnos()->sync($alumnosIds);
-
-    // 2. VERIFICACIÓN DE COHERENCIA (Solo si estamos modificando un grupo REGULAR)
-    if ($grupo->tipo_grupo === 'REGULAR') {
-        
-        // Obtenemos los IDs de todos los alumnos que fueron añadidos o quitados.
-        $affectedStudentIds = array_merge($changes['attached'], $changes['detached']);
-
-        if (!empty($affectedStudentIds)) {
-            // Buscamos a esos alumnos con todas sus relaciones de grupo cargadas.
-            $studentsToCheck = Alumno::with('grupos.grado.gradosRegularesAplicables')->findMany($affectedStudentIds);
-
-            foreach ($studentsToCheck as $student) {
-                // Buscamos si el alumno tiene un grupo extra.
-                $extraGroup = $student->grupos->firstWhere('tipo_grupo', 'EXTRA');
-                
-                // Si no tiene grupo extra, no hay nada que verificar.
-                if (!$extraGroup) {
-                    continue;
-                }
-
-                // Buscamos su grupo regular actual (puede que ya no tenga si lo quitamos de todos).
-                $regularGroup = $student->grupos->firstWhere('tipo_grupo', 'REGULAR');
-                $isExtraAssignmentValid = false;
-
-                if ($regularGroup) {
-                    // Obtenemos los IDs de los grados permitidos para su extracurricular.
-                    $validGradeIds = $extraGroup->grado->gradosRegularesAplicables->pluck('grado_id');
-                    
-                    // Verificamos si el grado de su grupo regular actual está en la lista de permitidos.
-                    if ($validGradeIds->contains($regularGroup->grado_id)) {
-                        $isExtraAssignmentValid = true;
-                    }
-                }
-
-                // Si la asignación extracurricular ya no es válida (porque cambió de grado o ya no tiene
-                // grupo regular), lo desvinculamos del grupo extra.
-                if (!$isExtraAssignmentValid) {
-                    $student->grupos()->detach($extraGroup->grupo_id);
-                }
-            }
+  public function showMaterias(Grupo $grupo): View
+    {
+        if ($grupo->tipo_grupo === 'REGULAR') {
+            // Para grupos regulares, las materias vienen de la estructura curricular del grado.
+            $materiasDisponibles = $grupo->grado->materias;
+        } else {
+            // Para grupos EXTRA, ofrecemos todas las materias existentes.
+            // Opcional: podrías filtrar para excluir las que ya son parte de una estructura.
+            $materiasDisponibles = Materia::orderBy('nombre')->get();
         }
+
+        // Obtenemos los IDs de las materias que ya están asignadas a este grupo
+        // para poder marcar los checkboxes en la vista.
+        $idsMateriasAsignadas = $grupo->materias()->pluck('materias.materia_id')->toArray();
+
+        return view('grupos.materias', compact('grupo', 'materiasDisponibles', 'idsMateriasAsignadas'));
     }
 
-    return redirect()->back()->with('success', 'Alumnos asignados exitosamente.');
-}
+    /**
+     * Guarda las materias seleccionadas para un grupo.
+     */
+    public function storeMaterias(Request $request, Grupo $grupo)
+    {
+        $validated = $request->validate([
+            'materias' => 'nullable|array',
+            'materias.*' => 'exists:materias,materia_id',
+        ]);
+
+        $materiasIds = $validated['materias'] ?? [];
+
+        // sync() es el método perfecto de Laravel para tablas pivote.
+        // Automáticamente añade las nuevas, quita las desmarcadas y deja las que no cambiaron.
+        $grupo->materias()->sync($materiasIds);
+
+        return redirect()->route('grados.index')->with('success', 'Materias del grupo actualizadas exitosamente.');
+    }
 }

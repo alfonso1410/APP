@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Materia; 
 class Grupo extends Model
 {
     use HasFactory;
@@ -22,6 +23,11 @@ class Grupo extends Model
         'tipo_grupo',
     ];
     // 1. Relación con Grado (M-a-1)
+
+    public function materias()
+    {
+        return $this->belongsToMany(Materia::class, 'grupo_materia_maestro', 'grupo_id', 'materia_id');
+    }
     public function grado(): BelongsTo
     {
         return $this->belongsTo(Grado::class, 'grado_id', 'grado_id');
@@ -32,6 +38,12 @@ class Grupo extends Model
         return $this->belongsToMany(Alumno::class, 'asignacion_grupal', 'grupo_id', 'alumno_id')
                     ->withPivot('es_actual')
                     ->withTimestamps();
+    }
+
+    public function alumnosActuales()
+    {
+        return $this->belongsToMany(Alumno::class, 'asignacion_grupal', 'grupo_id', 'alumno_id')
+                    ->wherePivot('es_actual', 1); // La magia está aquí
     }
 
 
@@ -48,4 +60,6 @@ class Grupo extends Model
     {
         return $this->hasMany(GrupoMateriaMaestro::class, 'grupo_id', 'grupo_id');
     }
+
+    
 }

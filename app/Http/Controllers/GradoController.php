@@ -24,7 +24,7 @@ class GradoController extends Controller
         $grados = Grado::where('tipo_grado', 'EXTRA')
             // --- LÍNEA MODIFICADA ---
             // Le decimos que cargue también la relación del mapeo
-            ->with(['grupos', 'gradosRegularesAplicables']) 
+            ->with(['grupos', 'gradosRegularesMapeados']) 
             ->when($search, fn($q, $s) => $q->where('nombre', 'like', "%{$s}%"))
             ->orderBy('orden')
             ->get();
@@ -80,8 +80,13 @@ class GradoController extends Controller
 
     $grado->update($validatedData);
 
-    // Redirige de vuelta con un mensaje de éxito
-    return redirect()->route('grados.index')->with('success', 'Grado actualizado exitosamente.');
+    // Redirección inteligente (mejora)
+    $redirectParams = $grado->tipo_grado === 'REGULAR'
+        ? ['nivel' => $grado->nivel_id]
+        : ['view_mode' => 'extracurricular'];
+
+    return redirect()->route('grados.index', $redirectParams)
+                     ->with('success', 'Grado actualizado exitosamente.');
 }
 
 public function store(Request $request)
@@ -135,7 +140,7 @@ public function showMapeo(Grado $grado)
                           ->get();
 
     // 3. Obtenemos los IDs de los grados que ya están mapeados (esto no cambia).
-    $idsMapeados = $grado->gradosRegularesAplicables()->pluck('grados.grado_id')->toArray();
+    $idsMapeados = $grado->gradosRegularesMapeados()->pluck('grados.grado_id')->toArray();
 
     return view('grados.mapeo', compact('grado', 'gradosRegulares', 'idsMapeados'));
 }
@@ -156,7 +161,7 @@ public function showMapeo(Grado $grado)
         // Usamos sync() para actualizar la tabla pivote.
         // Laravel automáticamente añadirá los nuevos, quitará los desmarcados
         // y dejará los que ya estaban. Es la forma más eficiente.
-        $grado->gradosRegularesAplicables()->sync($gradosIds);
+        $grado->gradosRegularesMapeados()->sync($gradosIds);
 
         return redirect()->route('grados.index', ['view_mode' => 'extracurricular'])
                          ->with('success', 'Mapeo de grados actualizado exitosamente.');

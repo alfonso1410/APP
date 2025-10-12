@@ -42,13 +42,18 @@ class Grado extends Model
         return $this->hasMany(EstructuraCurricular::class, 'grado_id', 'grado_id');
     }
 
-    public function gradosRegularesAplicables(): BelongsToMany
+    public function gradosRegularesMapeados()
     {
         return $this->belongsToMany(
-            Grado::class,
-            'grado_mapeo',
-            'extra_grado_id',
-            'regular_grado_id'
+            Grado::class,           // El modelo al que nos conectamos
+            'grado_mapeo',          // La tabla pivote
+            'extra_grado_id',       // La clave foránea de este modelo en la tabla pivote
+            'regular_grado_id'      // La clave foránea del modelo relacionado en la tabla pivote
         );
     }
+
+    public function materias()
+{
+    return $this->belongsToMany(Materia::class, 'estructura_curricular', 'grado_id', 'materia_id');
+}
 }

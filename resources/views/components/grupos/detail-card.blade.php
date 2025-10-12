@@ -56,13 +56,13 @@
             </p>
             <p><span class="text-gray-500">Nivel Educativo:</span> <span class="font-semibold text-gray-700">{{ $grupo->grado->nivel->nombre }}</span></p>
 
-            @if($grupo->tipo_grupo === 'EXTRA' && $grupo->grado->gradosRegularesAplicables->isNotEmpty())
+            @if($grupo->tipo_grupo === 'EXTRA' && $grupo->grado->gradosRegularesMapeados->isNotEmpty())
                 <div class="pt-2">
                     <p>
                         <span class="text-gray-500">Grados Permitidos:</span> 
                         <span class="font-semibold text-indigo-700">
                             {{-- Esto toma los nombres de los grados mapeados y los une con comas --}}
-                            {{ $grupo->grado->gradosRegularesAplicables->pluck('nombre')->implode(', ') }}
+                            {{ $grupo->grado->gradosRegularesMapeados->pluck('nombre')->implode(', ') }}
                         </span>
                     </p>
                 </div>
@@ -72,10 +72,10 @@
 
     {{-- Pie con las tarjetas de navegación --}}
     <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <a href="{{ route('grupos.alumnos', $grupo) }}" class="block py-8 text-center bg-green-500 text-white rounded-2xl hover:bg-green-500 transition shadow-md hover:shadow-lg transform hover:-translate-y-1">
+        <a href="{{ route('grupos.alumnos.index', $grupo) }}" class="block py-8 text-center bg-green-500 text-white rounded-2xl hover:bg-green-500 transition shadow-md hover:shadow-lg transform hover:-translate-y-1">
             <h3 class="text-xl font-bold">Alumnos</h3>
         </a>
-        <a href="#" class="block py-8 text-center bg-blue-500 text-white rounded-2xl hover:bg-blue-500 transition shadow-md hover:shadow-lg transform hover:-translate-y-1">
+        <a href="{{ route('grupos.materias.edit', $grupo) }}" class="block py-8 text-center bg-blue-500 text-white rounded-2xl hover:bg-blue-500 transition shadow-md hover:shadow-lg transform hover:-translate-y-1">
             <h3 class="text-xl font-bold">Materias</h3>
         </a>
         <a href="#" class="block py-8 text-center bg-orange-400 text-white rounded-2xl hover:bg-orange-500 transition shadow-md hover:shadow-lg transform hover:-translate-y-1">
