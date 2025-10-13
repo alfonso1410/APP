@@ -12,9 +12,14 @@ class Materia extends Model
     protected $primaryKey = 'materia_id';
 
     // 1. Relación con la Estructura Curricular: Una Materia aparece en muchos registros del plan de estudios.
-    public function estructuraCurricular()
+     public function estructuraCurricular()
     {
-        return $this->hasMany(EstructuraCurricular::class, 'materia_id', 'materia_id');
+        return $this->hasMany(EstructuraCurricular::class, 'materia_id');
+    }
+
+     public function camposFormativos()
+    {
+        return $this->belongsToMany(CampoFormativo::class, 'estructura_curricular', 'materia_id', 'campo_id');
     }
 
     // 2. Relación con los Criterios de Evaluación: Una Materia tiene varios Criterios definidos.
@@ -27,5 +32,10 @@ class Materia extends Model
     public function asignacionesGrupo()
     {
         return $this->hasMany(GrupoMateriaMaestro::class, 'materia_id', 'materia_id');
+    }
+
+    public function maestros()
+    {
+        return $this->belongsToMany(User::class, 'grupo_materia_maestro', 'materia_id', 'maestro_id');
     }
 }

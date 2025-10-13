@@ -7,6 +7,7 @@
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 
+            <x-flash-messages />
                 {{-- 1. SECCIÓN DE FILTROS Y BÚSQUEDA RESTAURADA --}}
                 <div class="flex items-center justify-between mb-4">
                     {{-- Barra de búsqueda --}}
@@ -87,6 +88,14 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 {{-- Usamos un div con flex para alinear y espaciar los botones --}}
                 <div class="flex items-center justify-center gap-x-4">
+                    @if($grado->tipo_grado === 'REGULAR')
+                                                    <a href="{{ route('grados.estructura', $grado) }}" class="inline-flex items-center p-2 bg-teal-100 text-teal-800 rounded-full font-semibold text-xs hover:bg-teal-200" title="Asignar Materias al Grado">
+                                                       <svg class="size-4 ">
+            <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-add"></use>
+        </svg>
+                                                    </a>
+                                                @endif
+
                     @if($grado->tipo_grado === 'EXTRA')
                                                     <a href="{{ route('grados.mapeo', $grado) }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
                                                         Agrupar</a>
@@ -133,14 +142,30 @@
         </div>
 
         {{-- 2. BOTÓN "AGREGAR GRADO" MOVIDO ABAJO A LA DERECHA --}}
-        <div class="fixed bottom-8 right-8 z-50">
-            <button 
-                x-data=""
-                x-on:click.prevent="$dispatch('open-modal', 'agregar-grado')"
-                class="bg-princeton hover:bg-blue-700 text-white font-bold py-3 px-5 rounded-full shadow-lg transition-transform hover:scale-105"
-                title="Agregar Nuevo Grado"
-            >
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+        <div x-data="{ open: false }" @keydown.escape.window="open = false" @click.outside="open = false" class="fixed bottom-8 right-8 z-50">
+            <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                 class="absolute bottom-full right-0 mb-3 flex flex-col items-end gap-3" style="display: none;">
+
+                <div class="flex items-center gap-2">
+                    <span class="bg-white text-sm text-gray-700 px-3 py-1 rounded-md shadow-lg">Crear Nivel</span>
+                    <button @click.prevent="$dispatch('open-modal', 'agregar-nivel'); open = false"
+                            class="bg-white hover:bg-gray-100 text-gray-800 font-bold p-3 rounded-full shadow-lg transition-transform hover:scale-105">
+                        <svg class="size-4"><use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-nivel"></use></svg>
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <span class="bg-white text-sm text-gray-700 px-3 py-1 rounded-md shadow-lg">Crear Grado</span>
+                    <button @click.prevent="$dispatch('open-modal', 'agregar-grado'); open = false"
+                            class="bg-white hover:bg-gray-100 text-gray-800 font-bold p-3 rounded-full shadow-lg transition-transform hover:scale-105">
+                        <svg class="size-4"><use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-add"></use></svg>
+                    </button>
+                </div>
+            </div>
+
+            <button @click="open = !open" class="bg-princeton hover:bg-blue-700 text-white font-bold p-4 rounded-full shadow-lg transition-transform hover:scale-105" title="Agregar">
+                <svg class="size-6 transition-transform duration-300" :class="{ 'rotate-45': open }">
+                    <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-add"></use></svg>
             </button>
         </div>
 
@@ -182,5 +207,14 @@
     </x-modal>
 @endforeach                                                                                     
       
+ <x-modal name="agregar-nivel" :show="$errors->has('nombre')" focusable>
+            <div class="p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Crear Nuevo Nivel Educativo</h2>
+                <p class="text-sm text-gray-600 mb-4">
+                    Crea una categoría principal como "Preescolar", "Primaria" o "Secundaria".
+                </p>
+                <x-grados.create-nivel />
+            </div>
+        </x-modal>
     </div>
 </x-app-layout>

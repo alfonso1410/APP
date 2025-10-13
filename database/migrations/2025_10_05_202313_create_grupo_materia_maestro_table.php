@@ -18,7 +18,7 @@ return new class extends Migration
             // Claves Foráneas (unsignedBigInteger para compatibilidad)
             $table->unsignedBigInteger('grupo_id');
             $table->unsignedBigInteger('materia_id');
-            $table->unsignedBigInteger('maestro_id'); // Referencia a Usuarios
+            $table->unsignedBigInteger('maestro_id')->nullable(); // Referencia a Usuarios
             
             // Definición de Claves Foráneas
             $table->foreign('grupo_id')->references('grupo_id')->on('grupos')->onDelete('cascade');

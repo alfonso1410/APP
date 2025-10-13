@@ -54,4 +54,14 @@
 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
 </symbol>
 
+
+<symbol id="icon-add" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+</symbol>
+
+<symbol id="icon-nivel" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25" />
+</symbol>
+
+
  </svg>

@@ -52,8 +52,10 @@ class Grado extends Model
         );
     }
 
-    public function materias()
+public function materias()
 {
-    return $this->belongsToMany(Materia::class, 'estructura_curricular', 'grado_id', 'materia_id');
+    return $this->belongsToMany(Materia::class, 'estructura_curricular', 'grado_id', 'materia_id')
+                ->withPivot('campo_id')
+                ->withTimestamps();
 }
 }

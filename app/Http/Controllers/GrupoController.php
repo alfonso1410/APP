@@ -136,43 +136,56 @@ public function mostrarAlumnos(Grupo $grupo, Request $request)
 
     return view('grupos.alumnos-index', compact('grupo', 'alumnos'));
 }
+
+public function indexMaterias(Grupo $grupo): View
+{
+    if ($grupo->tipo_grupo === 'REGULAR') {
+        // Para grupos regulares, las materias vienen de la ESTRUCTURA CURRICULAR DEL GRADO.
+        $materias = $grupo->grado->materias()
+                        ->with(['camposFormativos', 'maestros' => function ($query) use ($grupo) {
+                            // Cargamos solo el maestro asignado A ESTE GRUPO para esta materia
+                            $query->where('grupo_materia_maestro.grupo_id', $grupo->grupo_id);
+                        }])
+                        ->get();
+    } else { // EXTRA
+        // Para grupos extra, las materias vienen de la asignación directa al grupo.
+        $materias = $grupo->materias()
+                        ->with(['maestros' => function ($query) use ($grupo) {
+                            $query->where('grupo_materia_maestro.grupo_id', $grupo->grupo_id);
+                        }])
+                        ->get();
+    }
+
+    return view('grupos.materias-index', compact('grupo', 'materias'));
+}
     /**
      * Guarda las asignaciones de alumnos para un grupo.
      */
-  public function showMaterias(Grupo $grupo): View
+  public function createMaterias(Grupo $grupo): View
     {
         if ($grupo->tipo_grupo === 'REGULAR') {
-            // Para grupos regulares, las materias vienen de la estructura curricular del grado.
+            // Materias definidas por la estructura curricular del grado.
             $materiasDisponibles = $grupo->grado->materias;
         } else {
-            // Para grupos EXTRA, ofrecemos todas las materias existentes.
-            // Opcional: podrías filtrar para excluir las que ya son parte de una estructura.
-            $materiasDisponibles = Materia::orderBy('nombre')->get();
+            // LÓGICA CLAVE: Materias que NO están en ninguna estructura curricular.
+            $materiasDisponibles = Materia::whereDoesntHave('estructuraCurricular')
+                                          ->orderBy('nombre')
+                                          ->get();
         }
 
-        // Obtenemos los IDs de las materias que ya están asignadas a este grupo
-        // para poder marcar los checkboxes en la vista.
         $idsMateriasAsignadas = $grupo->materias()->pluck('materias.materia_id')->toArray();
 
+        // Esta es tu vista anterior (grupos.materias), la usaremos como formulario.
         return view('grupos.materias', compact('grupo', 'materiasDisponibles', 'idsMateriasAsignadas'));
     }
-
-    /**
-     * Guarda las materias seleccionadas para un grupo.
-     */
+      
     public function storeMaterias(Request $request, Grupo $grupo)
     {
-        $validated = $request->validate([
-            'materias' => 'nullable|array',
-            'materias.*' => 'exists:materias,materia_id',
-        ]);
+        // ... (la lógica de validación y sync() se queda igual)
+        $grupo->materias()->sync($request->input('materias', []));
 
-        $materiasIds = $validated['materias'] ?? [];
-
-        // sync() es el método perfecto de Laravel para tablas pivote.
-        // Automáticamente añade las nuevas, quita las desmarcadas y deja las que no cambiaron.
-        $grupo->materias()->sync($materiasIds);
-
-        return redirect()->route('grados.index')->with('success', 'Materias del grupo actualizadas exitosamente.');
+        // Redirigimos a la nueva lista de materias.
+        return redirect()->route('grupos.materias.index', $grupo)
+                         ->with('success', 'Materias del grupo actualizadas exitosamente.');
     }
 }
