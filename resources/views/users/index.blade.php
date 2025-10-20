@@ -92,22 +92,21 @@
                        <section x-data="{}" class="flex gap-2 justify-center ">
                      {{-- Botones de acción: Editar y Eliminar --}}
                         <button
-        type="button"
-        x-on:click.prevent="$dispatch('open-modal', 'editar-usuario-{{ $user->id }}')" 
-        class="bg-blue-100 text-blue-800 p-1 flex size-4 sm:size-6 items-center justify-center rounded-full hover:scale-150 transition-transform"
-        title="Editar Usuario"
-    >
-        <svg class="size-6">
-            <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-edit"></use>
-        </svg>
-        </button>
+                        type="button"
+                        x-on:click.prevent="$dispatch('open-modal', 'editar-usuario-{{ $user->id }}')" 
+                        class="bg-blue-100 text-blue-800 p-1 flex size-4 sm:size-6 items-center justify-center rounded-full hover:scale-150 transition-transform"
+                        title="Editar Usuario">
+                        <svg class="size-6">
+                            <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-edit"></use>
+                        </svg>
+                        </button>
 
         
                         <x-user-eliminate-form
             :action="route('users.destroy', $user)"
             confirm-message="¿Deseas desactivar a {{ $user->name }}? No podrá iniciar sesión."
-            class="bg-red-100"
-        >
+            class="bg-red-100">
+            
             {{-- Inyectamos el icono SVG en el slot --}}
             <svg class="size-6">
                 <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-delete"></use>

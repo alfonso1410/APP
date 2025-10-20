@@ -11,6 +11,8 @@ use App\Http\Controllers\MaestroController;
 use App\Http\Controllers\AsignacionGrupalController;
 use App\Http\Controllers\NivelController;
 use App\Http\Controllers\EstructuraCurricularController;
+use App\Http\Controllers\CampoFormativoController;
+use App\Http\Controllers\MateriaController;
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -64,6 +66,15 @@ Route::post('/grados/{grado}/estructura', [EstructuraCurricularController::class
     Route::resource('maestros', MaestroController::class);
 
     Route::post('/niveles', [NivelController::class, 'store'])->name('niveles.store');
+
+    // Ruta para el CRUD de Campos Formativos
+    Route::resource('campos-formativos', CampoFormativoController::class);
+
+    // Ruta para el CRUD de Materias
+    Route::resource('materias', MateriaController::class);
+
+    Route::post('/campos-formativos/{campo_formativo}/assign-subjects', [CampoFormativoController::class, 'assignSubjects'])
+          ->name('campos-formativos.assign-subjects');
 });
 
 

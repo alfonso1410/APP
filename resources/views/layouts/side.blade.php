@@ -73,6 +73,16 @@
                         <span class="flex-1 ms-3 whitespace-nowrap">Gestionar Maestros</span>
                     </a>
                 </li>
+
+                {{-- ENLACE PARA GESTIONAR MATERIAS --}}
+                <li>
+                    <a href="{{ route('materias.index') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">
+                        <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
+                            <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-grade"> </use>
+                        </svg>
+                        <span class="flex-1 ms-3 whitespace-nowrap">Gestionar Materias</span>
+                    </a>
+                </li>
     
                 {{-- 4. ENLACE PARA CERRAR SESIÓN --}}
                 <li>
@@ -83,6 +93,7 @@
                         <span class="ms-3">Cerrar Sesión</span>
                     </a>
                 </li>
+                
             </ul>
         </div>
     </aside>
