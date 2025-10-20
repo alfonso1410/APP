@@ -46,24 +46,21 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             @forelse ($alumnos as $alumno)
-                                @php
-                                    $grupoRegular = $alumno->grupos->firstWhere('tipo_grupo', 'REGULAR');
-                                    $grupoExtra = $alumno->grupos->firstWhere('tipo_grupo', 'EXTRA');
-                                @endphp
                                 <tr>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                         {{ $alumno->apellido_paterno }} {{ $alumno->apellido_materno }} {{ $alumno->nombres }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $alumno->curp }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ $grupoRegular?->grado?->nombre ?? 'Sin asignar' }}
-                                    </td>
+            {{ $alumno->grupoRegularActivo->first()->grado->nombre ?? 'Sin asignar' }}
+        </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ $grupoRegular?->nombre_grupo ?? 'Sin asignar' }}
-                                    </td>
+            {{ $alumno->grupoRegularActivo->first()->nombre_grupo ?? 'Sin asignar' }}
+        </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ $grupoExtra?->nombre_grupo ?? 'N/A' }}
-                                    </td>
+            {{-- La lógica para el grupo extra puede seguir igual o usar un accessor --}}
+            {{ $alumno->grupoExtracurricularActivo->first()->nombre_grupo ?? 'N/A' }}
+        </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         @if ($alumno->estado_alumno === 'ACTIVO')
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activo</span>

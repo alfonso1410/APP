@@ -10,58 +10,56 @@ use Illuminate\View\View;
 
 class AlumnoController extends Controller
 {
-    public function index(Request $request): View
+        public function index(Request $request): View
     {
+        // Obtenemos los parámetros de la URL
+        $nivel_id = $request->input('nivel', 0); // 0 será nuestro ID para "Sin Asignar"
         $search = $request->input('search');
-        
-        // Si no se encuentra un 'nivel' en la URL, se establece '1' (Preescolar) por defecto.
-        $nivel_id = $request->input('nivel', 1);
-        
-       $alumnosQuery = Alumno::query();
 
-    // --- LÓGICA DE FILTRADO MODIFICADA ---
-    if ($nivel_id > 0) {
-       $alumnosQuery->whereHas('grupos', function ($groupQuery) use ($nivel_id) {
-        $groupQuery->where('tipo_grupo', 'REGULAR') // <-- Condición clave añadida
-                   ->whereHas('grado', function ($gradeQuery) use ($nivel_id) {
-                       $gradeQuery->where('nivel_id', $nivel_id);
-                   });
-    });
-    } else {
-        // Si el ID es 0, busca alumnos que NO TIENEN ningún grupo asignado.
-        $alumnosQuery->whereDoesntHave('grupos');
-    }
-    // --- FIN DE LA MODIFICACIÓN ---
+        // Empezamos la consulta base
+        $query = Alumno::query();
 
-    // El resto de la consulta continúa encadenándose
-    $alumnos = $alumnosQuery->with(['grupos' => function ($query) {
-            $query->wherePivot('es_actual', true)
-                  ->with('grado')
-                  ->orderBy('tipo_grupo', 'asc');
-        }])
-        ->when($search, function ($query, $search) {
-            return $query->where(function ($q) use ($search) {
-                $q->where('nombres', 'like', "%{$search}%")
-                  ->orWhere('apellido_paterno', 'like', "%{$search}%")
-                  ->orWhere('apellido_materno', 'like', "%{$search}%")
-                  ->orWhere('curp', 'like', "%{$search}%");
+        // --- INICIO DE LA LÓGICA DE FILTRADO CORREGIDA ---
+
+        if ($nivel_id == 0) {
+            // FILTRO "SIN ASIGNAR":
+            // Busca alumnos que NO TENGAN un grupo regular ACTIVO.
+            $query->whereDoesntHave('grupos', function ($q) {
+                $q->where('tipo_grupo', 'REGULAR')
+                  ->where('asignacion_grupal.es_actual', 1);
             });
-        })
-        ->orderBy('apellido_paterno')
-        ->orderBy('apellido_materno')
-        ->orderBy('nombres')
-        ->paginate(10)
-        ->withQueryString();
-        $niveles = Nivel::all();
+        } else {
+            // FILTRO POR NIVEL (Preescolar, Primaria, etc.):
+            // Busca alumnos que SÍ TENGAN un grupo regular ACTIVO en el nivel seleccionado.
+            $query->whereHas('grupos', function ($q) use ($nivel_id) {
+                $q->where('tipo_grupo', 'REGULAR')
+                  ->where('asignacion_grupal.es_actual', 1) // <-- ¡LA CLAVE!
+                  ->whereHas('grado', function ($subQ) use ($nivel_id) {
+                      $subQ->where('nivel_id', $nivel_id);
+                  });
+            });
+        }
 
-        // Se añade 'nivel_id' para pasarlo a la vista y que el componente sepa qué botón resaltar
-        return view('alumnos.index', [
-            'alumnos' => $alumnos,
-            'search' => $search,
-            'niveles' => $niveles,
-            'nivel_id' => $nivel_id,
-        ]);
+        // --- FIN DE LA LÓGICA DE FILTRADO ---
+
+        // Aplicamos la búsqueda por texto si existe
+        $query->when($search, function ($q, $s) {
+            $q->where(function ($subQ) use ($s) {
+                $subQ->where('nombres', 'like', "%{$s}%")
+                     ->orWhere('apellido_paterno', 'like', "%{$s}%")
+                     ->orWhere('apellido_materno', 'like', "%{$s}%")
+                     ->orWhere('curp', 'like', "%{$s}%");
+            });
+        });
+
+        // Eager loading para optimizar y paginación
+        $alumnos = $query->with(['grupos.grado']) // Precargamos las relaciones que la vista necesita
+                         ->orderBy('apellido_paterno')
+                         ->paginate(15);
+
+        return view('alumnos.index', compact('alumnos', 'nivel_id', 'search'));
     }
+
 
     // --- El resto de los métodos (create, store, etc.) no requieren cambios ---
     

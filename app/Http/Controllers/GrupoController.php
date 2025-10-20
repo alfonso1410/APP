@@ -6,6 +6,9 @@ use App\Models\Grado;
 use App\Models\Grupo;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\DB; 
+use App\Models\Alumno;
+use App\Models\Materia; 
 
 class GrupoController extends Controller
 {
@@ -27,23 +30,35 @@ class GrupoController extends Controller
     /**
      * Guarda el nuevo grupo en la base de datos.
      */
-    public function store(Request $request)
+     public function store(Request $request)
     {
-        // 1. Validamos los datos del formulario.
+        // 1. Validamos solo los datos que vienen del formulario.
         $validated = $request->validate([
             'grado_id'      => 'required|exists:grados,grado_id',
-            'nombre_grupo'        => 'required|string|max:50',
+            'nombre_grupo'  => 'required|string|max:50',
             'ciclo_escolar' => 'required|string|max:10',
-            'tipo_grupo'    => 'required|string|in:REGULAR,EXTRA',
         ]);
 
-        // 2. Creamos el nuevo grupo con los datos validados.
-        Grupo::create($validated);
+        // 2. Buscamos el grado padre para obtener su tipo.
+        $gradoPadre = Grado::find($validated['grado_id']);
 
-        // 3. Redirigimos al usuario a la lista de grados con un mensaje de éxito.
-        return redirect()->route('grados.index')->with('success', 'Grupo creado exitosamente.');
+        // 3. Creamos el nuevo grupo, añadiendo el tipo de grupo y el estado.
+        Grupo::create([
+            'grado_id'       => $validated['grado_id'],
+            'nombre_grupo'   => $validated['nombre_grupo'],
+            'ciclo_escolar'  => $validated['ciclo_escolar'],
+            'tipo_grupo'     => $gradoPadre->tipo_grado, // <-- Lógica automática
+            'estado'         => 'ACTIVO',
+        ]);
+
+        // 4. Preparamos los parámetros para la redirección inteligente.
+        $redirectParams = $gradoPadre->tipo_grado === 'REGULAR' 
+            ? ['nivel' => $gradoPadre->nivel_id] 
+            : ['view_mode' => 'extracurricular'];
+
+        return redirect()->route('grados.index', $redirectParams)
+                         ->with('success', 'Grupo creado exitosamente.');
     }
-
     // --- Los siguientes métodos los implementaremos cuando necesitemos editar y eliminar ---
 
     public function show(Grupo $grupo)
@@ -52,17 +67,125 @@ class GrupoController extends Controller
     }
 
     public function edit(Grupo $grupo)
-    {
-        //
+{
+    return view('grupos.edit', compact('grupo'));
+}
+
+public function update(Request $request, Grupo $grupo)
+{
+    $validated = $request->validate([
+        'nombre_grupo'  => 'required|string|max:50',
+        'ciclo_escolar' => 'required|string|max:10',
+    ]);
+
+    $grupo->update($validated);
+
+    // Redirección inteligente
+    $redirectParams = $grupo->grado->tipo_grado === 'REGULAR' 
+        ? ['nivel' => $grupo->grado->nivel_id] 
+        : ['view_mode' => 'extracurricular'];
+
+    return redirect()->route('grados.index', $redirectParams)
+                     ->with('success', 'Grupo actualizado exitosamente.');
+}
+  public function destroy(Grupo $grupo)
+{
+    // 1. Desvinculamos a todos los alumnos de este grupo.
+    // Esto borra las entradas en la tabla pivote 'asignacion_grupal'.
+    $grupo->alumnos()->detach();
+
+    // 2. Ahora que el grupo ya no tiene alumnos, podemos eliminarlo sin problemas.
+    $grupo->delete();
+
+    return back()->with('success', 'Grupo y todas sus asignaciones de alumnos han sido eliminados.');
+}
+public function archivar(Grupo $grupo)
+{
+    DB::transaction(function () use ($grupo) {
+        // 1. Cambiamos el estado del grupo a 'ARCHIVADO' (o 'INACTIVO' si prefieres)
+        $grupo->estado = 'ARCHIVADO';
+        $grupo->save();
+
+        // 2. Desactivamos todas las asignaciones actuales de alumnos a este grupo.
+        $grupo->alumnos()->updateExistingPivot(null, ['es_actual' => false]);
+    });
+
+    return back()->with('success', 'El grupo ha sido archivado y los alumnos desvinculados.');
+}
+
+public function indexArchivados()
+{
+    // Vista temporal para mantenimiento
+    $gruposArchivados = Grupo::where('estado', 'ARCHIVADO')
+                             // ¡Añadimos todas las relaciones que la modal necesita!
+                             ->with('grado.nivel', 'grado.gradosRegularesMapeados')
+                             ->latest()
+                             ->paginate(25);
+
+    return view('grupos.archivados', compact('gruposArchivados'));
+}
+public function mostrarAlumnos(Grupo $grupo, Request $request)
+{
+    // Ya no necesitamos la lógica de búsqueda aquí, ni la paginación.
+    // Simplemente obtenemos TODOS los alumnos del grupo con sus calificaciones.
+    $alumnos = $grupo->alumnosActuales()
+                     ->with(['calificaciones', 'grupos.materias'])
+                     ->orderBy('apellido_paterno')
+                     ->orderBy('apellido_materno')
+                     ->get(); // <-- Cambiamos paginate(10) por get()
+
+    return view('grupos.alumnos-index', compact('grupo', 'alumnos'));
+}
+
+public function indexMaterias(Grupo $grupo): View
+{
+    if ($grupo->tipo_grupo === 'REGULAR') {
+        // Para grupos regulares, las materias vienen de la ESTRUCTURA CURRICULAR DEL GRADO.
+        $materias = $grupo->grado->materias()
+                        ->with(['camposFormativos', 'maestros' => function ($query) use ($grupo) {
+                            // Cargamos solo el maestro asignado A ESTE GRUPO para esta materia
+                            $query->where('grupo_materia_maestro.grupo_id', $grupo->grupo_id);
+                        }])
+                        ->get();
+    } else { // EXTRA
+        // Para grupos extra, las materias vienen de la asignación directa al grupo.
+        $materias = $grupo->materias()
+                        ->with(['maestros' => function ($query) use ($grupo) {
+                            $query->where('grupo_materia_maestro.grupo_id', $grupo->grupo_id);
+                        }])
+                        ->get();
     }
 
-    public function update(Request $request, Grupo $grupo)
+    return view('grupos.materias-index', compact('grupo', 'materias'));
+}
+    /**
+     * Guarda las asignaciones de alumnos para un grupo.
+     */
+  public function createMaterias(Grupo $grupo): View
     {
-        //
-    }
+        if ($grupo->tipo_grupo === 'REGULAR') {
+            // Materias definidas por la estructura curricular del grado.
+            $materiasDisponibles = $grupo->grado->materias;
+        } else {
+            // LÓGICA CLAVE: Materias que NO están en ninguna estructura curricular.
+            $materiasDisponibles = Materia::whereDoesntHave('estructuraCurricular')
+                                          ->orderBy('nombre')
+                                          ->get();
+        }
 
-    public function destroy(Grupo $grupo)
+        $idsMateriasAsignadas = $grupo->materias()->pluck('materias.materia_id')->toArray();
+
+        // Esta es tu vista anterior (grupos.materias), la usaremos como formulario.
+        return view('grupos.materias', compact('grupo', 'materiasDisponibles', 'idsMateriasAsignadas'));
+    }
+      
+    public function storeMaterias(Request $request, Grupo $grupo)
     {
-        //
+        // ... (la lógica de validación y sync() se queda igual)
+        $grupo->materias()->sync($request->input('materias', []));
+
+        // Redirigimos a la nueva lista de materias.
+        return redirect()->route('grupos.materias.index', $grupo)
+                         ->with('success', 'Materias del grupo actualizadas exitosamente.');
     }
 }

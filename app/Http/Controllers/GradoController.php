@@ -6,6 +6,7 @@ use App\Models\Grado;
 use App\Models\Nivel;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use App\Models\Grupo;
 
 class GradoController extends Controller
 {
@@ -14,42 +15,46 @@ class GradoController extends Controller
      */
     public function index(Request $request): View
     {
-        // 1. Validar la entrada para mayor seguridad
-        $validated = $request->validate([
-            'nivel' => 'nullable|integer|exists:niveles,nivel_id',
-            'search' => 'nullable|string|max:50',
-        ]);
-
-        // 2. Establecer 'Preescolar' (ID 1) como filtro por defecto si no se recibe uno
-        $nivel_id = $validated['nivel'] ?? 1;
-        $search = $validated['search'] ?? null;
-
-        // 3. Consulta los grados del nivel seleccionado
-        $grados = Grado::query()
-            ->where('nivel_id', $nivel_id)
-            ->when($search, function ($query, $search) {
-                return $query->where('nombre', 'like', "%{$search}%");
-            })
-            ->with(['grupos' => function ($query) {
-                // ✅ CAMBIO 1: Se ajusta el filtro a tu columna `tipo_grupo`.
-                // Asumimos que los grupos que quieres mostrar tienen el valor 'REGULAR'.
-                $query->where('estado', 'ACTIVO')
-                      ->where('tipo_grupo', 'REGULAR'); 
-            }])
-            // ✅ CAMBIO 2: Se ordena por `grado_id` en lugar de la columna `orden` que no existe.
-            // Esto mantendrá el orden lógico de los grados.
-            ->orderBy('grado_id') 
-            ->get();
-            
+        $view_mode = $request->input('view_mode', 'regular');
         $niveles = Nivel::all();
+        $search = $request->input('search');
 
-        // 4. Pasamos los datos a la vista
-        return view('grados.index', [
-            'grados' => $grados,
-            'niveles' => $niveles,
-            'nivel_id' => $nivel_id,
-            'search' => $search,
-        ]);
+        if ($view_mode === 'extracurricular') {
+            // MODO EXTRACURRICULAR
+            $grados = Grado::where('tipo_grado', 'EXTRA')
+                ->with(['grupos', 'gradosRegularesMapeados']) 
+                ->when($search, fn($q, $s) => $q->where('nombre', 'like', "%{$s}%"))
+                ->orderBy('orden')
+                ->get();
+
+            return view('grados.index', [
+                'view_mode' => 'extracurricular',
+                'grados' => $grados,
+                'niveles' => $niveles,
+                'nivel_id' => 0,
+                'search' => $search,
+            ]);
+        } else {
+            // MODO REGULAR
+            $nivel_id = $request->input('nivel', 1);
+
+            $grados = Grado::where('tipo_grado', 'REGULAR')
+                ->where('nivel_id', $nivel_id)
+                ->with(['grupos' => function ($query) {
+                    $query->where('estado', 'ACTIVO')->where('tipo_grupo', 'REGULAR');
+                }])
+                ->when($search, fn($q, $s) => $q->where('nombre', 'like', "%{$s}%"))
+                ->orderBy('orden')
+                ->get();
+
+            return view('grados.index', [
+                'view_mode' => 'regular',
+                'grados' => $grados,
+                'nivel_id' => (int)$nivel_id,
+                'search' => $search,
+                'niveles' => $niveles,
+            ]);
+        }
     }
 
     /**
@@ -73,7 +78,85 @@ class GradoController extends Controller
 
         $grado->update($validatedData);
 
-        return redirect()->route('grados.index', ['nivel' => $grado->nivel_id])
+        $redirectParams = $grado->tipo_grado === 'REGULAR'
+            ? ['nivel' => $grado->nivel_id]
+            : ['view_mode' => 'extracurricular'];
+
+        return redirect()->route('grados.index', $redirectParams)
                          ->with('success', 'Grado actualizado exitosamente.');
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'nombre' => 'required|string|max:50',
+            'nivel_id' => 'required|exists:niveles,nivel_id',
+            'tipo_grado' => 'required|string|in:REGULAR,EXTRA',
+        ]);
+
+        $orden = Grado::where('nivel_id', $validated['nivel_id'])
+                      ->where('tipo_grado', $validated['tipo_grado'])
+                      ->max('orden') + 1;
+
+        $grado = Grado::create([
+            'nombre' => $validated['nombre'],
+            'nivel_id' => $validated['nivel_id'],
+            'tipo_grado' => $validated['tipo_grado'],
+            'orden' => $orden,
+        ]);
+
+        $redirectParams = $grado->tipo_grado === 'REGULAR' 
+            ? ['nivel' => $grado->nivel_id] 
+            : ['view_mode' => 'extracurricular'];
+
+        return redirect()->route('grados.index', $redirectParams)
+                         ->with('success', 'Registro creado exitosamente.');
+    }
+
+    public function showMapeo(Grado $grado)
+    {
+        if ($grado->tipo_grado !== 'EXTRA') {
+            abort(404);
+        }
+
+        $nivelIdDelExtra = $grado->nivel_id;
+
+        $gradosRegulares = Grado::where('tipo_grado', 'REGULAR')
+                                ->where('nivel_id', $nivelIdDelExtra)
+                                ->orderBy('orden')
+                                ->get();
+
+        $idsMapeados = $grado->gradosRegularesMapeados()->pluck('grados.grado_id')->toArray();
+
+        return view('grados.mapeo', compact('grado', 'gradosRegulares', 'idsMapeados'));
+    }
+
+    /**
+     * Guarda el mapeo de grados en la base de datos.
+     */
+    public function storeMapeo(Request $request, Grado $grado)
+    {
+        $request->validate([
+            'grados_regulares' => 'nullable|array',
+            'grados_regulares.*' => 'exists:grados,grado_id',
+        ]);
+
+        $gradosIds = $request->input('grados_regulares', []);
+
+        $grado->gradosRegularesMapeados()->sync($gradosIds);
+
+        return redirect()->route('grados.index', ['view_mode' => 'extracurricular'])
+                         ->with('success', 'Mapeo de grados actualizado exitosamente.');
+    }
+
+    public function destroy(Grado $grado)
+    {
+        if ($grado->grupos()->count() > 0) {
+            return back()->with('error', 'No se puede eliminar este grado porque tiene grupos asociados.');
+        }
+
+        $grado->delete();
+
+        return back()->with('success', 'Grado eliminado exitosamente.');
     }
 }

@@ -14,41 +14,57 @@ class AsignacionGrupalSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Limpiamos la tabla para un inicio limpio.
-        DB::table('asignacion_grupal')->delete();
-
+        // IDs basados en el orden de creación de tus otros seeders.
         $asignaciones = [
-            // === ALUMNOS DE PREESCOLAR "A" (grupo_id: 1) ===
-            ['alumno_id' => 1, 'grupo_id' => 1, 'es_actual' => true], // Sofía
-            ['alumno_id' => 2, 'grupo_id' => 1, 'es_actual' => true], // Ricardo
-            ['alumno_id' => 10, 'grupo_id' => 1, 'es_actual' => true],// Diego
+            
+            // --- ASIGNACIONES REGULARES (Cada alumno tiene uno) ---
 
-            // --- Alumnos de Primero "A" (grupo_id: 2) ---
-            ['alumno_id' => 4, 'grupo_id' => 2, 'es_actual' => true], // Mateo
-            ['alumno_id' => 5, 'grupo_id' => 2, 'es_actual' => true], // Valentina
+            // Alumnos en 'Primero Preescolar - A' (grupo_id: 1)
+            ['alumno_id' => 1, 'grupo_id' => 1],
+            ['alumno_id' => 2, 'grupo_id' => 1],
 
-            // --- Alumnos de Segundo "A" (grupo_id: 3) ---
-            ['alumno_id' => 6, 'grupo_id' => 3, 'es_actual' => true], // Leonardo
-            ['alumno_id' => 7, 'grupo_id' => 3, 'es_actual' => true], // Isabella
+            // Alumnos en 'Primero de Primaria - A' (grupo_id: 3)
+            ['alumno_id' => 3, 'grupo_id' => 3],
+            ['alumno_id' => 4, 'grupo_id' => 3],
 
-            // --- Alumnos de Tercero "A" (grupo_id: 4) ---
-            ['alumno_id' => 8, 'grupo_id' => 4, 'es_actual' => true], // Santiago
-            ['alumno_id' => 9, 'grupo_id' => 4, 'es_actual' => true], // Camila
+            // Alumnos en 'Primero de Primaria - B' (grupo_id: 4)
+            ['alumno_id' => 5, 'grupo_id' => 4],
+            ['alumno_id' => 6, 'grupo_id' => 4],
 
-            // === Asignaciones Extracurriculares ===
+            // Alumnos en 'Segundo de Primaria - A' (grupo_id: 5)
+            ['alumno_id' => 7, 'grupo_id' => 5],
+            ['alumno_id' => 8, 'grupo_id' => 5],
+            ['alumno_id' => 9, 'grupo_id' => 5],
+            ['alumno_id' => 10, 'grupo_id' => 5],
 
-            // --- Ajedrez (grupo_id: 5) ---
-            ['alumno_id' => 4, 'grupo_id' => 5, 'es_actual' => true], // Mateo (1ro)
-            ['alumno_id' => 5, 'grupo_id' => 5, 'es_actual' => true], // Valentina (1ro)
+            
+            // --- ASIGNACIONES EXTRA (Solo 5 alumnos, respetando el mapeo) ---
 
-            // --- Fútbol (grupo_id: 6) ---
-            ['alumno_id' => 6, 'grupo_id' => 6, 'es_actual' => true], // Leonardo (2do)
-            ['alumno_id' => 9, 'grupo_id' => 6, 'es_actual' => true], // Camila (3ro)
+            // Alumno 2 (de Preescolar) es compatible con 'Yoga Preescolar' (grupo_id: 6)
+            ['alumno_id' => 2, 'grupo_id' => 6],
+            
+            // Alumno 3 (de 1° Primaria) es compatible con 'Yoga (1° y 2°)' - Grupo A (grupo_id: 7)
+            ['alumno_id' => 3, 'grupo_id' => 7],
+
+            // Alumno 5 (de 1° Primaria) es compatible con 'Yoga (1° y 2°)' - Grupo B (grupo_id: 8)
+            ['alumno_id' => 5, 'grupo_id' => 8],
+
+            // Alumno 7 (de 2° Primaria) es compatible con 'Yoga (1° y 2°)' - Grupo A (grupo_id: 7)
+            ['alumno_id' => 7, 'grupo_id' => 7],
+
+            // Alumno 9 (de 2° Primaria) es compatible con 'Yoga (1° y 2°)' - Grupo B (grupo_id: 8)
+            ['alumno_id' => 9, 'grupo_id' => 8],
         ];
-        
-        // Nota: El alumno 3 (Emilia) está INACTIVO, por lo que no se le asigna ningún grupo.
-        
-        // 2. Insertamos todas las asignaciones con una sola consulta. Es más eficiente.
-        DB::table('asignacion_grupal')->insert($asignaciones);
+
+        // Preparamos los datos para una única inserción
+        $dataToInsert = array_map(function ($asignacion) {
+            $asignacion['es_actual'] = true;
+            $asignacion['created_at'] = now();
+            $asignacion['updated_at'] = now();
+            return $asignacion;
+        }, $asignaciones);
+
+        // Insertamos todos los registros en una sola consulta
+        DB::table('asignacion_grupal')->insert($dataToInsert);
     }
 }
