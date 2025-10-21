@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
 class Grado extends Model
 {
     use HasFactory;
@@ -16,17 +17,28 @@ class Grado extends Model
     protected $fillable = [
         'nombre',
         'nivel_id',
-        'orden',      // <-- Añadir
-        'tipo_grado', // <-- Añadir
+        'orden',     
+        'tipo_grado',
     ];
+
+    // --- INICIO CORRECCIÓN ---
+    /**
+     * Atributos visibles en JSON para el modal de campos formativos.
+     */
+    protected $visible = [
+        'grado_id',
+        'nombre' // <-- El atributo clave
+    ];
+    // --- FIN CORRECCIÓN ---
+
     // 3. Definir la relación con Nivel: Un Grado pertenece a UN Nivel
     public function nivel()
     {
         return $this->belongsTo(Nivel::class, 'nivel_id', 'nivel_id');
     }
 
-    // 4. PREPARACIÓN: Un Grado también tendrá muchos Grupos
-   public function grupos(): HasMany
+    // --- Otras relaciones (sin cambios) ---
+    public function grupos(): HasMany
     {
         return $this->hasMany(Grupo::class, 'grado_id', 'grado_id');
     }
@@ -39,17 +51,17 @@ class Grado extends Model
     public function gradosRegularesMapeados()
     {
         return $this->belongsToMany(
-            Grado::class,           // El modelo al que nos conectamos
-            'grado_mapeo',          // La tabla pivote
-            'extra_grado_id',       // La clave foránea de este modelo en la tabla pivote
-            'regular_grado_id'      // La clave foránea del modelo relacionado en la tabla pivote
+            Grado::class,          
+            'grado_mapeo',        
+            'extra_grado_id',     
+            'regular_grado_id'    
         );
     }
 
-public function materias()
-{
-    return $this->belongsToMany(Materia::class, 'estructura_curricular', 'grado_id', 'materia_id')
-                ->withPivot('campo_id')
-                ->withTimestamps();
-}
+    public function materias()
+    {
+        return $this->belongsToMany(Materia::class, 'estructura_curricular', 'grado_id', 'materia_id')
+                    ->withPivot('campo_id')
+                    ->withTimestamps();
+    }
 }

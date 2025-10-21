@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Materia; 
+
 class Grupo extends Model
 {
     use HasFactory;
@@ -15,24 +16,38 @@ class Grupo extends Model
     protected $table = 'grupos'; 
     protected $primaryKey = 'grupo_id';
 
-      protected $fillable = [
-        'grado_id', // ¡El que faltaba!
+    protected $fillable = [
+        'grado_id', 
         'nombre_grupo',
         'ciclo_escolar',
         'estado',
         'tipo_grupo',
     ];
-    // 1. Relación con Grado (M-a-1)
 
-    public function materias()
-    {
-        return $this->belongsToMany(Materia::class, 'grupo_materia_maestro', 'grupo_id', 'materia_id');
-    }
+    // --- INICIO CORRECCIÓN ---
+    /**
+     * Atributos visibles en JSON para el modal de campos formativos.
+     */
+    protected $visible = [
+        'grupo_id',
+        'nombre_grupo',
+        'grado', // <-- La relación clave
+        'grado_id'
+    ];
+    // --- FIN CORRECCIÓN ---
+
+    // 1. Relación con Grado (M-a-1)
     public function grado(): BelongsTo
     {
         return $this->belongsTo(Grado::class, 'grado_id', 'grado_id');
     }
     
+    // --- Otras relaciones (sin cambios) ---
+    public function materias()
+    {
+        return $this->belongsToMany(Materia::class, 'grupo_materia_maestro', 'grupo_id', 'materia_id');
+    }
+
     public function alumnos(): BelongsToMany
     {
         return $this->belongsToMany(Alumno::class, 'asignacion_grupal', 'grupo_id', 'alumno_id')
@@ -43,23 +58,17 @@ class Grupo extends Model
     public function alumnosActuales()
     {
         return $this->belongsToMany(Alumno::class, 'asignacion_grupal', 'grupo_id', 'alumno_id')
-                    ->wherePivot('es_actual', 1); // La magia está aquí
+                    ->wherePivot('es_actual', 1); 
     }
 
-
     public function coTitulares(): BelongsToMany
-{
-    // 1. Modelo relacionado
-    // 2. Nombre de la tabla pivot
-    // 3. Clave foránea de Grupo en la pivot
-    // 4. Clave foránea de User en la pivot
-    return $this->belongsToMany(User::class, 'grupo_titular', 'grupo_id', 'maestro_id')
-                ->withTimestamps(); // Incluye created_at y updated_at
-}
+    {
+        return $this->belongsToMany(User::class, 'grupo_titular', 'grupo_id', 'maestro_id')
+                    ->withTimestamps();
+    }
+    
     public function asignacionesMaestros(): HasMany
     {
         return $this->hasMany(GrupoMateriaMaestro::class, 'grupo_id', 'grupo_id');
     }
-
-    
 }

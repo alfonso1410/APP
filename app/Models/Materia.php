@@ -13,80 +13,70 @@ class Materia extends Model
 
     protected $table = 'materias';
     protected $primaryKey = 'materia_id';
-
-    /**
-     * Define si el modelo debe tener timestamps (created_at y updated_at).
-     * Según tu schema , esta tabla no los tiene.
-     */
     public $timestamps = false;
 
-    /**
-     * Atributos que se pueden asignar masivamente (para store/update).
-     */
-   protected $fillable = [
+    protected $fillable = [
         'nombre',
-        'tipo', // <-- ¡AÑADE ESTA LÍNEA!
+        'tipo', 
     ];
+
+    // --- INICIO DE LA CORRECCIÓN ---
+    /**
+     * Los atributos que deben ser visibles en la serialización JSON.
+     * Esto es crucial para que el modal "Ver Materias" en Campos Formativos
+     * pueda acceder a las asignaciones de esta materia.
+     */
+    protected $visible = [
+        'materia_id',
+        'nombre',
+        'tipo',
+        'asignacionesGrupo', // <-- La clave para el modal
+        // No necesitamos 'camposFormativos' aquí para evitar bucles
+    ];
+    // --- FIN DE LA CORRECCIÓN ---
     
     // --- Relaciones con Estructura Curricular ---
 
-    /**
-     * 1. Relación (1:N) con los registros de la tabla pivote 'estructura_curricular'.
-     * Útil si necesitas los registros pivote en sí.
-     */
     public function estructuraCurricular(): HasMany
     {
-        // El FK en 'estructura_curricular' es 'materia_id' [cite: 10]
         return $this->hasMany(EstructuraCurricular::class, 'materia_id', 'materia_id');
     }
 
-    /**
-     * 2. Relación (N:M) para obtener los Campos Formativos
-     * a través de la tabla 'estructura_curricular'.
-     */
     public function camposFormativos(): BelongsToMany
     {
         return $this->belongsToMany(
-            CampoFormativo::class,      // Modelo relacionado
-            'estructura_curricular',    // Tabla pivote
-            'materia_id',               // FK de este modelo (Materia) en la pivote [cite: 10]
-            'campo_id'                  // FK del modelo relacionado (CampoFormativo) en la pivote [cite: 10]
+            CampoFormativo::class,
+            'estructura_curricular',
+            'materia_id',
+            'campo_id'
         );
     }
 
     // --- Relaciones con Criterios de Evaluación ---
 
-    /**
-     * 3. Relación (1:N) con los registros de la tabla pivote 'materia_criterios'.
-     */
     public function criterios(): HasMany
     {
-        // El FK en 'materia_criterios' es 'materia_id' [cite: 12]
         return $this->hasMany(MateriaCriterio::class, 'materia_id', 'materia_id');
     }
 
     // --- Relaciones con Asignación de Maestros ---
 
     /**
-     * 4. Relación (1:N) con los registros de la tabla pivote 'grupo_materia_maestro'.
+     * Esta es la relación (camelCase) que cargamos en el controlador
+     * y que ahora será visible en el JSON.
      */
     public function asignacionesGrupo(): HasMany
     {
-        // El FK en 'grupo_materia_maestro' es 'materia_id' [cite: 13]
         return $this->hasMany(GrupoMateriaMaestro::class, 'materia_id', 'materia_id');
     }
 
-    /**
-     * 5. Relación (N:M) para obtener los Maestros (User)
-     * a través de la tabla 'grupo_materia_maestro'.
-     */
     public function maestros(): BelongsToMany
     {
         return $this->belongsToMany(
-            User::class,                // Modelo relacionado
-            'grupo_materia_maestro',    // Tabla pivote
-            'materia_id',               // FK de este modelo (Materia) en la pivote [cite: 13]
-            'maestro_id'                // FK del modelo relacionado (User) en la pivote [cite: 13]
+            User::class,
+            'grupo_materia_maestro',
+            'materia_id',
+            'maestro_id'
         );
     }
 }

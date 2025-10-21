@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers; // Make sure this namespace is correct
+namespace App\Http\Controllers;
 
 use App\Models\Materia;
 use Illuminate\Http\Request;
@@ -9,16 +9,13 @@ use Illuminate\Validation\Rule;
 class MateriaController extends Controller
 {
     /**
-     * Muestra la lista de materias con sus relaciones cargadas.
+     * Muestra la lista de materias y maneja los modales.
      */
     public function index()
     {
-        // **CAMBIO:** Usamos with() para cargar relaciones eficientemente.
-        // Esto evita múltiples consultas a la base de datos (problema N+1).
         $materias = Materia::with([
-            'camposFormativos', // Carga el primer campo formativo asociado.
+            'camposFormativos',
             'asignacionesGrupo' => function ($query) {
-                // Carga las asignaciones y, dentro de ellas, el maestro y el grado.
                 $query->with(['maestro', 'grupo.grado']); 
             }
         ])
@@ -29,28 +26,18 @@ class MateriaController extends Controller
     }
 
     /**
-     * Muestra el formulario para crear una nueva materia.
-     * (Sin cambios)
-     */
-    public function create()
-    {
-        return view('materias.create');
-    }
-
-    /**
-     * Guarda la nueva materia.
+     * Guarda la nueva materia desde el modal.
      */
     public function store(Request $request)
     {
-        // **CAMBIO:** Usamos validated() para obtener solo los datos validados.
-        $validatedData = $request->validate([
+        // --- CORRECCIÓN: Usamos 'validateWithBag' ---
+        // Esto guarda los errores en un "contenedor" llamado 'store'.
+        $validatedData = $request->validateWithBag('store', [
             'nombre' => 'required|string|max:100|unique:materias,nombre',
         ], [
             'nombre.unique' => 'La materia ya existe.',
         ]);
 
-        // **CAMBIO:** Usamos $validatedData en lugar de $request->all().
-        // Esto previene errores de asignación masiva (MassAssignmentException).
         Materia::create($validatedData);
 
         return redirect()->route('materias.index')
@@ -58,21 +45,23 @@ class MateriaController extends Controller
     }
 
     /**
-     * Muestra el formulario para editar una materia.
-     * (Sin cambios)
+     * --- MÉTODO ELIMINADO ---
+     * Ya no se necesita una página separada para 'edit'.
+     * La lógica del modal está en 'index'.
      */
-    public function edit(Materia $materia)
-    {
-        return view('materias.edit', compact('materia'));
-    }
+    // public function edit(Materia $materia)
+    // {
+    //     return view('materias.edit', compact('materia'));
+    // }
 
     /**
-     * Actualiza la materia.
+     * Actualiza la materia desde el modal.
      */
     public function update(Request $request, Materia $materia)
     {
-        // **CAMBIO:** Usamos validated() para obtener solo los datos validados.
-        $validatedData = $request->validate([
+        // --- CORRECCIÓN: Usamos 'validateWithBag' ---
+        // Esto guarda los errores en un "contenedor" llamado 'update'.
+        $validatedData = $request->validateWithBag('update', [
             'nombre' => [
                 'required',
                 'string',
@@ -83,8 +72,6 @@ class MateriaController extends Controller
             'nombre.unique' => 'La materia ya existe.',
         ]);
 
-        // **CAMBIO:** Usamos $validatedData en lugar de $request->all().
-        // Previene MassAssignmentException.
         $materia->update($validatedData);
 
         return redirect()->route('materias.index')
@@ -92,8 +79,7 @@ class MateriaController extends Controller
     }
 
     /**
-     * Elimina la materia.
-     * (Sin cambios, pero asegúrate que el Route Model Binding funciona como esperas)
+     * Elimina la materia. (Sin cambios)
      */
     public function destroy(Materia $materia)
     {
@@ -102,7 +88,6 @@ class MateriaController extends Controller
             return redirect()->route('materias.index')
                              ->with('success', 'Materia eliminada exitosamente.');
         } catch (\Illuminate\Database\QueryException $e) {
-            // Considera loggear el error $e->getMessage() para depuración.
             return redirect()->route('materias.index')
                              ->with('error', 'No se puede eliminar la materia, está siendo utilizada.');
         }

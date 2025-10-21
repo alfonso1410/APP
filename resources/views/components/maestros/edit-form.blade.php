@@ -1,88 +1,127 @@
-@props(['user', 'action', 'method' => 'PATCH']) {{-- 1. Recibimos el objeto $user --}}
+@props(['user', 'action', 'method' => 'PATCH']) {{-- Recibimos el objeto $user (que representa al maestro) --}}
 
 <form method="POST" action="{{ $action }}">
     @csrf
-    @method($method) {{-- 2. Siempre inyectamos PATCH/PUT --}}
-    
+    @method($method)
+
+    {{-- Campo oculto para identificar al maestro en caso de error de validación --}}
+    <input type="hidden" name="user_id" value="{{ $user->id }}">
+
     {{-- Nombre --}}
-    <div>
-        <x-input-label for="name" :value="__('Name')" />
-        <x-text-input 
-            id="name" 
-            class="block mt-1 w-full" 
-            type="text" 
-            name="name" 
-            :value="old('name', $user->name)" {{-- 3. Llenamos con $user->name --}}
-            required autofocus 
-            autocomplete="name" 
+    <div class="mt-4"> {{-- Añadido mt-4 --}}
+        {{-- CORREGIDO: ID y FOR --}}
+        <x-input-label for="name_edit_{{ $user->id }}" :value="__('Nombre')" />
+        <x-text-input
+            id="name_edit_{{ $user->id }}" {{-- CORREGIDO --}}
+            class="block mt-1 w-full"
+            type="text"
+            name="name"
+            :value="old('name', $user->name)"
+            required autofocus
+            autocomplete="name"
         />
-        <x-input-error :messages="$errors->get('name')" class="mt-2" />
+        {{-- CORREGIDO: Condición para mostrar error --}}
+        @if(old('user_id') == $user->id)
+            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+        @endif
     </div>
 
     {{-- Apellido Paterno --}}
     <div class="mt-4">
-        <x-input-label for="apellido_paterno" :value="__('Apellido Paterno')" />
-        <x-text-input id="apellido_paterno" class="block mt-1 w-full" type="text" name="apellido_paterno" :value="old('apellido_paterno', $user->apellido_paterno)" required autocomplete="apelldio-paerno" />
-        <x-input-error :messages="$errors->get('apellido_paterno')" class="mt-2" />
+        {{-- CORREGIDO: ID y FOR --}}
+        <x-input-label for="apellido_paterno_edit_{{ $user->id }}" :value="__('Apellido Paterno')" />
+        <x-text-input
+            id="apellido_paterno_edit_{{ $user->id }}" {{-- CORREGIDO --}}
+            class="block mt-1 w-full" type="text" name="apellido_paterno" :value="old('apellido_paterno', $user->apellido_paterno)" required autocomplete="apellido-paterno" {{-- Corregido autocomplete --}}
+        />
+        {{-- CORREGIDO: Condición para mostrar error --}}
+        @if(old('user_id') == $user->id)
+            <x-input-error :messages="$errors->get('apellido_paterno')" class="mt-2" />
+        @endif
     </div>
 
     {{-- Apellido Materno --}}
     <div class="mt-4">
-        <x-input-label for="apellido_materno" :value="__('Apellido Materno')" />
-        <x-text-input id="apellido_materno" class="block mt-1 w-full" type="text" name="apellido_materno" :value="old('apellido_materno', $user->apellido_materno)" autocomplete="apellido-materno" />
-        <x-input-error :messages="$errors->get('apellido_materno')" class="mt-2" />
+        {{-- CORREGIDO: ID y FOR --}}
+        <x-input-label for="apellido_materno_edit_{{ $user->id }}" :value="__('Apellido Materno')" />
+        <x-text-input
+            id="apellido_materno_edit_{{ $user->id }}" {{-- CORREGIDO --}}
+            class="block mt-1 w-full" type="text" name="apellido_materno" :value="old('apellido_materno', $user->apellido_materno)" autocomplete="apellido-materno"
+        />
+        {{-- CORREGIDO: Condición para mostrar error --}}
+        @if(old('user_id') == $user->id)
+            <x-input-error :messages="$errors->get('apellido_materno')" class="mt-2" />
+        @endif
     </div>
 
-    {{-- Rol (SELECT) --}}
+    {{-- Rol (Deshabilitado, pero con ID único por consistencia) --}}
     <div class="mt-4">
-    <x-input-label for="rol" :value="__('Rol de Usuario')" />
-    <x-text-input id="rol" class="block mt-1 w-full bg-gray-100" type="text" name="rol" value="Maestro" disabled />
-</div>
+        {{-- CORREGIDO: ID y FOR --}}
+        <x-input-label for="rol_edit_{{ $user->id }}" :value="__('Rol de Usuario')" />
+        <x-text-input
+            id="rol_edit_{{ $user->id }}" {{-- CORREGIDO --}}
+            class="block mt-1 w-full bg-gray-100" type="text" name="rol" value="Maestro" readonly disabled {{-- Usar readonly además de disabled --}}
+        />
+        {{-- No necesitamos error para un campo deshabilitado --}}
+    </div>
 
     {{-- Email Address --}}
     <div class="mt-4">
-        <x-input-label for="email" :value="__('Email')" />
-        <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $user->email)" required autocomplete="username" />
-        <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        {{-- CORREGIDO: ID y FOR --}}
+        <x-input-label for="email_edit_{{ $user->id }}" :value="__('Email')" />
+        <x-text-input
+            id="email_edit_{{ $user->id }}" {{-- CORREGIDO --}}
+            class="block mt-1 w-full" type="email" name="email" :value="old('email', $user->email)" required autocomplete="username"
+        />
+        {{-- CORREGIDO: Condición para mostrar error --}}
+        @if(old('user_id') == $user->id)
+            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        @endif
     </div>
-
- 
 
     {{-- Activo/Inactivo (Radio Button) --}}
     <div class="mt-4">
-        <x-input-label for="activo_group" :value="__('Estado del Usuario')" class="mb-2" />
+        <x-input-label :value="__('Estado del Usuario')" class="mb-2" /> {{-- Quitamos 'for' --}}
 
-        <div id="activo_group" class="flex space-x-6">
-            {{-- Obtenemos el valor actual: old o $user->activo --}}
+        <div class="flex space-x-6"> {{-- Quitamos ID --}}
             @php $currentActivo = old('activo', $user->activo); @endphp
-            
-            <label for="activo_1" class="inline-flex items-center">
-                <input id="activo_1" type="radio" name="activo" value="1" 
+
+            {{-- CORREGIDO: ID y FOR --}}
+            <label for="activo_1_edit_{{ $user->id }}" class="inline-flex items-center">
+                <input
+                    id="activo_1_edit_{{ $user->id }}" {{-- CORREGIDO --}}
+                    type="radio" name="activo" value="1"
                     {{ $currentActivo == 1 ? 'checked' : '' }}
                     class="rounded border-gray-300 text-green-600 shadow-sm focus:ring-green-500"
                 />
                 <span class="ms-2 text-sm text-gray-600">{{ __('Activo') }}</span>
             </label>
 
-            <label for="activo_0" class="inline-flex items-center">
-                <input id="activo_0" type="radio" name="activo" value="0" 
+            {{-- CORREGIDO: ID y FOR --}}
+            <label for="activo_0_edit_{{ $user->id }}" class="inline-flex items-center">
+                <input
+                    id="activo_0_edit_{{ $user->id }}" {{-- CORREGIDO --}}
+                    type="radio" name="activo" value="0"
                     {{ $currentActivo == 0 ? 'checked' : '' }}
                     class="rounded border-gray-300 text-red-600 shadow-sm focus:ring-red-500"
                 />
                 <span class="ms-2 text-sm text-gray-600">{{ __('Inactivo') }}</span>
             </label>
         </div>
-        <x-input-error :messages="$errors->get('activo')" class="mt-2" />
+        {{-- CORREGIDO: Condición para mostrar error --}}
+        @if(old('user_id') == $user->id)
+            <x-input-error :messages="$errors->get('activo')" class="mt-2" />
+        @endif
     </div>
 
     <div class="flex items-center justify-end mt-4">
-        {{-- Botón para cerrar la modal, ahora es 'editar-maestro-[ID]' --}}
+        {{-- El botón Cancelar ya usa el ID del usuario en el dispatch, está correcto --}}
         <button type="button" x-on:click.prevent="$dispatch('close-modal', 'editar-maestro-{{ $user->id }}')" class="px-4 py-2 text-sm font-medium text-gray-700">
             Cancelar
         </button>
 
         <button type="submit" class="ms-4 pb-1 bg-princeton hover:bg-slate-900 text-white font-bold py-2 px-4 rounded">
-            Actualizar Maestro {{-- Texto específico de edición --}}
+            Actualizar Maestro
         </button>
     </div>
 </form>

@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany; // Asegúrate de tener este 'use'
+use Illuminate\Database\Eloquent\Relations\BelongsTo; // Asegúrate de tener este 'use'
+
 
 class CampoFormativo extends Model
 {
@@ -13,49 +16,50 @@ class CampoFormativo extends Model
     protected $table = 'campos_formativos';
     protected $primaryKey = 'campo_id';
 
-    /**
-     * CORRECCIÓN:
-     * Tu base de datos SÍ tiene timestamps,
-     * por lo que eliminamos la línea 'public $timestamps = false;'.
-     * Eloquent los manejará automáticamente por defecto.
-     */
-    // public $timestamps = false;  <-- LÍNEA ELIMINADA
-
-    /**
-     * Atributos que se pueden asignar masivamente (para store/update).
-     * Esto soluciona el error 'MassAssignmentException'.
-     */
-
-  protected $fillable = [
+    protected $fillable = [
         'nombre',
         'nivel_id',
     ];
+
     /**
-     * Un Campo Formativo se relaciona con muchas Materias a través de la
-     * tabla pivote 'estructura_curricular'.
+     * Los atributos que deben ser visibles en la serialización JSON.
+     * Incluye las relaciones 'materias' y 'nivel'.
+     */
+    protected $visible = [
+        'campo_id',
+        'nombre',
+        'nivel_id',
+        'materias', // <-- Incluye la relación materias
+        'nivel'     // <-- Incluye la relación nivel
+    ];
+
+    /**
+     * Relación con Materias.
+     * Se añade distinct() para evitar problemas con llaves duplicadas en Alpine.
      */
     public function materias(): BelongsToMany
     {
         return $this->belongsToMany(
-            Materia::class,           // 1. Modelo relacionado
-            'estructura_curricular',  // 2. Tabla pivote
-            'campo_id',               // 3. Clave foránea de este modelo (CampoFormativo) en la pivote
-            'materia_id'              // 4. Clave foránea del modelo relacionado (Materia) en la pivote
-        );
+            Materia::class,
+            'estructura_curricular',
+            'campo_id',
+            'materia_id'
+        )->distinct(); // <-- CORRECCIÓN: Evita materias duplicadas
     }
 
     /**
-     * Relación opcional para obtener los registros pivote directos.
+     * Relación con Estructura Curricular (registros pivote).
      */
-    public function asignacionesEstructura()
+    public function asignacionesEstructura(): HasMany
     {
          return $this->hasMany(EstructuraCurricular::class, 'campo_id', 'campo_id');
     }
 
-    public function nivel()
+    /**
+     * Relación con Nivel.
+     */
+    public function nivel(): BelongsTo
     {
-        // Como usas 'nivel_id' como llave primaria en Niveles,
-        // debemos especificarlo como 'ownerKey' (el 3er argumento).
         return $this->belongsTo(Nivel::class, 'nivel_id', 'nivel_id');
     }
 }

@@ -94,7 +94,7 @@
                         <button
                         type="button"
                         x-on:click.prevent="$dispatch('open-modal', 'editar-usuario-{{ $user->id }}')" 
-                        class="bg-blue-100 text-blue-800 p-1 flex size-4 sm:size-6 items-center justify-center rounded-full hover:scale-150 transition-transform"
+                        class="p-1 flex size-4 sm:size-6 items-center justify-center rounded-full bg-blue-100 text-blue-800 hover:scale-150 transition-transform"
                         title="Editar Usuario">
                         <svg class="size-6">
                             <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-edit"></use>

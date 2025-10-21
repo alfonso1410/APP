@@ -13,6 +13,7 @@ use App\Http\Controllers\NivelController;
 use App\Http\Controllers\EstructuraCurricularController;
 use App\Http\Controllers\CampoFormativoController;
 use App\Http\Controllers\MateriaController;
+
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -21,55 +22,58 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Ruta del Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Rutas de tipo "Resource" para los módulos CRUD
-    Route::resource('users', UserController::class);
-    Route::resource('alumnos', AlumnoController::class);
+    // Usuarios
+    Route::resource('users', UserController::class); // Asumiendo que 'edit' sigue siendo modal aquí
 
-    //grupos
-    Route::resource('grupos', GrupoController::class); 
+    // --- CORRECCIÓN ALUMNOS ---
+    // Excluimos create y edit (son modales) y show (no se usa)
+    Route::resource('alumnos', AlumnoController::class)->except([
+        'create', 'edit', 'show'
+    ]);
+    // --- FIN CORRECCIÓN ---
+
+    // Grupos
+    Route::resource('grupos', GrupoController::class);
     Route::get('/grupos-archivados', [GrupoController::class, 'indexArchivados'])->name('grupos.archivados');
     Route::patch('/grupos/{grupo}/archivar', [GrupoController::class, 'archivar'])->name('grupos.archivar');
-    // 1. MUESTRA la lista de alumnos que YA ESTÁN en un grupo.
+    // Alumnos en Grupos
     Route::get('/grupos/{grupo}/alumnos', [GrupoController::class, 'mostrarAlumnos'])
         ->name('grupos.alumnos.index');
-    // 2. MUESTRA el formulario para buscar y asignar nuevos alumnos.
     Route::get('/grupos/{grupo}/asignar-alumnos', [AsignacionGrupalController::class, 'create'])
         ->name('grupos.alumnos.create');
-    // 3. PROCESA el guardado de la asignación.
     Route::post('/grupos/{grupo}/asignar-alumnos', [AsignacionGrupalController::class, 'store'])
         ->name('grupos.alumnos.store');
-    // Muestra la vista para asignar/editar las materias de un grupo
-// 1. Muestra la LISTA de materias asignadas a un grupo.
-Route::get('/grupos/{grupo}/materias', [GrupoController::class, 'indexMaterias'])
-     ->name('grupos.materias.index');
+    // Materias en Grupos
+    Route::get('/grupos/{grupo}/materias', [GrupoController::class, 'indexMaterias'])
+         ->name('grupos.materias.index');
+    Route::get('/grupos/{grupo}/materias/asignar', [GrupoController::class, 'createMaterias'])
+         ->name('grupos.materias.create');
+    Route::post('/grupos/{grupo}/materias', [GrupoController::class, 'storeMaterias'])
+          ->name('grupos.materias.store');
 
-// 2. Muestra el FORMULARIO para asignar nuevas materias.
-Route::get('/grupos/{grupo}/materias/asignar', [GrupoController::class, 'createMaterias'])
-     ->name('grupos.materias.create');
-
-// 3. GUARDA la asignación (esta ruta no cambia).
-Route::post('/grupos/{grupo}/materias', [GrupoController::class, 'storeMaterias'])
-      ->name('grupos.materias.store');
-
-    // Ruta para la vista de Grados (solo necesitamos la vista principal por ahora)
+    // Grados y Estructura
     Route::resource('grados', GradoController::class);
     Route::get('/grados/{grado}/mapear', [GradoController::class, 'showMapeo'])->name('grados.mapeo');
-Route::post('/grados/{grado}/mapear', [GradoController::class, 'storeMapeo'])->name('grados.storeMapeo');
-Route::get('/grados/{grado}/estructura', [EstructuraCurricularController::class, 'edit'])->name('grados.estructura');
-Route::post('/grados/{grado}/estructura', [EstructuraCurricularController::class, 'update'])->name('grados.estructura.update');
+    Route::post('/grados/{grado}/mapear', [GradoController::class, 'storeMapeo'])->name('grados.storeMapeo');
+    Route::get('/grados/{grado}/estructura', [EstructuraCurricularController::class, 'edit'])->name('grados.estructura');
+    Route::post('/grados/{grado}/estructura', [EstructuraCurricularController::class, 'update'])->name('grados.estructura.update');
 
-    Route::resource('maestros', MaestroController::class);
+    // Maestros
+    Route::resource('maestros', MaestroController::class); // Asumiendo que 'edit' sigue siendo modal aquí
 
+    // Niveles
     Route::post('/niveles', [NivelController::class, 'store'])->name('niveles.store');
 
-    // Ruta para el CRUD de Campos Formativos
-    Route::resource('campos-formativos', CampoFormativoController::class);
+    // Campos Formativos (Ya estaba corregido)
+    Route::resource('campos-formativos', CampoFormativoController::class)->except([
+        'create', 'show', 'edit'
+    ]);
 
-    // Ruta para el CRUD de Materias
-    Route::resource('materias', MateriaController::class);
+    // Materias (Ya estaba corregido)
+    Route::resource('materias', MateriaController::class)->except([
+        'create', 'show', 'edit'
+    ]);
 
-    Route::post('/campos-formativos/{campo_formativo}/assign-subjects', [CampoFormativoController::class, 'assignSubjects'])
-          ->name('campos-formativos.assign-subjects');
 });
 
 

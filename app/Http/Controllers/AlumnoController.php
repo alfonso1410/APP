@@ -3,46 +3,38 @@
 namespace App\Http\Controllers;
 
 use App\Models\Alumno;
-use App\Models\Nivel;
+use App\Models\Nivel; // Asegúrate que este 'use' exista
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse; // Importar RedirectResponse
 
 class AlumnoController extends Controller
 {
-        public function index(Request $request): View
+    /**
+     * Muestra la lista de alumnos, filtros y maneja los modales.
+     */
+    public function index(Request $request): View
     {
-        // Obtenemos los parámetros de la URL
-        $nivel_id = $request->input('nivel', 0); // 0 será nuestro ID para "Sin Asignar"
+        $nivel_id = $request->input('nivel', 0);
         $search = $request->input('search');
-
-        // Empezamos la consulta base
         $query = Alumno::query();
 
-        // --- INICIO DE LA LÓGICA DE FILTRADO CORREGIDA ---
-
+        // --- Lógica de filtrado (sin cambios) ---
         if ($nivel_id == 0) {
-            // FILTRO "SIN ASIGNAR":
-            // Busca alumnos que NO TENGAN un grupo regular ACTIVO.
             $query->whereDoesntHave('grupos', function ($q) {
                 $q->where('tipo_grupo', 'REGULAR')
                   ->where('asignacion_grupal.es_actual', 1);
             });
         } else {
-            // FILTRO POR NIVEL (Preescolar, Primaria, etc.):
-            // Busca alumnos que SÍ TENGAN un grupo regular ACTIVO en el nivel seleccionado.
             $query->whereHas('grupos', function ($q) use ($nivel_id) {
                 $q->where('tipo_grupo', 'REGULAR')
-                  ->where('asignacion_grupal.es_actual', 1) // <-- ¡LA CLAVE!
+                  ->where('asignacion_grupal.es_actual', 1)
                   ->whereHas('grado', function ($subQ) use ($nivel_id) {
                       $subQ->where('nivel_id', $nivel_id);
                   });
             });
         }
-
-        // --- FIN DE LA LÓGICA DE FILTRADO ---
-
-        // Aplicamos la búsqueda por texto si existe
         $query->when($search, function ($q, $s) {
             $q->where(function ($subQ) use ($s) {
                 $subQ->where('nombres', 'like', "%{$s}%")
@@ -51,26 +43,27 @@ class AlumnoController extends Controller
                      ->orWhere('curp', 'like', "%{$s}%");
             });
         });
+        // --- Fin lógica de filtrado ---
 
-        // Eager loading para optimizar y paginación
-        $alumnos = $query->with(['grupos.grado']) // Precargamos las relaciones que la vista necesita
-                         ->orderBy('apellido_paterno')
-                         ->paginate(15);
+        $alumnos = $query->with([
+                            'grupos' => function ($q) { // Cargamos solo el grupo activo
+                                $q->where('asignacion_grupal.es_actual', 1)->with('grado');
+                            }
+                        ])
+                        ->orderBy('apellido_paterno')
+                        ->paginate(15);
 
+        // Pasamos solo los datos necesarios para la vista y los modales (si aplica)
         return view('alumnos.index', compact('alumnos', 'nivel_id', 'search'));
     }
 
-
-    // --- El resto de los métodos (create, store, etc.) no requieren cambios ---
-    
-    public function create(): View
+    /**
+     * Guarda un nuevo alumno desde el modal.
+     */
+    public function store(Request $request): RedirectResponse // Especificar tipo de retorno
     {
-        return view('alumnos.create');
-    }
-
-    public function store(Request $request)
-    {
-        $validatedData = $request->validate([
+        // CORREGIDO: Usar validateWithBag('store', ...)
+        $validatedData = $request->validateWithBag('store', [
             'nombres'          => 'required|string|max:255',
             'apellido_paterno' => 'required|string|max:255',
             'apellido_materno' => 'required|string|max:255',
@@ -78,18 +71,20 @@ class AlumnoController extends Controller
             'curp'             => 'required|string|unique:alumnos,curp|size:18',
             'estado_alumno'    => 'required|string|in:ACTIVO,INACTIVO',
         ]);
+
         Alumno::create($validatedData);
-        return redirect()->route('alumnos.index')->with('success', 'Alumno creado exitosamente.');
+        // Redirigimos de vuelta al index
+        return redirect()->route('alumnos.index', ['nivel' => $request->input('current_nivel_id', 0)]) // Mantenemos el filtro
+                         ->with('success', 'Alumno creado exitosamente.');
     }
 
-    public function edit(Alumno $alumno): View
+    /**
+     * Actualiza un alumno desde el modal.
+     */
+    public function update(Request $request, Alumno $alumno): RedirectResponse // Especificar tipo de retorno
     {
-        return view('alumnos.edit', compact('alumno'));
-    }
-
-    public function update(Request $request, Alumno $alumno)
-    {
-        $validatedData = $request->validate([
+        // CORREGIDO: Usar validateWithBag('update', ...)
+        $validatedData = $request->validateWithBag('update', [
             'nombres'          => 'required|string|max:255',
             'apellido_paterno' => 'required|string|max:255',
             'apellido_materno' => 'required|string|max:255',
@@ -100,14 +95,27 @@ class AlumnoController extends Controller
             ],
             'estado_alumno'    => 'required|string|in:ACTIVO,INACTIVO'
         ]);
+
         $alumno->update($validatedData);
-        return redirect()->route('alumnos.index')->with('success', 'Alumno actualizado exitosamente.');
+        // Redirigimos de vuelta al index
+        return redirect()->route('alumnos.index', ['nivel' => $request->input('current_nivel_id', 0)]) // Mantenemos el filtro
+                         ->with('success', 'Alumno actualizado exitosamente.');
     }
 
-    public function destroy(Alumno $alumno)
+    /**
+     * Inactiva (soft delete) un alumno.
+     * (Sin cambios en la lógica, solo tipo de retorno)
+     */
+    public function destroy(Alumno $alumno): RedirectResponse // Especificar tipo de retorno
     {
+        $nivelId = $alumno->grupos()->where('asignacion_grupal.es_actual', 1)->first()?->grado?->nivel_id ?? 0; // Obtenemos nivel antes de inactivar
         $alumno->estado_alumno = 'INACTIVO';
+        // Opcional: Desasignar de grupos actuales si es necesario
+        // $alumno->grupos()->updateExistingPivot($grupoId, ['es_actual' => 0]);
         $alumno->save();
-        return redirect()->route('alumnos.index')->with('success', 'Alumno inactivado exitosamente.');
+        return redirect()->route('alumnos.index', ['nivel' => $nivelId])
+                         ->with('success', 'Alumno inactivado exitosamente.');
     }
+
+    // --- MÉTODOS create() y edit() ELIMINADOS ---
 }

@@ -6,22 +6,28 @@
             </h2>
             <div class="flex space-x-4">
                  <x-secondary-link-button href="{{ route('campos-formativos.index') }}">
-                    Ver Campos Formativos
-                </x-secondary-link-button>
-                <x-primary-button-link href="{{ route('materias.create') }}">
-                    + Nueva Materia
-                </x-primary-button-link>
+                     Ver Campos Formativos
+                 </x-secondary-link-button>
+
+                 <x-primary-button
+                    x-data=""
+                    x-on:click.prevent="$dispatch('open-modal', 'create-materia')">
+                     + Nueva Materia
+                 </x-primary-button>
             </div>
         </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8"> {{-- Corregido: sm:px-6 --}}
+    {{-- --- INICIO CORRECCIÓN --- --}}
+    {{-- Añadimos x-data para declarar currentMateria --}}
+    <div class="py-12" x-data="{ currentMateria: {} }">
+    {{-- --- FIN CORRECCIÓN --- --}}
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <x-flash-messages />
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
                     <div class="overflow-x-auto">
-                        
+
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
@@ -45,36 +51,32 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {{ $materia->asignacionesGrupo->first()?->grupo?->grado?->nombre ?? 'N/A' }}
                                         </td>
-                                        
-                                        {{-- --- INICIO DE LA CORRECCIÓN: Botones de Icono --- --}}
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div class="flex justify-end items-center space-x-2"> {{-- Contenedor Flex para alinear iconos --}}
-                                                
-                                                {{-- Botón Editar (como enlace estilizado) --}}
-                                                <a href="{{ route('materias.edit', $materia) }}"
-                                                   class="bg-blue-100 text-blue-800 p-1 flex size-6 items-center justify-center rounded-full hover:scale-125 transition-transform" {{-- Ajustado tamaño y hover --}}
-                                                   title="Editar Materia">
-                                                   <svg class="size-4"> {{-- Ajustado tamaño SVG --}}
-                                                       <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-edit"></use>
-                                                   </svg>
-                                                </a>
+                                            <div class="flex justify-end items-center space-x-2">
 
-                                                {{-- Botón Eliminar (dentro de su form) --}}
+                                                {{-- Botón Editar Materia --}}
+                                                <button
+                                                    {{-- Usamos @json y comillas simples/dobles --}}
+                                                    x-on:click.prevent='$dispatch("open-modal", "edit-materia"); currentMateria = @json($materia);'
+                                                    class="bg-blue-100 text-blue-800 p-1 flex size-6 items-center justify-center rounded-full hover:scale-125 transition-transform"
+                                                    title="Editar Materia">
+                                                    {{-- Icono SVG Simplificado --}}
+                                                    <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                                </button>
+
+                                                {{-- Botón Eliminar --}}
                                                 <form action="{{ route('materias.destroy', $materia) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar la materia \'{{ $materia->nombre }}\'?');" class="inline">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" 
-                                                            class="bg-red-100 text-red-800 p-1 flex size-6 items-center justify-center rounded-full hover:scale-125 transition-transform" {{-- Ajustado tamaño y hover --}}
+                                                    <button type="submit"
+                                                            class="bg-red-100 text-red-800 p-1 flex size-6 items-center justify-center rounded-full hover:scale-125 transition-transform"
                                                             title="Eliminar Materia">
-                                                        <svg class="size-4"> {{-- Ajustado tamaño SVG --}}
-                                                            {{-- Asume que tienes un icono 'icon-delete' o similar en tu sprite --}}
-                                                            <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-delete"></use> 
-                                                        </svg>
+                                                            {{-- Icono SVG Simplificado --}}
+                                                        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                                     </button>
                                                 </form>
                                             </div>
                                         </td>
-                                        {{-- --- FIN DE LA CORRECCIÓN --- --}}
                                     </tr>
                                 @empty
                                     <tr>
@@ -83,10 +85,65 @@
                                 @endforelse
                             </tbody>
                         </table>
-                         
+
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        {{-- Modal: CREAR Materia --}}
+        <x-modal name="create-materia" :show="$errors->store->isNotEmpty()" focusable>
+            <form method="post" action="{{ route('materias.store') }}" class="p-6">
+                @csrf
+                <h2 class="text-lg font-medium text-gray-900">
+                    Crear Nueva Materia
+                </h2>
+                <div class="mt-6">
+                    <x-input-label for="nombre_create" value="Nombre de la Materia" />
+                    <x-text-input id="nombre_create" name="nombre" type="text" class="mt-1 block w-full" :value="old('nombre')" required autofocus />
+                    <x-input-error :messages="$errors->store->get('nombre')" class="mt-2" />
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <x-secondary-button x-on:click="$dispatch('close')">
+                        Cancelar
+                    </x-secondary-button>
+                    <x-primary-button class="ml-4">
+                        Guardar Materia
+                    </x-primary-button>
+                </div>
+            </form>
+        </x-modal>
+
+        {{-- Modal: EDITAR Materia --}}
+        <x-modal name="edit-materia" :show="$errors->update->isNotEmpty()" focusable>
+             <form method="post" x-bind:action="currentMateria ? `{{ url('materias') }}/${currentMateria.materia_id}` : ''" class="p-6">
+                @csrf
+                @method('PATCH') {{-- O PUT, dependiendo de tu ruta --}}
+                <h2 class="text-lg font-medium text-gray-900">
+                    Editar Materia
+                </h2>
+                <div class="mt-6">
+                    <x-input-label for="nombre_edit" value="Nombre de la Materia" />
+                    <x-text-input
+                        id="nombre_edit"
+                        name="nombre"
+                        type="text"
+                        class="mt-1 block w-full"
+                        {{-- Asegúrate que el modelo Materia tenga materia_id en $visible --}}
+                        x-bind:value="currentMateria?.nombre"
+                        required />
+                    <x-input-error :messages="$errors->update->get('nombre')" class="mt-2" />
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <x-secondary-button x-on:click="$dispatch('close')">
+                        Cancelar
+                    </x-secondary-button>
+                    <x-primary-button class="ml-4">
+                        Actualizar Materia
+                    </x-primary-button>
+                </div>
+            </form>
+        </x-modal>
+
+    </div> {{-- Fin del div py-12 --}}
 </x-app-layout>

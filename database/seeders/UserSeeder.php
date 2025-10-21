@@ -15,13 +15,13 @@ class UserSeeder extends Seeder
     {
         // 1. Crear un Administrador (ADMIN)
         DB::table('users')->updateOrInsert(
-            ['email' => 'noel02_2003@hotmail.com'], // Criterio de búsqueda (clave única)
+            ['email' => 'renealdm3@gmail.com'], // Criterio de búsqueda (clave única)
             [
-                'name' => 'Pavel Noel',
-                'apellido_paterno' => 'Domínguez',
-                'apellido_materno' => 'Reyes',
+                'name' => 'Alfonso Rene',
+                'apellido_paterno' => 'Aldama',
+                'apellido_materno' => 'Trinidad',
                 'rol' => 'COORDINADOR', // Rol clave
-                'password' => Hash::make('password'), // ¡IMPORTANTE! Contraseña encriptada
+                'password' => Hash::make('Alfonso33'), // ¡IMPORTANTE! Contraseña encriptada
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]

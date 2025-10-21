@@ -6,10 +6,13 @@ use App\Models\CampoFormativo;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\Nivel;
-use App\Models\Materia;
+use App\Models\Materia; // Asegúrate de que este 'use' exista
 
 class CampoFormativoController extends Controller
 {
+    /**
+     * Muestra la lista de campos formativos, filtrada por nivel.
+     */
     public function index(Request $request)
     {
         $niveles = Nivel::orderBy('nivel_id')->get();
@@ -19,29 +22,26 @@ class CampoFormativoController extends Controller
             $activeNivelId = $niveles->first()->nivel_id;
         }
 
-        $query = CampoFormativo::query();
-
-        // --- INICIO CORRECCIÓN EAGER LOADING ---
-        // 1. Quitamos distinct() más adelante.
-        // 2. Cargamos 'materias' y SUS relaciones anidadas necesarias para el modal.
-        $query->with([
-            'materias.asignacionesGrupo.maestro', // Carga materia -> asignación -> maestro
-            'materias.asignacionesGrupo.grupo.grado' // Carga materia -> asignación -> grupo -> grado
+        // --- INICIO CORRECCIÓN: Lógica de Filtrado ---
+        // 1. La consulta ahora incluye las relaciones que necesitamos
+        //    para el modal (materias y sus asignaciones).
+        $query = CampoFormativo::query()->with([
+            'materias.asignacionesGrupo.maestro',
+            'materias.asignacionesGrupo.grupo.grado',
+            'nivel'
         ]);
-        // --- FIN CORRECCIÓN EAGER LOADING ---
 
-        // Lógica de filtrado (igual)
-        if ($activeNivelId == '0') {
-             $query->whereDoesntHave('asignacionesEstructura');
-        } else if ($activeNivelId) {
-             $query->whereHas('asignacionesEstructura.grado', function ($q) use ($activeNivelId) {
-                 $q->where('nivel_id', $activeNivelId);
-             });
+        // 2. Lógica de filtrado NUEVA Y SIMPLIFICADA.
+        //    Filtramos directamente por la columna 'nivel_id' del campo formativo.
+        if ($activeNivelId) {
+            $query->where('nivel_id', $activeNivelId);
         }
+        // --- FIN CORRECCIÓN ---
 
-        // --- CORRECCIÓN: Quitamos distinct() ---
-        $camposFormativos = $query->orderBy('nombre')->get(); // distinct() eliminado
+        $camposFormativos = $query->orderBy('nombre')->get();
 
+        // Esto es necesario para el modal de "Ver Materias", aunque no lo usemos aquí.
+        // Lo dejamos por si acaso, pero no es parte del error.
         $allMaterias = Materia::orderBy('nombre')->get();
 
         return view('campos-formativos.index', compact(
@@ -53,51 +53,73 @@ class CampoFormativoController extends Controller
     }
 
     /**
-     * Guarda un nuevo campo formativo (desde el modal).
-     * (Este método se mantiene como lo tenías, ya es correcto)
+     * Guarda un nuevo campo formativo.
+     * (Este método ya estaba corregido en nuestra iteración anterior)
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'nombre' => 'required|string|max:100|unique:campos_formativos,nombre',
+        // Usamos 'validateWithBag' para manejar errores en el modal 'create'
+        $validatedData = $request->validateWithBag('store', [
+            'nombre' => [
+                'required', 'string', 'max:100',
+                Rule::unique('campos_formativos')->where(function ($query) use ($request) {
+                    return $query->where('nivel_id', $request->nivel_id);
+                }),
+            ],
+            'nivel_id' => 'required|integer|exists:niveles,nivel_id',
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
-            'nombre.unique' => 'Este campo formativo ya existe.',
+            'nombre.unique' => 'Este campo formativo ya existe para el nivel seleccionado.',
+            'nivel_id.required' => 'Debe seleccionar un nivel educativo.',
         ]);
+
         CampoFormativo::create($validatedData);
-        return redirect()->route('campos-formativos.index')->with('success', 'Campo formativo creado exitosamente.');
+
+        return redirect()->route('campos-formativos.index', ['nivel' => $request->nivel_id])
+                         ->with('success', 'Campo formativo creado exitosamente.');
     }
 
     /**
-     * Actualiza un campo formativo (desde el modal).
-     * (Este método se mantiene como lo tenías, ya es correcto)
+     * Actualiza un campo formativo.
+     * (Este método ya estaba corregido en nuestra iteración anterior)
      */
     public function update(Request $request, CampoFormativo $camposFormativo)
     {
-        $validatedData = $request->validate([
+        // Usamos 'validateWithBag' para manejar errores en el modal 'edit'
+        $validatedData = $request->validateWithBag('update', [
             'nombre' => [
                 'required', 'string', 'max:100',
-                Rule::unique('campos_formativos')->ignore($camposFormativo->campo_id, 'campo_id'),
+                Rule::unique('campos_formativos')->where(function ($query) use ($request) {
+                    return $query->where('nivel_id', $request->nivel_id);
+                })->ignore($camposFormativo->campo_id, 'campo_id'),
             ],
+            'nivel_id' => 'required|integer|exists:niveles,nivel_id',
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
-            'nombre.unique' => 'Este campo formativo ya existe.',
+            'nombre.unique' => 'Este campo formativo ya existe para el nivel seleccionado.',
         ]);
+
         $camposFormativo->update($validatedData);
-        return redirect()->route('campos-formativos.index')->with('success', 'Campo formativo actualizado exitosamente.');
+
+        return redirect()->route('campos-formativos.index', ['nivel' => $request->nivel_id])
+                         ->with('success', 'Campo formativo actualizado exitosamente.');
     }
 
     /**
      * Elimina un campo formativo.
-     * (Este método se mantiene como lo tenías, ya es correcto)
+     * (Este método ya estaba corregido en nuestra iteración anterior)
      */
     public function destroy(CampoFormativo $camposFormativo)
     {
         try {
+            $nivelId = $camposFormativo->nivel_id;
             $camposFormativo->delete();
-            return redirect()->route('campos-formativos.index')->with('success', 'Campo formativo eliminado exitosamente.');
+            
+            return redirect()->route('campos-formativos.index', ['nivel' => $nivelId])
+                             ->with('success', 'Campo formativo eliminado exitosamente.');
         } catch (\Illuminate\Database\QueryException $e) {
-            return redirect()->route('campos-formativos.index')->with('error', 'No se puede eliminar el campo formativo, está siendo utilizado en una estructura curricular.');
+            return redirect()->route('campos-formativos.index', ['nivel' => $camposFormativo->nivel_id])
+                             ->with('error', 'No se puede eliminar el campo formativo, está siendo utilizado.');
         }
     }
 }

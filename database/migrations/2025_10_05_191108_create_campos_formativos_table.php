@@ -13,18 +13,26 @@ return new class extends Migration
     {
         Schema::create('campos_formativos', function (Blueprint $table) {
             $table->id('campo_id');
-            $table->string('nombre', 100)->unique();
             
-            // --- LÍNEAS AÑADIDAS ---
-            // Añadimos la llave foránea
+            // --- CORRECCIÓN ---
+            // Quitamos el ->unique() de aquí.
+            $table->string('nombre', 100); 
+            // --- FIN CORRECCIÓN ---
+
+            // Tu llave foránea (esto está correcto, asumiendo que niveles.nivel_id es unsignedBigInteger)
             $table->unsignedBigInteger('nivel_id'); 
 
-            // Creamos la relación
             $table->foreign('nivel_id')
-                  ->references('nivel_id')  // Apunta a 'nivel_id' en la tabla 'niveles'
+                  ->references('nivel_id')
                   ->on('niveles')
                   ->onDelete('restrict'); // Evita borrar un nivel si tiene campos
-            // --- FIN LÍNEAS AÑADIDAS ---
+
+            // --- LÍNEA AÑADIDA ---
+            // Creamos un índice único compuesto.
+            // Esto permite "Lenguajes" con nivel_id=1 Y "Lenguajes" con nivel_id=2
+            // pero NO "Lenguajes" con nivel_id=1 dos veces.
+            $table->unique(['nombre', 'nivel_id']);
+            // --- FIN LÍNEA AÑADIDA ---
 
             $table->timestamps();
         });
