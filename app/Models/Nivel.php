@@ -14,6 +14,10 @@ class Nivel extends Model
     
     // 2. Especificar la clave primaria si no es 'id':
     protected $primaryKey = 'nivel_id';
+
+    protected $fillable = [
+        'nombre',
+    ];
     
     // 3. Definir la relación: Un Nivel tiene muchos Grados
     public function grados()
@@ -22,5 +26,12 @@ class Nivel extends Model
         // El segundo argumento es la clave foránea en la tabla 'grados'.
         // El tercer argumento es la clave local en la tabla 'niveles'.
         return $this->hasMany(Grado::class, 'nivel_id', 'nivel_id');
+    }
+
+    public function camposFormativos()
+    {
+        // Especificamos la llave foránea (2o) y la llave local (3o)
+        // porque no son las estándar de Laravel.
+        return $this->hasMany(CampoFormativo::class, 'nivel_id', 'nivel_id');
     }
 }

@@ -10,12 +10,17 @@
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             
             <x-flash-messages />
-        @php
-    // Combina las asignaciones de la BD con el input 'old' para repoblar los selects
-    $finalAsignaciones = array_merge(
-        $asignacionesActuales->toArray(),
-        old('materias', [])
-    );
+   @php
+    // Obtenemos las asignaciones de la BD
+    $dbAsignaciones = $asignacionesActuales->toArray();
+
+    // Obtenemos los valores 'old' (si una validación falló)
+    $oldAsignaciones = old('materias', []);
+
+    // USAMOS EL OPERADOR '+' (UNIÓN)
+    // Esto respeta las claves (materia_id) y da prioridad a los datos
+    // de la izquierda (los datos 'old' tienen prioridad).
+    $finalAsignaciones = $oldAsignaciones + $dbAsignaciones;
 
     // Obtiene los checkboxes marcados del input 'old'
     // Si no hay 'old' input (primera carga), usa las claves de las asignaciones de la BD
@@ -34,12 +39,43 @@
                             </div>
                         @endif
                         
-                <div x-data="{ 
-                            search: '', 
-                            materias: {{ $materiasDisponibles->toJson() }},
-                            asignaciones: {{ json_encode($finalAsignaciones) }},
-                            seleccionados: {{ json_encode(array_map('strval', $finalSeleccionados)) }}
-                        }">
+      <div x-data="{ 
+    search: '', 
+    materias: {{ $materiasDisponibles->toJson() }},
+    asignacionesOriginales: {{ json_encode($finalAsignaciones) }},
+    asignaciones: { ...{{ json_encode($finalAsignaciones) }} },
+    seleccionados: {{ json_encode(array_map('strval', $finalSeleccionados)) }},
+
+    // --- ¡NUEVO MÉTODO AÑADIDO AQUÍ! ---
+    handleCampoChange(materia, event) {
+        // Ahora sí podemos usar 'const' y 'let' libremente
+        
+        const materiaId = String(materia.materia_id);
+        const materiaNombre = materia.nombre;
+        
+        // Usamos 'this.' para acceder a las propiedades del x-data
+        const originalCampoId = String(this.asignacionesOriginales[materiaId] || '');
+        const newCampoId = String(event.target.value); // El valor nuevo del select
+
+        const wasAssigned = originalCampoId !== '';
+        const isChanging = newCampoId !== originalCampoId;
+
+        // Misma lógica de antes
+        if (wasAssigned && isChanging) {
+            
+            const userConfirmed = confirm(
+                'Confirmar Cambio\n\nMateria: ' + materiaNombre + 
+                '\n\nEstás cambiando su campo formativo. ¿Deseas continuar?'
+            );
+
+            if (!userConfirmed) {
+                // Revertimos el cambio.
+                // Usamos 'this.asignaciones'
+                this.asignaciones[materiaId] = originalCampoId;
+            }
+        }
+    }
+}">
                                 <input type="text" x-model.debounce.300ms="search" placeholder="Buscar materia por nombre..." 
                                    class="w-full sm:w-2/3 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 mb-6">
 
@@ -60,16 +96,18 @@
 
                                         <!-- Select de Campo Formativo -->
                                         <div class="col-span-2">
-                                         <select 
-                                                :name="'materias[' + materia.materia_id + ']'" 
-                                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring-opacity-50 text-sm"
-                                                {{-- Usamos el `String()` para asegurar la compatibilidad con las claves del JSON --}}
-                                                x-model="asignaciones[String(materia.materia_id)]">
-                                                <option value="">-- Selecciona un Campo Formativo --</option>
-                                                @foreach ($camposFormativos as $campo)
-                                                    <option value="{{ $campo->campo_id }}">{{ $campo->nombre }}</option>
-                                                @endforeach
-                                            </select>
+     <select 
+    :name="'materias[' + materia.materia_id + ']'" 
+    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring-opacity-50 text-sm"
+    x-model="asignaciones[String(materia.materia_id)]"
+    
+    @change="handleCampoChange(materia, $event)"
+>
+    <option value="">-- Selecciona un Campo Formativo --</option>
+    @foreach ($camposFormativos as $campo)
+        <option value="{{ $campo->campo_id }}">{{ $campo->nombre }}</option>
+    @endforeach
+</select>
                                         </div>
                                     </div>
                                 </template>

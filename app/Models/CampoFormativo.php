@@ -25,8 +25,11 @@ class CampoFormativo extends Model
      * Atributos que se pueden asignar masivamente (para store/update).
      * Esto soluciona el error 'MassAssignmentException'.
      */
-    protected $fillable = ['nombre'];
 
+  protected $fillable = [
+        'nombre',
+        'nivel_id',
+    ];
     /**
      * Un Campo Formativo se relaciona con muchas Materias a través de la
      * tabla pivote 'estructura_curricular'.
@@ -47,5 +50,12 @@ class CampoFormativo extends Model
     public function asignacionesEstructura()
     {
          return $this->hasMany(EstructuraCurricular::class, 'campo_id', 'campo_id');
+    }
+
+    public function nivel()
+    {
+        // Como usas 'nivel_id' como llave primaria en Niveles,
+        // debemos especificarlo como 'ownerKey' (el 3er argumento).
+        return $this->belongsTo(Nivel::class, 'nivel_id', 'nivel_id');
     }
 }

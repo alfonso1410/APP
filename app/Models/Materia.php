@@ -23,8 +23,10 @@ class Materia extends Model
     /**
      * Atributos que se pueden asignar masivamente (para store/update).
      */
-    protected $fillable = ['nombre'];
-
+   protected $fillable = [
+        'nombre',
+        'tipo', // <-- ¡AÑADE ESTA LÍNEA!
+    ];
     
     // --- Relaciones con Estructura Curricular ---
 
