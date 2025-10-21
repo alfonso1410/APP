@@ -22,7 +22,9 @@ class EstructuraCurricularController extends Controller
             abort(404, 'La estructura curricular solo se puede definir para grados regulares.');
         }
 
-        $materiasDisponibles = Materia::orderBy('nombre')->get();
+        $materiasDisponibles = Materia::where('tipo', 'REGULAR')
+                                  ->orderBy('nombre')
+                                  ->get();
         $camposFormativos = CampoFormativo::orderBy('nombre')->get();
 
         // Obtenemos las asignaciones actuales en un formato práctico: [materia_id => campo_id]
@@ -65,7 +67,9 @@ class EstructuraCurricularController extends Controller
             'materias.*.exists'   => 'El campo formativo seleccionado no es válido.'
         ]);
         // --- FIN DE LA CORRECCIÓN ---
-
+            // --- AÑADE ESTA LÍNEA PARA DEPURAR ---
+      //  dd($datosAValidar, $validator->fails(), $validator->errors());
+        // --- FIN DE LA DEPURACIÓN -
         // 6. Si la validación falla, Laravel redirige automáticamente con los errores.
         // Ahora la vista SÍ encontrará los errores y los mostrará.
         if ($validator->fails()) {

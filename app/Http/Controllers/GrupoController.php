@@ -167,11 +167,13 @@ public function indexMaterias(Grupo $grupo): View
             // Materias definidas por la estructura curricular del grado.
             $materiasDisponibles = $grupo->grado->materias;
         } else {
-            // LÓGICA CLAVE: Materias que NO están en ninguna estructura curricular.
-            $materiasDisponibles = Materia::whereDoesntHave('estructuraCurricular')
-                                          ->orderBy('nombre')
-                                          ->get();
-        }
+        // 2. Para grupos EXTRA (¡AQUÍ ESTÁ EL CAMBIO!):
+        // Las materias disponibles son todas las que están marcadas
+        // explícitamente como 'EXTRA' en la tabla materias.
+        $materiasDisponibles = Materia::where('tipo', 'EXTRA')
+                                      ->orderBy('nombre')
+                                      ->get();
+    }
 
         $idsMateriasAsignadas = $grupo->materias()->pluck('materias.materia_id')->toArray();
 
