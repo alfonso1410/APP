@@ -48,25 +48,25 @@
 
                             {{-- Botón: Ver Materias --}}
                              <button
-                                 type="button"
-                                 class="text-gray-400 hover:text-green-400 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500"
-                                 title="Ver Materias"
-                                 {{-- Usamos @json y comillas simples/dobles correctas --}}
-                                 x-on:click.prevent='selectedCampo = @json($campo); $dispatch("open-modal", "materias-modal")'
-                             >
+                                    type="button"
+                                    class="text-gray-400 hover:text-green-400 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    title="Ver Materias"
+                                    {{-- Usamos @json y comillas simples/dobles correctas --}}
+                                    x-on:click.prevent='selectedCampo = @json($campo); $dispatch("open-modal", "materias-modal")'
+                                >
                                 {{-- Icono SVG simplificado --}}
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
                             </button>
 
                             {{-- Botón Editar --}}
                             <button
-                                {{-- Usamos @json y comillas simples/dobles correctas --}}
-                                x-on:click.prevent='$dispatch("open-modal", "edit-campo"); currentCampo = @json($campo);'
-                                class="text-gray-400 hover:text-blue-400 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                title="Editar"
-                            >
-                               {{-- Icono SVG simplificado --}}
-                               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    {{-- Usamos @json y comillas simples/dobles correctas --}}
+                                    x-on:click.prevent='$dispatch("open-modal", "edit-campo"); currentCampo = @json($campo);'
+                                    class="text-gray-400 hover:text-blue-400 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    title="Editar"
+                                >
+                                {{-- Icono SVG simplificado --}}
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
 
                             {{-- Formulario Eliminar --}}
@@ -86,7 +86,7 @@
             @if($camposFormativos->isEmpty())
                  <div class="bg-white rounded-lg shadow-lg p-6 text-center text-gray-500 mt-6">
                     No se encontraron campos formativos para el filtro seleccionado.
-                </div>
+                 </div>
             @endif
         </div>
 
@@ -156,7 +156,7 @@
         </x-modal>
 
 
-        {{-- Modal Ver Materias (CORREGIDO con <template x-if> y asignaciones_grupo) --}}
+        {{-- Modal Ver Materias (CORREGIDO con <template x-if> y la nueva fuente de verdad) --}}
         <x-modal name="materias-modal" :show="false" focusable>
             <div class="p-6">
                 {{-- Usamos <template x-if> para envolver TODO el contenido dependiente de selectedCampo --}}
@@ -181,7 +181,7 @@
                                             <tr>
                                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Materia</th>
                                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profesor Asignado</th>
-                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grado</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grados</th> {{-- ✅ CORREGIDO: "Grado" -> "Grados" --}}
                                             </tr>
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200">
@@ -190,13 +190,21 @@
                                                 <tr>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="materia.nombre"></td>
 
-                                                    {{-- CORREGIDO a asignaciones_grupo --}}
+                                                    {{-- Columna "Profesor Asignado" (lógica sin cambios) --}}
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                         <span x-text="materia.asignaciones_grupo && materia.asignaciones_grupo.length > 0 ? (materia.asignaciones_grupo[0].maestro ? materia.asignaciones_grupo[0].maestro.name : 'N/A') : 'Sin Asignar'"></span>
                                                     </td>
+                                                    
+                                                    {{-- 
+                                                      ---
+                                                      INICIO DE LA CORRECCIÓN FINAL: Columna "Grados"
+                                                      ---
+                                                      Usamos la nueva relación 'grados' y la lógica de mapeo para mostrar todos los nombres.
+                                                    --}}
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                        <span x-text="materia.asignaciones_grupo && materia.asignaciones_grupo.length > 0 ? (materia.asignaciones_grupo[0].grupo && materia.asignaciones_grupo[0].grupo.grado ? materia.asignaciones_grupo[0].grupo.grado.nombre : 'N/A') : 'N/A'"></span>
+                                                         <span x-text="materia.grados.length > 0 ? materia.grados.map(g => g.nombre).join(', ') : 'N/A'"></span> {{-- ✅ LÓGICA FINAL --}}
                                                     </td>
+                                                    {{-- FIN DE LA CORRECCIÓN FINAL --}}
 
                                                 </tr>
                                             </template>

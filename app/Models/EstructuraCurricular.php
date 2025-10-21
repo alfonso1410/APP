@@ -21,6 +21,19 @@ class EstructuraCurricular extends Model
      * así que dejamos que Eloquent los maneje (no añadimos $timestamps = false).
      */
 
+    // --- INICIO DE LA CORRECCIÓN ---
+    /**
+     * Define qué atributos/relaciones deben ser visibles
+     * cuando este modelo se convierte a JSON (para Alpine.js).
+     */
+    protected $visible = [
+        'grado_id',
+        'campo_id',
+        'materia_id',
+        'grado', // <-- ¡LA CLAVE! Asegura que la relación se incluya en el JSON.
+    ];
+    // --- FIN DE LA CORRECCIÓN ---
+
     // 1. Relación con Grado: Pertenece a un Grado.
     public function grado(): BelongsTo // <-- Añadido Type-hint
     {

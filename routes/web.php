@@ -13,6 +13,7 @@ use App\Http\Controllers\NivelController;
 use App\Http\Controllers\EstructuraCurricularController;
 use App\Http\Controllers\CampoFormativoController;
 use App\Http\Controllers\MateriaController;
+use App\Http\Controllers\MateriaCriterioController; // ✅ IMPORTACIÓN AÑADIDA
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -23,14 +24,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Usuarios
-    Route::resource('users', UserController::class); // Asumiendo que 'edit' sigue siendo modal aquí
+    Route::resource('users', UserController::class); 
 
-    // --- CORRECCIÓN ALUMNOS ---
-    // Excluimos create y edit (son modales) y show (no se usa)
+    // Alumnos
     Route::resource('alumnos', AlumnoController::class)->except([
         'create', 'edit', 'show'
     ]);
-    // --- FIN CORRECCIÓN ---
 
     // Grupos
     Route::resource('grupos', GrupoController::class);
@@ -49,7 +48,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/grupos/{grupo}/materias/asignar', [GrupoController::class, 'createMaterias'])
          ->name('grupos.materias.create');
     Route::post('/grupos/{grupo}/materias', [GrupoController::class, 'storeMaterias'])
-          ->name('grupos.materias.store');
+         ->name('grupos.materias.store');
 
     // Grados y Estructura
     Route::resource('grados', GradoController::class);
@@ -59,21 +58,36 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/grados/{grado}/estructura', [EstructuraCurricularController::class, 'update'])->name('grados.estructura.update');
 
     // Maestros
-    Route::resource('maestros', MaestroController::class); // Asumiendo que 'edit' sigue siendo modal aquí
+    Route::resource('maestros', MaestroController::class); 
 
     // Niveles
     Route::post('/niveles', [NivelController::class, 'store'])->name('niveles.store');
 
-    // Campos Formativos (Ya estaba corregido)
+    // Campos Formativos
     Route::resource('campos-formativos', CampoFormativoController::class)->except([
         'create', 'show', 'edit'
     ]);
 
-    // Materias (Ya estaba corregido)
+    // Materias 
     Route::resource('materias', MateriaController::class)->except([
         'create', 'show', 'edit'
     ]);
 
+    // --------------------------------------------------------
+    //  NUEVAS RUTAS: GESTIÓN Y ASIGNACIÓN DE CRITERIOS
+    // --------------------------------------------------------
+    
+    // Ruta para el botón global "Crear Criterio"
+    // Usamos el método 'create' para la vista de definición del criterio base.
+    Route::get('materia-criterios/create', [MateriaCriterioController::class, 'create'])->name('materia-criterios.create');
+    
+    // Rutas para la gestión de criterios base (store, update, destroy)
+    Route::resource('materia-criterios', MateriaCriterioController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    // NOTA: La ruta 'materia-criterios.index' se utilizará para mostrar
+    // la vista de ASIGNACIÓN de criterios a una materia específica,
+    // usando un parámetro de consulta (ej: /materia-criterios?materia=1)
+    
 });
 
 
