@@ -128,12 +128,14 @@ public function indexArchivados()
 public function mostrarAlumnos(Grupo $grupo, Request $request)
 {
     // 1. Obtenemos TODOS los alumnos del grupo con sus calificaciones.
-    $alumnos = $grupo->alumnosActuales()
-                      ->with(['calificaciones'])
-                      ->orderBy('apellido_paterno')
-                      ->orderBy('apellido_materno')
-                      ->get();
-
+   $alumnos = $grupo->alumnosActuales()
+    ->with([
+        'calificaciones',
+        'grupos.materias' // 👈 agregamos esto
+    ])
+    ->orderBy('apellido_paterno')
+    ->orderBy('apellido_materno')
+    ->get();
     // 2. Preparamos el nombre de la materia (valor por defecto)
     $materiaExtraNombre = 'N/A'; 
 

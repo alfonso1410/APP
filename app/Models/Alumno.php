@@ -48,27 +48,13 @@ class Alumno extends Model
         return $this->calificaciones->avg('calificacion_obtenida');
     }
 
-    public function getMateriaExtracurricularAttribute()
-    {
-        // Si las relaciones no están cargadas, no hacemos nada.
-        if (! $this->relationLoaded('grupos')) {
-            return 'Ninguna';
-        }
+  public function getMateriaExtracurricularAttribute()
+{
+    $grupoExtra = $this->grupos->firstWhere('tipo_grupo', 'EXTRA');
+    $materia = $grupoExtra?->materias?->first();
 
-        // 1. Busca el primer (y único) grupo del alumno que sea de tipo 'EXTRA'.
-        $grupoExtra = $this->grupos->firstWhere('tipo_grupo', 'EXTRA');
-
-        // 2. Si no se encuentra un grupo extra, devuelve 'Ninguna'.
-        if (! $grupoExtra || ! $this->relationLoaded('grupos.materias')) {
-            return 'Ninguna';
-        }
-        
-        // 3. De ese grupo, toma la primera (y única) materia.
-        $materia = $grupoExtra->materias->first();
-
-        // 4. Devuelve el nombre de la materia o 'Ninguna' si el grupo no tiene materia asignada.
-        return $materia ? $materia->nombre : 'Ninguna';
-    }
+    return $materia?->nombre ?? 'Ninguna';
+}
 
      public function grupoRegularActivo()
     {
