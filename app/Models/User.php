@@ -56,12 +56,13 @@ class User extends Authenticatable
 
    public function gruposTitulares()
     {
+        // --- CORRECCIÓN: Añadir withPivot para leer la columna 'idioma' de la tabla pivote ---
         return $this->belongsToMany(
             Grupo::class,
             'grupo_titular',
             'maestro_id', // <-- ¡CAMBIO AQUÍ! (en lugar de 'user_id')
             'grupo_id'
-        );
+        )->withPivot('idioma'); // <-- AÑADIDO
     }
 
     public function scopeMaestros($query)

@@ -63,12 +63,13 @@ class Grupo extends Model
 
    public function maestrosTitulares()
     {
+        // --- CORRECCIÓN: Añadir withPivot para leer la columna 'idioma' de la tabla pivote ---
         return $this->belongsToMany(
             User::class,
             'grupo_titular', // Nombre de la tabla pivote
             'grupo_id',      // Llave foránea de este modelo (Grupo)
             'maestro_id'     // <-- ¡CAMBIO AQUÍ! (en lugar de 'user_id')
-        );
+        )->withPivot('idioma'); // <-- AÑADIDO
     }
     
     public function asignacionesMaestros(): HasMany

@@ -11,11 +11,15 @@ class RegistroAsistencia extends Model
     protected $table = 'registro_asistencia';
     protected $primaryKey = 'registro_asistencia_id';
 
+    /**
+     * CORRECCIÓN: 'turno' se reemplaza por 'idioma'
+     */
     protected $fillable = [
         'alumno_id',
         'grupo_id',
         'fecha',
         'tipo_asistencia',
+        'idioma', // <-- CORREGIDO
     ];
 
     // 1. Relación con Alumno: Un registro pertenece a UN Alumno
@@ -35,7 +39,7 @@ class RegistroAsistencia extends Model
     // esta función sería necesaria:
     /* public function periodo()
     {
-        return $this->belongsTo(Periodo::class, 'periodo_id', 'periodo_id');
+         return $this->belongsTo(Periodo::class, 'periodo_id', 'periodo_id');
     }
     */
 }

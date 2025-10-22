@@ -11,36 +11,57 @@
             <form action="{{ route('admin.grupos.maestros.store', $grupo) }}" method="POST">
                 @csrf
                 <div class="bg-white shadow-sm rounded-lg p-6">
+                    
                     <p class="text-gray-600 mb-6">
-                        Selecciona los maestros que estarán a cargo de este grupo.
+                        Selecciona el maestro titular para ESPAÑOL y para INGLÉS.
                     </p>
 
-                    <div class="space-y-3">
-                        @forelse ($maestrosDisponibles as $maestro)
-                            <label class="flex items-center p-4 border rounded-lg hover:bg-gray-50 transition cursor-pointer">
-                                <input 
-                                    type="checkbox" 
-                                    name="maestros[]" 
-                                    value="{{ $maestro->id }}" 
-                                    class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                    @checked(in_array($maestro->id, $idsMaestrosAsignados))
-                                >
-                                <span class="ml-4 text-gray-800 font-medium">{{ $maestro->name }}</span>
-                                <span class="ml-auto text-sm text-gray-500">{{ $maestro->email }}</span>
-                            </label>
-                        @empty
+                    <div class="space-y-6">
+                        
+                        @if ($maestrosDisponibles->isNotEmpty())
+                            <div>
+                                <label for="maestro_espanol_id" class="block font-medium text-sm text-gray-700">Maestro Titular (ESPAÑOL)</label>
+                                <select name="maestro_espanol_id" id="maestro_espanol_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                    <option value="">[ Ninguno seleccionado ]</option>
+                                    @foreach ($maestrosDisponibles as $maestro)
+                                        <option value="{{ $maestro->id }}" @selected($maestroEspanol?->id == $maestro->id)>
+                                            {{ $maestro->name }} {{ $maestro->apellido_paterno }} {{ $maestro->apellido_materno}}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="maestro_ingles_id" class="block font-medium text-sm text-gray-700">Maestro Titular (INGLÉS)</label>
+                                <select name="maestro_ingles_id" id="maestro_ingles_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                    <option value="">[ Ninguno seleccionado ]</option>
+                                    @foreach ($maestrosDisponibles as $maestro)
+                                        <option value="{{ $maestro->id }}" @selected($maestroIngles?->id == $maestro->id)>
+                                            {{ $maestro->name }} {{ $maestro->apellido_paterno }} {{ $maestro->apellido_materno}}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('maestro_ingles_id')
+                                    <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                        @else
                             <div class="text-center p-4 border rounded-lg text-gray-500">
                                 No hay usuarios con el rol "maestro" en el sistema.
                             </div>
-                        @endforelse
+                        @endif
+
                     </div>
 
                     <div class="mt-8 flex justify-end gap-4">
-                        {{-- Redirige a la vista de detalle de la card --}}
                         <a href="{{ route('admin.grupos.maestros.index', $grupo) }}" class="px-4 py-2 bg-gray-200 text-sm font-semibold rounded-md hover:bg-gray-300">Volver al Grupo</a>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700">
-                            Guardar Maestros
-                        </button>
+                        
+                        @if ($maestrosDisponibles->isNotEmpty())
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700">
+                                Guardar Maestros
+                            </button>
+                        @endif
                     </div>
                 </div>
             </form>

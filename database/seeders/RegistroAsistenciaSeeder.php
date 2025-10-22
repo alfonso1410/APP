@@ -16,41 +16,42 @@ class RegistroAsistenciaSeeder extends Seeder
     {
         $fecha_asistencia = '2025-09-02';
         
+        // --- CORRECCIÓN 1: Renombrar 'turno' a 'idioma' y cambiar valores ---
         $registros = [
-            // Alumno 1 en Grupo 1: Asistencia de INICIO_DIA (Maestro 1)
+            // Alumno 1 en Grupo 1: Asistencia de ESPAÑOL
             [
                 'alumno_id' => 1, 
                 'grupo_id' => 1, 
                 'fecha' => $fecha_asistencia, 
                 'tipo_asistencia' => 'PRESENTE',
-                'turno' => 'INICIO_DIA' // Campo nuevo añadido
+                'idioma' => 'ESPAÑOL' // <-- CORREGIDO
             ],
-            // Alumno 2 en Grupo 1: Asistencia de INICIO_DIA (Maestro 1)
+            // Alumno 2 en Grupo 1: Asistencia de ESPAÑOL
             [
                 'alumno_id' => 2, 
                 'grupo_id' => 1, 
                 'fecha' => $fecha_asistencia, 
                 'tipo_asistencia' => 'FALTA',
-                'turno' => 'INICIO_DIA' // Campo nuevo añadido
+                'idioma' => 'ESPAÑOL' // <-- CORREGIDO
             ],
-            // Alumno 1 en Grupo 1: Segunda asistencia a mitad del día (Maestro 2)
+            // Alumno 1 en Grupo 1: Segunda asistencia del día (INGLES)
             [
                 'alumno_id' => 1, 
                 'grupo_id' => 1, 
                 'fecha' => $fecha_asistencia, 
                 'tipo_asistencia' => 'PRESENTE',
-                'turno' => 'MEDIO_DIA' // Demuestra que puede haber 2 registros por alumno por día
+                'idioma' => 'INGLES' // <-- CORREGIDO
             ],
         ];
 
         foreach ($registros as $registro) {
             DB::table('registro_asistencia')->updateOrInsert(
-                // Clave de Búsqueda COMPLETA (incluye el nuevo campo 'turno')
+                // --- CORRECCIÓN 2: Clave de Búsqueda COMPLETA ahora usa 'idioma' ---
                 [
                     'alumno_id' => $registro['alumno_id'],
                     'grupo_id' => $registro['grupo_id'],
                     'fecha' => $registro['fecha'],
-                    'turno' => $registro['turno'], // <-- CAMBIO CLAVE
+                    'idioma' => $registro['idioma'], // <-- CORREGIDO
                 ],
                 // Valores a Insertar/Actualizar
                 [
