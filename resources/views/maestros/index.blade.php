@@ -23,7 +23,7 @@
             <div class="p-6">
                 <h2 class="text-lg font-medium text-princeton mb-4">Agregar Nuevo Maestro</h2>
                 {{-- Usamos el nuevo componente de maestro --}}
-                <x-maestros.create-form action="{{ route('maestros.store') }}" method="POST" />
+                <x-maestros.create-form action="{{ route('admin.maestros.store') }}" method="POST" />
             </div>
         </x-modal>
      
@@ -61,7 +61,7 @@
                                     </button>
                                     
                                     <x-user-eliminate-form
-            :action="route('maestros.destroy', $maestro)"
+            :action="route('admin.maestros.destroy', $maestro)"
             confirm-message="¿Deseas desactivar a {{ $maestro->name }}? No podrá iniciar sesión."
             class="bg-red-100"
         >
@@ -77,7 +77,7 @@
                             <x-modal name="editar-maestro-{{ $maestro->id }}" :show="$errors->any() && old('user_id') == $maestro->id" focusable>
                                 <div class="p-6">
                                     <h2 class="text-lg font-medium text-gray-900 mb-4">Editar Maestro: {{ $maestro->name }}</h2>
-                                    <x-maestros.edit-form :user="$maestro" action="{{ route('maestros.update', $maestro) }}" />
+                                    <x-maestros.edit-form :user="$maestro" action="{{ route('admin.maestros.update', $maestro) }}" />
                                 </div>
                             </x-modal>
                         </tr>

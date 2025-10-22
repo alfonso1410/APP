@@ -74,7 +74,7 @@ class AlumnoController extends Controller
 
         Alumno::create($validatedData);
         // Redirigimos de vuelta al index
-        return redirect()->route('alumnos.index', ['nivel' => $request->input('current_nivel_id', 0)]) // Mantenemos el filtro
+        return redirect()->route('admin.alumnos.index', ['nivel' => $request->input('current_nivel_id', 0)]) // Mantenemos el filtro
                          ->with('success', 'Alumno creado exitosamente.');
     }
 
@@ -98,7 +98,7 @@ class AlumnoController extends Controller
 
         $alumno->update($validatedData);
         // Redirigimos de vuelta al index
-        return redirect()->route('alumnos.index', ['nivel' => $request->input('current_nivel_id', 0)]) // Mantenemos el filtro
+        return redirect()->route('admin.alumnos.index', ['nivel' => $request->input('current_nivel_id', 0)]) // Mantenemos el filtro
                          ->with('success', 'Alumno actualizado exitosamente.');
     }
 
@@ -113,7 +113,7 @@ class AlumnoController extends Controller
         // Opcional: Desasignar de grupos actuales si es necesario
         // $alumno->grupos()->updateExistingPivot($grupoId, ['es_actual' => 0]);
         $alumno->save();
-        return redirect()->route('alumnos.index', ['nivel' => $nivelId])
+        return redirect()->route('admin.alumnos.index', ['nivel' => $nivelId])
                          ->with('success', 'Alumno inactivado exitosamente.');
     }
 

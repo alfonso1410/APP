@@ -9,7 +9,7 @@
             <div class="flex space-x-4">
                 
                 {{-- ✅ BOTÓN AÑADIDO: Volver a la Gestión de Materias --}}
-                <x-secondary-link-button :href="route('materias.index')" title="Volver a la Gestión de Materias">
+                <x-secondary-link-button :href="route('admin.materias.index')" title="Volver a la Gestión de Materias">
                     ← Volver
                 </x-secondary-link-button>
 
@@ -63,7 +63,7 @@
                                                     </button>
                                                     
                                                     {{-- Formulario Eliminar --}}
-                                                    <form action="{{ route('materia-criterios.destroy', $criterio->catalogo_criterio_id) }}" method="POST" onsubmit="return confirm('¿Eliminar el criterio \'{{ $criterio->nombre }}\'? Esto puede afectar a las materias asignadas.');" class="inline">
+                                                    <form action="{{ route('admin.materia-criterios.destroy', $criterio->catalogo_criterio_id) }}" method="POST" onsubmit="return confirm('¿Eliminar el criterio \'{{ $criterio->nombre }}\'? Esto puede afectar a las materias asignadas.');" class="inline">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="submit"
@@ -86,7 +86,7 @@
 
         {{-- MODAL: CREAR CRITERIO BASE (CRUD) --}}
         <x-modal name="create-criterio" :show="$errors->store->isNotEmpty()" focusable>
-            <form method="POST" action="{{ route('materia-criterios.store') }}" class="p-6">
+            <form method="POST" action="{{ route('admin.materia-criterios.store') }}" class="p-6">
                 @csrf
                 <h2 class="text-lg font-medium text-gray-900 mb-4">Crear Nuevo Criterio Base</h2>
                 
@@ -106,7 +106,7 @@
         {{-- MODAL: EDITAR CRITERIO BASE (CRUD) --}}
         <x-modal name="edit-criterio" :show="$errors->update->isNotEmpty()" focusable>
              <form method="post" 
-                   x-bind:action="currentCriterio.catalogo_criterio_id ? `{{ url('materia-criterios') }}/${currentCriterio.catalogo_criterio_id}` : ''" 
+                   x-bind:action="currentCriterio.catalogo_criterio_id ? `{{ url('admin/materia-criterios') }}/${currentCriterio.catalogo_criterio_id}` : ''" 
                    class="p-6">
                 @csrf
                 @method('PATCH')

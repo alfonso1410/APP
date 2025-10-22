@@ -12,7 +12,7 @@
                 <div class="p-6 bg-white border-b border-gray-200">
                     
                     {{-- El formulario enviará los datos a la ruta 'grupos.store' --}}
-                    <form action="{{ route('grupos.store') }}" method="POST">
+                    <form action="{{ route('admin.grupos.store') }}" method="POST">
                         @csrf
 
                         <input type="hidden" name="grado_id" value="{{ $grado->grado_id }}">
@@ -34,7 +34,7 @@
                         </div>
 
                         <div class="flex items-center justify-end mt-6">
-                            <a href="{{ route('grados.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">
+                            <a href="{{ route('admin.grados.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">
                                 Cancelar
                             </a>
                             <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">

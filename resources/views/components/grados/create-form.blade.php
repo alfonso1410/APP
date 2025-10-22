@@ -2,7 +2,7 @@
 
 @props(['niveles', 'view_mode' => 'regular']) {{-- 👈 1. Aceptamos el 'view_mode' --}}
 
-<form method="POST" action="{{ route('grados.store') }}">
+<form method="POST" action="{{ route('admin.grados.store') }}">
     @csrf
 
     {{-- 2. Campo oculto que envía el tipo de grado según el contexto --}}

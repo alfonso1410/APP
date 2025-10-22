@@ -66,6 +66,6 @@ class User extends Authenticatable
 
     public function scopeMaestros($query)
     {
-        return $query->where('rol', 'maestro'); // O como hayas definido tu rol
+        return $query->where('rol', 'MAESTRO'); // O como hayas definido tu rol
     }
 }

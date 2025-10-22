@@ -8,7 +8,7 @@
                     Gestión de Campos Formativos
                 </h2>
                 <div class="flex items-center space-x-4">
-                    <x-secondary-link-button href="{{ route('materias.index') }}">
+                    <x-secondary-link-button href="{{ route('admin.materias.index') }}">
                         + Ver materias
                     </x-secondary-link-button>
                     <x-primary-button x-data="" x-on:click.prevent="$dispatch('open-modal', 'create-campo')">
@@ -24,7 +24,7 @@
                     $inactiveClass = 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50';
                 @endphp
                 @foreach ($niveles as $nivel)
-                    <a href="{{ route('campos-formativos.index', ['nivel' => $nivel->nivel_id]) }}"
+                    <a href="{{ route('admin.campos-formativos.index', ['nivel' => $nivel->nivel_id]) }}"
                        class="{{ $baseClass }} {{ $nivel->nivel_id == $activeNivelId ? $activeClass : $inactiveClass }}">
                         {{ $nivel->nombre }}
                     </a>
@@ -70,7 +70,7 @@
                             </button>
 
                             {{-- Formulario Eliminar --}}
-                            <form action="{{ route('campos-formativos.destroy', $campo) }}" method="POST" onsubmit="return confirm('¿Eliminar campo formativo \'{{ $campo->nombre }}\'?');" class="inline">
+                            <form action="{{ route('admin.campos-formativos.destroy', $campo) }}" method="POST" onsubmit="return confirm('¿Eliminar campo formativo \'{{ $campo->nombre }}\'?');" class="inline">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-gray-400 hover:text-red-400 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500" title="Eliminar">
@@ -92,7 +92,7 @@
 
         {{-- Modales CREAR y EDITAR (sin cambios) --}}
         <x-modal name="create-campo" :show="$errors->store->isNotEmpty()" focusable>
-             <form method="post" action="{{ route('campos-formativos.store') }}" class="p-6">
+             <form method="post" action="{{ route('admin.campos-formativos.store') }}" class="p-6">
                 @csrf
                 <h2 class="text-lg font-medium text-gray-900">Crear Nuevo Campo Formativo</h2>
 
@@ -123,7 +123,7 @@
             </form>
         </x-modal>
         <x-modal name="edit-campo" :show="$errors->update->isNotEmpty()" focusable>
-             <form method="post" x-bind:action="currentCampo ? `{{ url('campos-formativos') }}/${currentCampo.campo_id}` : ''" class="p-6">
+             <form method="post" x-bind:action="currentCampo ? `{{ url('admin/campos-formativos') }}/${currentCampo.campo_id}` : ''" class="p-6">
                 @csrf
                 @method('PATCH')
                 <h2 class="text-lg font-medium text-gray-900">Editar Campo Formativo</h2>

@@ -1,11 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
     @php
-        $backUrl = route('grados.index');
+        $backUrl = route('admin.grados.index');
         if ($grupo->tipo_grupo === 'EXTRA') {
-            $backUrl = route('grados.index', ['view_mode' => 'extracurricular']);
+            $backUrl = route('admin.grados.index', ['view_mode' => 'extracurricular']);
         } elseif ($grupo->tipo_grupo === 'REGULAR' && $grupo->grado->nivel_id) {
-            $backUrl = route('grados.index', ['nivel' => $grupo->grado->nivel_id]);
+            $backUrl = route('admin.grados.index', ['nivel' => $grupo->grado->nivel_id]);
         }
     @endphp
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -30,7 +30,7 @@
             
             @if ($grupo->tipo_grupo === 'REGULAR')
                 {{-- Para grupos regulares, SOLO se asignan maestros --}}
-                <a href="{{ route('grupos.materias-maestros.create', $grupo) }}"
+                <a href="{{ route('admin.grupos.materias-maestros.create', $grupo) }}"
                    class="px-5 py-2 bg-orange-500 text-white font-semibold rounded-lg shadow-md hover:bg-orange-600 transition">
                    Asignar Maestros a Materias
                 </a>
@@ -38,13 +38,13 @@
                 {{-- Para grupos extra, se muestran AMBOS botones --}}
 
                 {{-- Botón 1: Para agregar/quitar materias --}}
-                <a href="{{ route('grupos.materias.create', $grupo) }}" 
+                <a href="{{ route('admin.grupos.materias.create', $grupo) }}" 
                    class="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition">
                    Editar Materias del Grupo
                 </a>
                 
                 {{-- Botón 2: Para asignar maestros a esas materias --}}
-                <a href="{{ route('grupos.materias-maestros.create', $grupo) }}"
+                <a href="{{ route('admin.grupos.materias-maestros.create', $grupo) }}"
                    class="px-5 py-2 bg-orange-500 text-white font-semibold rounded-lg shadow-md hover:bg-orange-600 transition">
                    Asignar Maestros a Materias
                 </a>

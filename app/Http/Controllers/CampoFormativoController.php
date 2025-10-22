@@ -73,7 +73,7 @@ class CampoFormativoController extends Controller
 
         CampoFormativo::create($validatedData);
 
-        return redirect()->route('campos-formativos.index', ['nivel' => $request->nivel_id])
+        return redirect()->route('admin.campos-formativos.index', ['nivel' => $request->nivel_id])
                          ->with('success', 'Campo formativo creado exitosamente.');
     }
 
@@ -99,7 +99,7 @@ class CampoFormativoController extends Controller
 
         $camposFormativo->update($validatedData);
 
-        return redirect()->route('campos-formativos.index', ['nivel' => $request->nivel_id])
+        return redirect()->route('admin.campos-formativos.index', ['nivel' => $request->nivel_id])
                          ->with('success', 'Campo formativo actualizado exitosamente.');
     }
 
@@ -113,10 +113,10 @@ class CampoFormativoController extends Controller
             $nivelId = $camposFormativo->nivel_id;
             $camposFormativo->delete();
             
-            return redirect()->route('campos-formativos.index', ['nivel' => $nivelId])
+            return redirect()->route('admin.campos-formativos.index', ['nivel' => $nivelId])
                              ->with('success', 'Campo formativo eliminado exitosamente.');
         } catch (\Illuminate\Database\QueryException $e) {
-            return redirect()->route('campos-formativos.index', ['nivel' => $camposFormativo->nivel_id])
+            return redirect()->route('admin.campos-formativos.index', ['nivel' => $camposFormativo->nivel_id])
                              ->with('error', 'No se puede eliminar el campo formativo, está siendo utilizado.');
         }
     }

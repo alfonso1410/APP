@@ -11,7 +11,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        
+        // --- INICIO DE LA CORRECCIÓN ---
+        // Aquí registramos los "alias" para poder usarlos en las rutas.
+        $middleware->alias([
+            'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
+            'guest' => \Illuminate\Auth\Middleware\RedirectIfAuthenticated::class,
+            'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+
+            // --- ¡ESTA ES LA LÍNEA QUE NECESITABAS! ---
+            'role' => \App\Http\Middleware\CheckRole::class,
+        ]);
+        // --- FIN DE LA CORRECCIÓN ---
+
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

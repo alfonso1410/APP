@@ -11,6 +11,13 @@ class RegistroAsistencia extends Model
     protected $table = 'registro_asistencia';
     protected $primaryKey = 'registro_asistencia_id';
 
+    protected $fillable = [
+        'alumno_id',
+        'grupo_id',
+        'fecha',
+        'tipo_asistencia',
+    ];
+
     // 1. Relación con Alumno: Un registro pertenece a UN Alumno
     public function alumno()
     {

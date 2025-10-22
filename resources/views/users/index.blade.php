@@ -37,7 +37,7 @@
         <div class="p-6">
             <h2 class="text-lg font-medium text-princeton mb-4">Agregar Nuevo Usuario</h2>
             {{-- Usar el componente del formulario --}}
-            <x-user-create action="{{ route('users.store') }}" method="POST" />
+            <x-user-create action="{{ route('admin.users.store') }}" method="POST" />
         </div>
     </x-modal>
     
@@ -103,7 +103,7 @@
 
         
                         <x-user-eliminate-form
-            :action="route('users.destroy', $user)"
+            :action="route('admin.users.destroy', $user)"
             confirm-message="¿Deseas desactivar a {{ $user->name }}? No podrá iniciar sesión."
             class="bg-red-100">
             
@@ -124,7 +124,7 @@
         {{-- Usamos el componente de Edición --}}
         <x-user-edit-form 
             :user="$user"                                  {{-- Pasamos el objeto $user --}}
-            action="{{ route('users.update', $user) }}"  {{-- Ruta al método update --}}       />
+            action="{{ route('admin.users.update', $user) }}"  {{-- Ruta al método update --}}       />
         </div>
 </x-modal>
                 </tr>

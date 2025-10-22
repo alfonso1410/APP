@@ -44,14 +44,14 @@
 
                     {{-- === CORRECCIÓN AQUÍ === --}}
                     {{-- Cambiado route('alumnos.create') a route('alumnos.index') --}}
-                    <a href="{{ route('alumnos.index') }}" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center">
+                    <a href="{{ route('admin.alumnos.index') }}" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                         Registrar Alumno
                     </a>
                     {{-- === FIN CORRECCIÓN === --}}
 
                     {{-- Nota: Si Registrar Maestro y Crear Grupo también son modales ahora, deberías cambiar sus href a route('maestros.index') y route('grupos.index') respectivamente --}}
-                    <a href="{{ route('maestros.index') }}" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center"> {{-- Asumiendo que maestros.index existe --}}
+                    <a href="{{ route('admin.maestros.index') }}" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center"> {{-- Asumiendo que maestros.index existe --}}
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                         Registrar Maestro
                     </a>

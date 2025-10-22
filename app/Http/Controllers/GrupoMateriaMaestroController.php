@@ -69,7 +69,7 @@ class GrupoMateriaMaestroController extends Controller
         }
 
         // 4. Redirigimos de vuelta a la lista de materias (donde se verá la tabla actualizada)
-        return redirect()->route('grupos.materias.index', $grupo)
+        return redirect()->route('admin.grupos.materias.index', $grupo)
                          ->with('success', 'Maestros asignados a las materias exitosamente.');
     }
 }

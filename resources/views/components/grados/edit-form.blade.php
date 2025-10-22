@@ -2,7 +2,7 @@
 
 @props(['grado', 'niveles'])
 
-<form method="POST" action="{{ route('grados.update', $grado) }}">
+<form method="POST" action="{{ route('admin.grados.update', $grado) }}">
     @csrf
     @method('PUT') {{-- Usamos el método PUT para actualizar --}}
 

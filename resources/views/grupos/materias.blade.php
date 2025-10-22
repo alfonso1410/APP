@@ -7,7 +7,7 @@
 
     <div class="py-12">
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
-            <form action="{{ route('grupos.materias.store', $grupo) }}" method="POST">
+            <form action="{{ route('admin.grupos.materias.store', $grupo) }}" method="POST">
                 @csrf
                 <div class="bg-white shadow-sm rounded-lg p-6">
                     <p class="text-gray-600 mb-6">
@@ -43,7 +43,7 @@
                     @endif
 
                     <div class="mt-8 flex justify-end gap-4">
-                        <a href="{{ route('grados.index') }}" class="px-4 py-2 bg-gray-200 text-sm font-semibold rounded-md hover:bg-gray-300">Cancelar</a>
+                        <a href="{{ route('admin.grados.index') }}" class="px-4 py-2 bg-gray-200 text-sm font-semibold rounded-md hover:bg-gray-300">Cancelar</a>
                         <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700"
                             @if($grupo->tipo_grupo === 'REGULAR') disabled @endif
                         >

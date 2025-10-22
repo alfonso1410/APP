@@ -47,7 +47,7 @@ class MaestroController extends Controller
 
         User::create($dataToSave);
 
-        return redirect()->route('maestros.index')->with('success', 'Maestro creado exitosamente.');
+        return redirect()->route('admin.maestros.index')->with('success', 'Maestro creado exitosamente.');
     }
     /**
      * Display the specified resource.
@@ -80,7 +80,7 @@ class MaestroController extends Controller
         ]);
 
         $maestro->update($validatedData);
-        return redirect()->route('maestros.index')->with('success', 'Maestro actualizado exitosamente.');
+        return redirect()->route('admin.maestros.index')->with('success', 'Maestro actualizado exitosamente.');
     }
     /**
      * Remove the specified resource from storage.
@@ -89,6 +89,6 @@ class MaestroController extends Controller
     {
         $maestro->activo = false;
         $maestro->save();
-        return redirect()->route('maestros.index')->with('success', 'Maestro desactivado exitosamente.');
+        return redirect()->route('admin.maestros.index')->with('success', 'Maestro desactivado exitosamente.');
     }
 }

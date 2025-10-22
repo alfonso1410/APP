@@ -1,11 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
         @php
-            $backUrl = route('grados.index');
+            $backUrl = route('admin.grados.index');
             if ($grupo->tipo_grupo === 'EXTRA') {
-                $backUrl = route('grados.index', ['view_mode' => 'extracurricular']);
+                $backUrl = route('admin.grados.index', ['view_mode' => 'extracurricular']);
             } elseif ($grupo->tipo_grupo === 'REGULAR' && $grupo->grado->nivel_id) {
-                $backUrl = route('grados.index', ['nivel' => $grupo->grado->nivel_id]);
+                $backUrl = route('admin.grados.index', ['nivel' => $grupo->grado->nivel_id]);
             }
         @endphp
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -25,7 +25,7 @@
             
             {{-- Botón de Acción Principal --}}
             {{-- Asumimos que la ruta para el formulario es 'grupos.maestros.create' o similar --}}
-            <a href="{{ route('grupos.maestros.create', $grupo) }}"
+            <a href="{{ route('admin.grupos.maestros.create', $grupo) }}"
                class="px-5 py-2 bg-orange-500 text-white font-semibold rounded-lg shadow-md hover:bg-orange-600 transition">
                 Asignar Maestros
             </a>
@@ -51,7 +51,7 @@
                             --}}
                             @forelse ($maestros as $maestro)
                                 <tr>
-                                    <td class="px-6 py-4 font-medium text-gray-900">{{ $maestro->name }}</td>
+                                    <td class="px-6 py-4 font-medium text-gray-900">{{ $maestro->name }} {{ $maestro->apellido_paterno }} {{ $maestro->apellido_materno }}</td>
                                 </tr>
                             @empty
                                 <tr>

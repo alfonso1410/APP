@@ -34,7 +34,12 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        // --- INICIO DE LA MEJORA ---
+        // ANTES: return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        
+        // CORREGIDO: Redirige a la página anterior (sea /profile o /maestro/perfil)
+        return Redirect::back()->with('status', 'profile-updated');
+        // --- FIN DE LA MEJORA ---
     }
 
     /**
@@ -42,6 +47,7 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        // ... (el resto de esta función está perfecta) ...
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
         ]);

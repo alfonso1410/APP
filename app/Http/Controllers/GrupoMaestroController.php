@@ -55,7 +55,7 @@ class GrupoMaestroController extends Controller
         $grupo->maestrosTitulares()->sync($request->input('maestros', []));
 
         // Redirigimos de vuelta a la LISTA
-        return redirect()->route('grupos.maestros.index', $grupo)
+        return redirect()->route('admin.grupos.maestros.index', $grupo)
                          ->with('success', 'Maestros titulares actualizados.');
     }
 }

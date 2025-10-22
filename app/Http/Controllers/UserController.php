@@ -55,7 +55,7 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'activo' => $request->activo,
         ]);
-        return redirect()->route('users.index')->with('status', 'Usuario creado exitosamente.');
+        return redirect()->route('admin.users.index')->with('status', 'Usuario creado exitosamente.');
     }
 
     /**
@@ -116,7 +116,7 @@ class UserController extends Controller
     // 6. Actualizar
     $user->update($userData);
 
-    return redirect()->route('users.index')
+    return redirect()->route('admin.users.index')
                      ->with('success', 'Usuario actualizado exitosamente.');
 }
     /**
@@ -129,7 +129,7 @@ class UserController extends Controller
     $user->save(); // 2. Guardamos el cambio
 
     // 3. Redirección con mensaje
-    return redirect()->route('users.index')
+    return redirect()->route('admin.users.index')
                      ->with('success', 'El usuario ' . $user->name . ' ha sido desactivado exitosamente.');
 }
 }

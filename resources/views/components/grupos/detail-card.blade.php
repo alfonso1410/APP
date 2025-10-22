@@ -9,7 +9,7 @@
             Información del Grupo
         </h2>
         <div class="flex items-center gap-3">
-              <form method="POST" action="{{ route('grupos.archivar', $grupo) }}" onsubmit="return confirm('¿Estás seguro de que deseas archivar este grupo? Los alumnos serán desvinculados.');">
+              <form method="POST" action="{{ route('admin.grupos.archivar', $grupo) }}" onsubmit="return confirm('¿Estás seguro de que deseas archivar este grupo? Los alumnos serán desvinculados.');">
         @csrf
         @method('PATCH')
         <button type="submit" class="flex items-center gap-2 px-3 py-1.5 bg-gray-200 text-gray-800 text-xs font-bold rounded-md hover:bg-gray-300 transition">
@@ -30,7 +30,7 @@
 
         {{-- Botón para Eliminar (usa el componente de confirmación) --}}
         <x-grupos.delete-form
-            :action="route('grupos.destroy', $grupo)"
+            :action="route('admin.grupos.destroy', $grupo)"
             confirm-message="¿Seguro que quieres eliminar el grupo '{{ $grupo->nombre_grupo }}'? No se podrá si tiene alumnos asignados."
             class="bg-red-100 text-red-800"
         >
@@ -72,13 +72,13 @@
 
     {{-- Pie con las tarjetas de navegación --}}
     <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <a href="{{ route('grupos.alumnos.index', $grupo) }}" class="block py-8 text-center bg-green-500 text-white rounded-2xl hover:bg-green-500 transition shadow-md hover:shadow-lg transform hover:-translate-y-1">
+        <a href="{{ route('admin.grupos.alumnos.index', $grupo) }}" class="block py-8 text-center bg-green-500 text-white rounded-2xl hover:bg-green-500 transition shadow-md hover:shadow-lg transform hover:-translate-y-1">
             <h3 class="text-xl font-bold">Alumnos</h3>
         </a>
-        <a href="{{ route('grupos.materias.index', $grupo) }}" class="block py-8 text-center bg-blue-500 text-white rounded-2xl hover:bg-blue-500 transition shadow-md hover:shadow-lg transform hover:-translate-y-1">
+        <a href="{{ route('admin.grupos.materias.index', $grupo) }}" class="block py-8 text-center bg-blue-500 text-white rounded-2xl hover:bg-blue-500 transition shadow-md hover:shadow-lg transform hover:-translate-y-1">
             <h3 class="text-xl font-bold">Materias</h3>
         </a>
-        <a href="{{ route('grupos.maestros.index', $grupo) }}" class="block py-8 text-center bg-orange-400 text-white rounded-2xl hover:bg-orange-500 transition shadow-md hover:shadow-lg transform hover:-translate-y-1">
+        <a href="{{ route('admin.grupos.maestros.index', $grupo) }}" class="block py-8 text-center bg-orange-400 text-white rounded-2xl hover:bg-orange-500 transition shadow-md hover:shadow-lg transform hover:-translate-y-1">
             <h3 class="text-xl font-bold">Maestros</h3>
         </a>
     </div>

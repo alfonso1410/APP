@@ -30,7 +30,7 @@
             <div class="flex items-center justify-between mb-4 gap-4">
                 {{-- Barra de Búsqueda --}}
                 <div class="w-full sm:w-2/3">
-                    <form action="{{ route('alumnos.index') }}" method="GET">
+                    <form action="{{ route('admin.alumnos.index') }}" method="GET">
                         <input type="hidden" name="nivel" value="{{ $nivel_id }}">
                         <input type="text" name="search" value="{{ $search ?? '' }}" placeholder="Buscar por nombre, apellidos o CURP..." class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                     </form>
@@ -42,7 +42,7 @@
             </div>
 
             {{-- Componente de filtro --}}
-            <x-level-filter :route="'alumnos.index'" :selectedNivel="$nivel_id" />
+            <x-level-filter :route="'admin.alumnos.index'" :selectedNivel="$nivel_id" />
 
             <div class="bg-white shadow-sm overflow-hidden sm:rounded-lg mt-4">
                 <div class="overflow-x-auto">
@@ -96,7 +96,7 @@
                                             </button>
 
                                             {{-- Botón Eliminar (Estilo Original) --}}
-                                            <form method="POST" action="{{ route('alumnos.destroy', $alumno) }}" onsubmit="return confirm('¿Estás seguro de que deseas INACTIVAR a este alumno?');">
+                                            <form method="POST" action="{{ route('admin.alumnos.destroy', $alumno) }}" onsubmit="return confirm('¿Estás seguro de que deseas INACTIVAR a este alumno?');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button
@@ -113,7 +113,7 @@
 
                                 {{-- Modal de Edición DENTRO del bucle --}}
                                 <x-modal :name="'editar-alumno-'.$alumno->alumno_id" :show="$errors->update->isNotEmpty() && old('alumno_id_error_key') == $alumno->alumno_id" focusable>
-                                    <form method="POST" action="{{ route('alumnos.update', $alumno) }}" class="p-6">
+                                    <form method="POST" action="{{ route('admin.alumnos.update', $alumno) }}" class="p-6">
                                         @method('PUT')
                                         @csrf
                                         <input type="hidden" name="current_nivel_id" value="{{ request()->input('nivel', 0) }}">
@@ -179,7 +179,7 @@
 
             {{-- Modal AGREGAR ALUMNO (Fuera del bucle) --}}
             <x-modal name="agregar-alumno" :show="$errors->store->isNotEmpty()" focusable>
-                 <form method="POST" action="{{ route('alumnos.store') }}" class="p-6">
+                 <form method="POST" action="{{ route('admin.alumnos.store') }}" class="p-6">
                      @csrf
                      <input type="hidden" name="current_nivel_id" value="{{ request()->input('nivel', 0) }}">
                      <h2 class="text-lg font-medium text-gray-900 mb-4">Agregar Nuevo Alumno</h2>

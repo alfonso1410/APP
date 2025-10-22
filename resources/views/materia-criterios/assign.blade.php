@@ -72,7 +72,7 @@
                                             </button>
                                             
                                             {{-- Formulario para eliminar --}}
-                                            <form method="POST" action="{{ route('materia-criterios.destroy', $criterio->materia_criterio_id) }}" class="inline" onsubmit="return confirm('¿Seguro que deseas eliminar este criterio asignado?');">
+                                            <form method="POST" action="{{ route('admin.materia-criterios.destroy', $criterio->materia_criterio_id) }}" class="inline" onsubmit="return confirm('¿Seguro que deseas eliminar este criterio asignado?');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" 
@@ -91,7 +91,7 @@
                 @endif
                 
                 {{-- Formulario para Añadir Nuevo Criterio (POST simple) --}}
-                <form method="POST" action="{{ route('materia-criterios.store') }}" class="bg-gray-50 p-4 rounded-lg border mt-8" x-data="{ includedInAverage: '1' }">
+                <form method="POST" action="{{ route('admin.materia-criterios.store') }}" class="bg-gray-50 p-4 rounded-lg border mt-8" x-data="{ includedInAverage: '1' }">
                     @csrf
                     <input type="hidden" name="materia_id" value="{{ $materia->materia_id }}">
                     
@@ -160,7 +160,7 @@
             </div>
             
             <div class="mt-8">
-                <x-secondary-link-button :href="route('materias.index')">
+                <x-secondary-link-button :href="route('admin.materias.index')">
                     ← Volver a Materias
                 </x-secondary-link-button>
             </div>
@@ -169,7 +169,7 @@
         {{-- MODAL: EDITAR CRITERIO ASIGNADO --}}
         <x-modal name="edit-criterio" :show="$errors->update->isNotEmpty()" focusable>
              <form method="post" 
-                   x-bind:action="currentCriterio.materia_criterio_id ? `{{ url('materia-criterios') }}/${currentCriterio.materia_criterio_id}` : ''" 
+                   x-bind:action="currentCriterio.materia_criterio_id ? `{{ url('admin/materia-criterios') }}/${currentCriterio.materia_criterio_id}` : ''" 
                    class="p-6">
                 @csrf
                 @method('PATCH')

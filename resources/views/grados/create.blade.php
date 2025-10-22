@@ -11,8 +11,8 @@
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
             {{-- Usamos nuestro nuevo componente de formulario reutilizable --}}
             <x-form-card 
-                :action="route('grados.store')" 
-                :cancelRoute="route('grados.index')"
+                :action="route('admin.grados.store')" 
+                :cancelRoute="route('admin.grados.index')"
                 submitText="Guardar Grado"
             >
                 {{-- Aquí dentro va el contenido del slot: nuestros campos personalizados --}}

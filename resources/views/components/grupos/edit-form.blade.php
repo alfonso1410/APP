@@ -1,7 +1,7 @@
 {{-- resources/views/components/grupos/edit-form.blade.php --}}
 @props(['grupo'])
 
-<form method="POST" action="{{ route('grupos.update', $grupo) }}">
+<form method="POST" action="{{ route('admin.grupos.update', $grupo) }}">
     @csrf
     @method('PUT')
 

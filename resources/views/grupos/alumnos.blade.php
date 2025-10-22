@@ -20,7 +20,7 @@
                     <p>{{ session('error') }}</p>
                 </div>
             @endif
-           <form action="{{ route('grupos.alumnos.store', $grupo) }}" method="POST">
+           <form action="{{ route('admin.grupos.alumnos.store', $grupo) }}" method="POST">
                 @csrf
                 <div class="bg-white shadow-sm rounded-lg">
                     <div class="p-6 border-b">
@@ -84,7 +84,7 @@
                     </div>
 
                     <div class="p-6 border-t flex justify-end gap-4">
-                        <a href="{{ route('grupos.alumnos.index', $grupo) }}" class="px-4 py-2 bg-gray-200 text-sm font-semibold rounded-md hover:bg-gray-300">Cancelar</a>
+                        <a href="{{ route('admin.grupos.alumnos.index', $grupo) }}" class="px-4 py-2 bg-gray-200 text-sm font-semibold rounded-md hover:bg-gray-300">Cancelar</a>
                         <button type="submit" class="px-4 py-2 bg-princeton text-white text-sm font-semibold rounded-md">Guardar Asignaciones</button>
                     </div>
                 </div>

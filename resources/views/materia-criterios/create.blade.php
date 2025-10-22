@@ -12,7 +12,7 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                 
                 {{-- Formulario de Creación --}}
-                <form method="POST" action="{{ route('materia-criterios.store') }}" class="pb-6 border-b border-gray-200 mb-6">
+                <form method="POST" action="{{ route('admin.materia-criterios.store') }}" class="pb-6 border-b border-gray-200 mb-6">
                     @csrf
                     
                     <div>
@@ -24,7 +24,7 @@
                     {{-- ❌ CAMPO ELIMINADO: Se ha quitado el bloque de 'descripcion' --}}
 
                     <div class="flex items-center justify-end mt-6">
-                        <x-secondary-link-button :href="route('materias.index')" class="mr-4">
+                        <x-secondary-link-button :href="route('admin.materias.index')" class="mr-4">
                             Cancelar
                         </x-secondary-link-button>
                         <x-primary-button>

@@ -5,12 +5,12 @@
                 Gestión de Materias
             </h2>
             <div class="flex space-x-4">
-                 <x-secondary-link-button href="{{ route('campos-formativos.index') }}">
+                 <x-secondary-link-button href="{{ route('admin.campos-formativos.index') }}">
                      Ver Campos Formativos
                  </x-secondary-link-button>
 
                  {{-- ✅ BOTÓN GLOBAL: Navega al Dashboard del Catálogo de Criterios --}}
-                 <x-secondary-link-button href="{{ route('materia-criterios.index') }}" title="Gestionar el Catálogo de Criterios de Evaluación Base">
+                 <x-secondary-link-button href="{{ route('admin.materia-criterios.index') }}" title="Gestionar el Catálogo de Criterios de Evaluación Base">
                      Ver Criterios
                  </x-secondary-link-button>
 
@@ -51,7 +51,7 @@
                                             <div class="flex justify-end items-center space-x-2">
 
                                                 {{-- ✅ BOTÓN POR FILA: Asignar Criterios (apunta a materia-criterios.index con parámetro) --}}
-                                                <a href="{{ route('materia-criterios.index', ['materia' => $materia->materia_id]) }}" 
+                                                <a href="{{ route('admin.materia-criterios.index', ['materia' => $materia->materia_id]) }}" 
                                                    class="bg-yellow-100 text-yellow-800 p-1 flex size-6 items-center justify-center rounded-full hover:scale-125 transition-transform" 
                                                    title="Añadir/Gestionar Criterios por Grado">
                                                      <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -69,7 +69,7 @@
                                                  </button>
 
                                                 {{-- Botón Eliminar --}}
-                                                <form action="{{ route('materias.destroy', $materia) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar la materia \'{{ $materia->nombre }}\'?');" class="inline">
+                                                <form action="{{ route('admin.materias.destroy', $materia) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar la materia \'{{ $materia->nombre }}\'?');" class="inline">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit"
@@ -96,7 +96,7 @@
 
         {{-- Modal: CREAR Materia --}}
         <x-modal name="create-materia" :show="$errors->store->isNotEmpty()" focusable>
-            <form method="post" action="{{ route('materias.store') }}" class="p-6">
+            <form method="post" action="{{ route('admin.materias.store') }}" class="p-6">
                 @csrf
                 <h2 class="text-lg font-medium text-gray-900">
                     Crear Nueva Materia
@@ -143,7 +143,7 @@
 
         {{-- Modal: EDITAR Materia --}}
         <x-modal name="edit-materia" :show="$errors->update->isNotEmpty()" focusable>
-             <form method="post" x-bind:action="currentMateria ? `{{ url('materias') }}/${currentMateria.materia_id}` : ''" class="p-6">
+             <form method="post" x-bind:action="currentMateria ? `{{ url('admin/materias') }}/${currentMateria.materia_id}` : ''" class="p-6">
                 @csrf
                 @method('PATCH')
                 <h2 class="text-lg font-medium text-gray-900">

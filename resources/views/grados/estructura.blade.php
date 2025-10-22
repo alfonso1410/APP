@@ -26,7 +26,7 @@
     // Si no hay 'old' input (primera carga), usa las claves de las asignaciones de la BD
     $finalSeleccionados = old('seleccionados', $asignacionesActuales->keys()->toArray());
 @endphp
-            <form action="{{ route('grados.estructura.update', $grado) }}" method="POST">
+            <form action="{{ route('admin.grados.estructura.update', $grado) }}" method="POST">
                 @csrf
                 <div class="bg-white shadow-sm rounded-lg">
                     <div class="p-6 border-b">
@@ -120,7 +120,7 @@
                     </div>
 
                     <div class="p-6 bg-gray-50 border-t flex justify-end gap-4">
-                        <a href="{{ route('grados.index', ['nivel' => $grado->nivel_id]) }}" class="px-4 py-2 bg-gray-200 text-sm font-semibold rounded-md hover:bg-gray-300">Cancelar</a>
+                        <a href="{{ route('admin.grados.index', ['nivel' => $grado->nivel_id]) }}" class="px-4 py-2 bg-gray-200 text-sm font-semibold rounded-md hover:bg-gray-300">Cancelar</a>
                         <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700">
                             Guardar Estructura
                         </button>

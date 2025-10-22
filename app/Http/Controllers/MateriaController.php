@@ -40,7 +40,7 @@ class MateriaController extends Controller
 
         Materia::create($validatedData);
 
-        return redirect()->route('materias.index')
+        return redirect()->route('admin.materias.index')
                          ->with('success', 'Materia creada exitosamente.');
     }
 
@@ -68,7 +68,7 @@ class MateriaController extends Controller
 
         $materia->update($validatedData);
 
-        return redirect()->route('materias.index')
+        return redirect()->route('admin.materias.index')
                          ->with('success', 'Materia actualizada exitosamente.');
     }
 
@@ -81,10 +81,10 @@ class MateriaController extends Controller
     {
         try {
             $materia->delete();
-            return redirect()->route('materias.index')
+            return redirect()->route('admin.materias.index')
                              ->with('success', 'Materia eliminada exitosamente.');
         } catch (\Illuminate\Database\QueryException $e) {
-            return redirect()->route('materias.index')
+            return redirect()->route('admin.materias.index')
                              ->with('error', 'No se puede eliminar la materia, está siendo utilizada.');
         }
     }

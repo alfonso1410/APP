@@ -3,7 +3,7 @@
         <div class="flex justify-between h-16">
             <div class="flex">
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
+                    <a href="{{ route('admin.dashboard') }}">
                         <img src="{{ asset('Assets/logo-princeton.png') }}"
                              alt="Logo del sistema de boletas"
                              class="block h-12 w-auto">
@@ -11,20 +11,23 @@
                 </div>
 
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                    <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')"> {{-- CORRECCIÓN AQUÍ --}}
                         {{ __('Inicio') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                    <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')"> {{-- CORRECCIÓN AQUÍ --}}
                         {{ __('Gestionar Usuarios') }}
                     </x-nav-link>
-
-                    {{-- =============================================== --}}
-                    {{-- =========== CÓDIGO AÑADIDO AQUÍ =========== --}}
-                    <x-nav-link :href="route('alumnos.index')" :active="request()->routeIs('alumnos.*')">
+                    
+                    <x-nav-link :href="route('admin.alumnos.index')" :active="request()->routeIs('admin.alumnos.*')"> {{-- CORRECCIÓN AQUÍ --}}
                         {{ __('Gestionar Alumnos') }}
                     </x-nav-link>
-                    {{-- =============================================== --}}
                     
+                    {{-- Aquí puedes agregar tus otros enlaces de admin (grupos, grados, etc.) --}}
+                    {{-- EJEMPLO:
+                    <x-nav-link :href="route('admin.grupos.index')" :active="request()->routeIs('admin.grupos.*')">
+                        {{ __('Gestionar Grupos') }}
+                    </x-nav-link>
+                    --}}
                 </div>
             </div>
 
@@ -43,6 +46,7 @@
                     </x-slot>
 
                     <x-slot name="content">
+                        {{-- CORRECCIÓN AQUÍ: 'profile.edit' no lleva el prefijo 'admin.' --}}
                         <x-dropdown-link :href="route('profile.edit')">
                             {{ __('Profile') }}
                         </x-dropdown-link>
@@ -73,19 +77,23 @@
 
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+            
+            {{-- CORRECCIÓN AQUÍ --}}
+            <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
                 {{ __('Inicio') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+
+            {{-- CORRECCIÓN AQUÍ --}}
+            <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
                 {{ __('Gestionar Usuarios') }}
             </x-responsive-nav-link>
             
-            {{-- =============================================== --}}
-            {{-- === CÓDIGO AÑADIDO AQUÍ PARA VISTA MÓVIL === --}}
-            <x-responsive-nav-link :href="route('alumnos.index')" :active="request()->routeIs('alumnos.*')">
+            {{-- CORRECCIÓN AQUÍ --}}
+            <x-responsive-nav-link :href="route('admin.alumnos.index')" :active="request()->routeIs('admin.alumnos.*')">
                 {{ __('Gestionar Alumnos') }}
             </x-responsive-nav-link>
-            {{-- =============================================== --}}
+
+            {{-- Aquí agregarías las otras vistas móviles (grupos, grados, etc.) --}}
 
         </div>
 
@@ -96,6 +104,7 @@
             </div>
 
             <div class="mt-3 space-y-1">
+                {{-- 'profile.edit' es global, no lleva 'admin.' --}}
                 <x-responsive-nav-link :href="route('profile.edit')">
                     {{ __('Profile') }}
                 </x-responsive-nav-link>

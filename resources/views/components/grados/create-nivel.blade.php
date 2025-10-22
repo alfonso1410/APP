@@ -1,5 +1,5 @@
 {{-- resources/views/components/grados/create-nivel.blade.php --}}
-<form method="post" action="{{ route('niveles.store') }}" class="space-y-6">
+<form method="post" action="{{ route('admin.niveles.store') }}" class="space-y-6">
     @csrf
 
     <div>

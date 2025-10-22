@@ -9,7 +9,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             
             <div class="flex justify-end mb-4">
-                <a href="{{ route('grados.index') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <a href="{{ route('admin.grados.index') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
                     &larr; Regresar a la Gestión Principal
                 </a>
             </div>
@@ -52,7 +52,7 @@
                                     <td class="px-6 py-4">{{ $grupo->estado }}</td>
                                     <td class="px-6 py-4 text-center">
                                          <x-grupos.delete-form
-                                            :action="route('grupos.destroy', $grupo)"
+                                            :action="route('admin.grupos.destroy', $grupo)"
                                             confirm-message="¿Seguro que quieres eliminar el grupo '{{ $grupo->nombre_grupo }}'? Esta acción es permanente."
                                             class="bg-red-100 text-red-800"
                                         >

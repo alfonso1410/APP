@@ -83,7 +83,7 @@ class GradoController extends Controller
             ? ['nivel' => $grado->nivel_id]
             : ['view_mode' => 'extracurricular'];
 
-        return redirect()->route('grados.index', $redirectParams)
+        return redirect()->route('admin.grados.index', $redirectParams)
                          ->with('success', 'Grado actualizado exitosamente.');
     }
 
@@ -110,7 +110,7 @@ class GradoController extends Controller
             ? ['nivel' => $grado->nivel_id] 
             : ['view_mode' => 'extracurricular'];
 
-        return redirect()->route('grados.index', $redirectParams)
+        return redirect()->route('admin.grados.index', $redirectParams)
                          ->with('success', 'Registro creado exitosamente.');
     }
 
@@ -146,7 +146,7 @@ class GradoController extends Controller
 
         $grado->gradosRegularesMapeados()->sync($gradosIds);
 
-        return redirect()->route('grados.index', ['view_mode' => 'extracurricular'])
+        return redirect()->route('admin.grados.index', ['view_mode' => 'extracurricular'])
                          ->with('success', 'Mapeo de grados actualizado exitosamente.');
     }
 

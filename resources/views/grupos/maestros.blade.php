@@ -8,7 +8,7 @@
     <div class="py-12">
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
             <x-flash-messages />
-            <form action="{{ route('grupos.maestros.store', $grupo) }}" method="POST">
+            <form action="{{ route('admin.grupos.maestros.store', $grupo) }}" method="POST">
                 @csrf
                 <div class="bg-white shadow-sm rounded-lg p-6">
                     <p class="text-gray-600 mb-6">
@@ -37,7 +37,7 @@
 
                     <div class="mt-8 flex justify-end gap-4">
                         {{-- Redirige a la vista de detalle de la card --}}
-                        <a href="{{ route('grupos.maestros.index', $grupo) }}" class="px-4 py-2 bg-gray-200 text-sm font-semibold rounded-md hover:bg-gray-300">Volver al Grupo</a>
+                        <a href="{{ route('admin.grupos.maestros.index', $grupo) }}" class="px-4 py-2 bg-gray-200 text-sm font-semibold rounded-md hover:bg-gray-300">Volver al Grupo</a>
                         <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700">
                             Guardar Maestros
                         </button>

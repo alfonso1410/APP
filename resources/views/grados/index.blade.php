@@ -12,7 +12,7 @@
                 <div class="flex items-center justify-between mb-4">
                     {{-- Barra de búsqueda --}}
                     <div class="w-1/3">
-                        <form action="{{ route('grados.index') }}" method="GET">
+                        <form action="{{ route('admin.grados.index') }}" method="GET">
                             @if($view_mode === 'extracurricular')
                                 <input type="hidden" name="view_mode" value="extracurricular">
                             @else
@@ -22,10 +22,10 @@
                         </form>
                     </div>
 
-          <x-level-filter :route="'grados.index'" :selectedNivel="$nivel_id" :show-unassigned="false">
+          <x-level-filter :route="'admin.grados.index'" :selectedNivel="$nivel_id" :show-unassigned="false">
         
         {{-- Este enlace se inyectará en el 'slot' del componente --}}
-        <a href="{{ route('grados.index', ['view_mode' => 'extracurricular']) }}"
+        <a href="{{ route('admin.grados.index', ['view_mode' => 'extracurricular']) }}"
            class="px-4 py-2 text-sm font-medium rounded-md transition
                   {{ $view_mode == 'extracurricular' 
                      ? 'bg-gray-800 text-white shadow' 
@@ -33,7 +33,7 @@
             Extracurricular
         </a>
 
-        <a href="{{ route('grupos.archivados') }}"
+        <a href="{{ route('admin.grupos.archivados') }}"
        class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
        title="Ver historial de grupos"
     >
@@ -89,7 +89,7 @@
                 {{-- Usamos un div con flex para alinear y espaciar los botones --}}
                 <div class="flex items-center justify-center gap-x-4">
                     @if($grado->tipo_grado === 'REGULAR')
-                                                    <a href="{{ route('grados.estructura', $grado) }}" class="inline-flex items-center p-2 bg-teal-100 text-teal-800 rounded-full font-semibold text-xs hover:bg-teal-200" title="Asignar Materias al Grado">
+                                                    <a href="{{ route('admin.grados.estructura', $grado) }}" class="inline-flex items-center p-2 bg-teal-100 text-teal-800 rounded-full font-semibold text-xs hover:bg-teal-200" title="Asignar Materias al Grado">
                                                        <svg class="size-4 ">
             <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-add"></use>
         </svg>
@@ -97,12 +97,12 @@
                                                 @endif
 
                     @if($grado->tipo_grado === 'EXTRA')
-                                                    <a href="{{ route('grados.mapeo', $grado) }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                                                    <a href="{{ route('admin.grados.mapeo', $grado) }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
                                                         Agrupar</a>
                     @endif
 
                     {{-- 1. Botón para Nuevo Grupo (el que faltaba) --}}
-                    <a href="{{ route('grupos.create', ['grado' => $grado->grado_id]) }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                    <a href="{{ route('admin.grupos.create', ['grado' => $grado->grado_id]) }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
                         Nuevo Grupo
                     </a>
                     {{-- 2. Botón para Editar Grado (abre la modal) --}}
@@ -118,7 +118,7 @@
                     </button>
 
                     <x-grados.eliminate-form
-                        :action="route('grados.destroy', $grado)"
+                        :action="route('admin.grados.destroy', $grado)"
                         confirm-message="¿Seguro que quieres eliminar el grado '{{ $grado->nombre }}'? No se podrá si tiene grupos asociados."
                         class="bg-red-100 text-red-800 "
                     >

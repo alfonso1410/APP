@@ -13,11 +13,11 @@
             @if($maestrosDelPool->isEmpty())
                 <div class="p-4 mb-4 text-sm text-yellow-800 rounded-lg bg-yellow-100" role="alert">
                     <span class="font-medium">¡Atención!</span> No hay maestros titulares asignados a este grupo. 
-                    <a href="{{ route('grupos.maestros.create', $grupo) }}" class="font-bold underline">Asigna maestros titulares primero</a>.
+                    <a href="{{ route('admin.grupos.maestros.create', $grupo) }}" class="font-bold underline">Asigna maestros titulares primero</a>.
                 </div>
             @endif
 
-            <form action="{{ route('grupos.materias-maestros.store', $grupo) }}" method="POST">
+            <form action="{{ route('admin.grupos.materias-maestros.store', $grupo) }}" method="POST">
                 @csrf
                 <div class="bg-white shadow-sm rounded-lg p-6">
                     <p class="text-gray-600 mb-6">
@@ -54,7 +54,7 @@
 
                     {{-- Botones de Acción --}}
                     <div class="mt-8 flex justify-end gap-4">
-                        <a href="{{ route('grupos.materias.index', $grupo) }}" class="px-4 py-2 bg-gray-200 text-sm font-semibold rounded-md hover:bg-gray-300">Cancelar</a>
+                        <a href="{{ route('admin.grupos.materias.index', $grupo) }}" class="px-4 py-2 bg-gray-200 text-sm font-semibold rounded-md hover:bg-gray-300">Cancelar</a>
                         <button type="submit" 
                                 class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700
                                        @if($maestrosDelPool->isEmpty()) opacity-50 cursor-not-allowed @endif"

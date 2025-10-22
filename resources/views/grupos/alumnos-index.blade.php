@@ -2,11 +2,11 @@
   <x-slot name="header">
     {{-- Lógica para construir la URL de regreso --}}
     @php
-        $backUrl = route('grados.index'); // URL por defecto
+        $backUrl = route('admin.grados.index'); // URL por defecto
         if ($grupo->tipo_grupo === 'EXTRA') {
-            $backUrl = route('grados.index', ['view_mode' => 'extracurricular']);
+            $backUrl = route('admin.grados.index', ['view_mode' => 'extracurricular']);
         } elseif ($grupo->tipo_grupo === 'REGULAR' && $grupo->grado->nivel_id) {
-            $backUrl = route('grados.index', ['nivel' => $grupo->grado->nivel_id]);
+            $backUrl = route('admin.grados.index', ['nivel' => $grupo->grado->nivel_id]);
         }
     @endphp
 
@@ -26,7 +26,7 @@
             </div>
         </div>
         
-        <a href="{{ route('grupos.alumnos.create', $grupo) }}" 
+        <a href="{{ route('admin.grupos.alumnos.create', $grupo) }}" 
            class="px-5 py-2 bg-princeton text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition">
             Asignar / Desvincular Alumnos
         </a>

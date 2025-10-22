@@ -42,7 +42,7 @@ class MateriaCriterioController extends Controller
      */
     public function create()
     {
-        return redirect()->route('materia-criterios.index');
+        return redirect()->route('admin.materia-criterios.index');
     }
 
     /**
@@ -64,7 +64,7 @@ class MateriaCriterioController extends Controller
 
         CatalogoCriterio::create($validatedData);
 
-        return redirect()->route('materia-criterios.index')->with('success', 'Criterio base creado exitosamente.');
+        return redirect()->route('admin.materia-criterios.index')->with('success', 'Criterio base creado exitosamente.');
     }
     
     /**
@@ -135,7 +135,7 @@ class MateriaCriterioController extends Controller
         
         MateriaCriterio::create($validated);
 
-        return redirect()->route('materia-criterios.index', [
+        return redirect()->route('admin.materia-criterios.index', [
             'materia' => $request->materia_id, 
         ])->with('success', 'Criterio asignado correctamente.');
     }
@@ -162,7 +162,7 @@ class MateriaCriterioController extends Controller
 
         $materia_criterio->update($validatedData);
 
-        return redirect()->route('materia-criterios.index')->with('success', 'Criterio actualizado exitosamente.');
+        return redirect()->route('admin.materia-criterios.index')->with('success', 'Criterio actualizado exitosamente.');
     }
     
     /**
@@ -228,7 +228,7 @@ class MateriaCriterioController extends Controller
             'incluido_en_promedio' => (bool)($validated['incluido_en_promedio'] ?? 0),
         ]);
 
-        return redirect()->route('materia-criterios.index', [
+        return redirect()->route('admin.materia-criterios.index', [
             'materia' => $materia_criterio->materia_id, 
         ])->with('success', 'Criterio actualizado correctamente.');
     }
@@ -242,11 +242,11 @@ class MateriaCriterioController extends Controller
         
         try {
             $materia_criterio->delete();
-            return redirect()->route('materia-criterios.index', [
+            return redirect()->route('admin.materia-criterios.index', [
                 'materia' => $materiaId, 
             ])->with('success', 'Asignación de criterio eliminada correctamente.');
         } catch (\Exception $e) {
-            return redirect()->route('materia-criterios.index', [
+            return redirect()->route('admin.materia-criterios.index', [
                 'materia' => $materiaId, 
             ])->with('error', 'Error al eliminar la asignación.');
         }

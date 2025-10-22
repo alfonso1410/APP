@@ -87,7 +87,7 @@ class EstructuraCurricularController extends Controller
         // 8. Sincronizamos la relación.
         $grado->materias()->sync($materiasSyncData);
 
-        return redirect()->route('grados.index', ['nivel' => $grado->nivel_id])
+        return redirect()->route('admin.grados.index', ['nivel' => $grado->nivel_id])
                          ->with('success', 'La estructura curricular se ha actualizado exitosamente.');
     }
 }

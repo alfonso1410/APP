@@ -143,6 +143,6 @@ class AsignacionGrupalController extends Controller
         return back()->with('error', 'Operación fallida: ' . $e->getMessage())->withInput();
     }
 
-    return redirect()->route('grupos.alumnos.index', $grupo)->with('success', 'Alumnos asignados correctamente.');
+    return redirect()->route('admin.grupos.alumnos.index', $grupo)->with('success', 'Alumnos asignados correctamente.');
 }
 }

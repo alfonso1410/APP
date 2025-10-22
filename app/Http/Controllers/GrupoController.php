@@ -56,7 +56,7 @@ class GrupoController extends Controller
             ? ['nivel' => $gradoPadre->nivel_id] 
             : ['view_mode' => 'extracurricular'];
 
-        return redirect()->route('grados.index', $redirectParams)
+        return redirect()->route('admin.grados.index', $redirectParams)
                          ->with('success', 'Grupo creado exitosamente.');
     }
     // --- Los siguientes métodos los implementaremos cuando necesitemos editar y eliminar ---
@@ -85,7 +85,7 @@ public function update(Request $request, Grupo $grupo)
         ? ['nivel' => $grupo->grado->nivel_id] 
         : ['view_mode' => 'extracurricular'];
 
-    return redirect()->route('grados.index', $redirectParams)
+    return redirect()->route('admin.grados.index', $redirectParams)
                      ->with('success', 'Grupo actualizado exitosamente.');
 }
   public function destroy(Grupo $grupo)
@@ -208,7 +208,7 @@ public function indexMaterias(Grupo $grupo): View
         $grupo->materias()->sync($request->input('materias', []));
 
         // Redirigimos a la nueva lista de materias.
-        return redirect()->route('grupos.materias.index', $grupo)
+        return redirect()->route('admin.grupos.materias.index', $grupo)
                          ->with('success', 'Materias del grupo actualizadas exitosamente.');
     }
 }

@@ -1,64 +1,69 @@
 <section>
     <header>
         <h2 class="text-lg font-medium text-gray-900">
-            {{ __('Profile Information') }}
+            {{ __('Información de Perfil') }}
         </h2>
 
         <p class="mt-1 text-sm text-gray-600">
-            {{ __("Update your account's profile information and email address.") }}
+            {{ __("Aquí puedes ver tu información de perfil. El nombre y correo no se pueden modificar desde esta pantalla.") }}
         </p>
     </header>
 
+    {{-- Formulario para reenviar verificación (se mantiene por si acaso) --}}
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
-        @csrf
-        @method('patch')
+    {{-- Quitamos el formulario 'profile.update' y solo mostramos los campos --}}
+    <div class="mt-6 space-y-6">
 
+        {{-- CAMPO NOMBRE COMPLETO (SOLO LECTURA) --}}
         <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
+            <x-input-label for="name" :value="__('Nombre Completo')" />
+            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full bg-gray-100" 
+                          {{-- Concatenamos el nombre, apellido_paterno y apellido_materno --}}
+                          :value="old('name', $user->name . ' ' . $user->apellido_paterno . ' ' . $user->apellido_materno)" 
+                          disabled 
+                          autocomplete="name" />
         </div>
 
+        {{-- CAMPO CORREO (SOLO LECTURA) --}}
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
+            <x-input-label for="email" :value="__('Correo Electrónico')" />
+            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full bg-gray-100" 
+                          :value="old('email', $user->email)" 
+                          disabled 
+                          autocomplete="username" />
 
+            {{-- Lógica de verificación de email (traducida) --}}
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                 <div>
                     <p class="text-sm mt-2 text-gray-800">
-                        {{ __('Your email address is unverified.') }}
+                        {{ __('Tu correo electrónico no está verificado.') }}
 
                         <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {{ __('Click here to re-send the verification email.') }}
+                            {{ __('Haz clic aquí para reenviar el correo de verificación.') }}
                         </button>
                     </p>
 
                     @if (session('status') === 'verification-link-sent')
                         <p class="mt-2 font-medium text-sm text-green-600">
-                            {{ __('A new verification link has been sent to your email address.') }}
+                            {{ __('Se ha enviado un nuevo enlace de verificación a tu correo.') }}
                         </p>
                     @endif
                 </div>
             @endif
         </div>
 
+        {{-- ELIMINAMOS EL DIV QUE CONTIENE EL BOTÓN DE GUARDAR --}}
+        {{-- 
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 
             @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
-                >{{ __('Saved.') }}</p>
+                <p ... >{{ __('Saved.') }}</p>
             @endif
-        </div>
-    </form>
+        </div> 
+        --}}
+    </div>
 </section>
