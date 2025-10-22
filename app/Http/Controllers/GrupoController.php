@@ -124,19 +124,40 @@ public function indexArchivados()
 
     return view('grupos.archivados', compact('gruposArchivados'));
 }
+
 public function mostrarAlumnos(Grupo $grupo, Request $request)
 {
-    // Ya no necesitamos la lógica de búsqueda aquí, ni la paginación.
-    // Simplemente obtenemos TODOS los alumnos del grupo con sus calificaciones.
+    // 1. Obtenemos TODOS los alumnos del grupo con sus calificaciones.
     $alumnos = $grupo->alumnosActuales()
-                     ->with(['calificaciones', 'grupos.materias'])
-                     ->orderBy('apellido_paterno')
-                     ->orderBy('apellido_materno')
-                     ->get(); // <-- Cambiamos paginate(10) por get()
+                      ->with(['calificaciones'])
+                      ->orderBy('apellido_paterno')
+                      ->orderBy('apellido_materno')
+                      ->get();
 
+    // 2. Preparamos el nombre de la materia (valor por defecto)
+    $materiaExtraNombre = 'N/A'; 
+
+    // 3. Si el grupo es EXTRA, buscamos el nombre de sus materias
+    if ($grupo->tipo_grupo === 'EXTRA') {
+        
+        // El dd() que estaba aquí demostró que esta línea funciona:
+        $nombres = $grupo->materias()->pluck('nombre')->implode(', ');
+        
+        if (!empty($nombres)) {
+            $materiaExtraNombre = $nombres; // Esto valdrá "Educación Física"
+        } else {
+            $materiaExtraNombre = 'Sin materia asignada'; 
+        }
+    }
+
+    // 4. Añadimos este nombre como una nueva propiedad a CADA alumno
+    $alumnos->each(function ($alumno) use ($materiaExtraNombre) {
+        $alumno->materia_extracurricular = $materiaExtraNombre;
+    });
+    
+    // 5. Pasamos la colección MODIFICADA a la vista.
     return view('grupos.alumnos-index', compact('grupo', 'alumnos'));
 }
-
 public function indexMaterias(Grupo $grupo): View
 {
     if ($grupo->tipo_grupo === 'REGULAR') {

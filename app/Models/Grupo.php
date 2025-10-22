@@ -61,10 +61,14 @@ class Grupo extends Model
                     ->wherePivot('es_actual', 1); 
     }
 
-    public function coTitulares(): BelongsToMany
+   public function maestrosTitulares()
     {
-        return $this->belongsToMany(User::class, 'grupo_titular', 'grupo_id', 'maestro_id')
-                    ->withTimestamps();
+        return $this->belongsToMany(
+            User::class,
+            'grupo_titular', // Nombre de la tabla pivote
+            'grupo_id',      // Llave foránea de este modelo (Grupo)
+            'maestro_id'     // <-- ¡CAMBIO AQUÍ! (en lugar de 'user_id')
+        );
     }
     
     public function asignacionesMaestros(): HasMany

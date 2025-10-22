@@ -54,9 +54,18 @@ class User extends Authenticatable
         return $this->hasMany(GrupoMateriaMaestro::class, 'maestro_id', 'id');
     }
 
-    public function gruposCoTitular(): BelongsToMany
+   public function gruposTitulares()
     {
-        return $this->belongsToMany(Grupo::class, 'grupo_titular', 'maestro_id', 'grupo_id')
-                    ->withTimestamps(); 
+        return $this->belongsToMany(
+            Grupo::class,
+            'grupo_titular',
+            'maestro_id', // <-- ¡CAMBIO AQUÍ! (en lugar de 'user_id')
+            'grupo_id'
+        );
+    }
+
+    public function scopeMaestros($query)
+    {
+        return $query->where('rol', 'maestro'); // O como hayas definido tu rol
     }
 }

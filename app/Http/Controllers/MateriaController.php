@@ -13,29 +13,29 @@ class MateriaController extends Controller
      */
     public function index()
     {
-        $materias = Materia::with([
-            'camposFormativos',
-            'asignacionesGrupo' => function ($query) {
-                $query->with(['maestro', 'grupo.grado']); 
-            }
-        ])
+        // ✅ OPTIMIZACIÓN: Solo cargamos camposFormativos, ya que es la única relación visible en la tabla principal.
+        $materias = Materia::with(['camposFormativos'])
         ->orderBy('nombre')
         ->get();
         
         return view('materias.index', compact('materias'));
     }
 
+    // -----------------------------------------------------------------------
+
     /**
      * Guarda la nueva materia desde el modal.
      */
     public function store(Request $request)
     {
-        // --- CORRECCIÓN: Usamos 'validateWithBag' ---
-        // Esto guarda los errores en un "contenedor" llamado 'store'.
+        // El código de validación es correcto para nombre y tipo.
         $validatedData = $request->validateWithBag('store', [
             'nombre' => 'required|string|max:100|unique:materias,nombre',
+            'tipo' => 'required|in:REGULAR,EXTRA',
         ], [
             'nombre.unique' => 'La materia ya existe.',
+            'tipo.required' => 'Debe seleccionar un tipo de materia.',
+            'tipo.in' => 'El tipo de materia seleccionado no es válido.',
         ]);
 
         Materia::create($validatedData);
@@ -44,23 +44,14 @@ class MateriaController extends Controller
                          ->with('success', 'Materia creada exitosamente.');
     }
 
-    /**
-     * --- MÉTODO ELIMINADO ---
-     * Ya no se necesita una página separada para 'edit'.
-     * La lógica del modal está en 'index'.
-     */
-    // public function edit(Materia $materia)
-    // {
-    //     return view('materias.edit', compact('materia'));
-    // }
+    // -----------------------------------------------------------------------
 
     /**
      * Actualiza la materia desde el modal.
      */
     public function update(Request $request, Materia $materia)
     {
-        // --- CORRECCIÓN: Usamos 'validateWithBag' ---
-        // Esto guarda los errores en un "contenedor" llamado 'update'.
+        // El código de validación es correcto para nombre y tipo.
         $validatedData = $request->validateWithBag('update', [
             'nombre' => [
                 'required',
@@ -68,8 +59,11 @@ class MateriaController extends Controller
                 'max:100',
                 Rule::unique('materias')->ignore($materia->materia_id, 'materia_id'),
             ],
+            'tipo' => 'required|in:REGULAR,EXTRA',
         ], [
             'nombre.unique' => 'La materia ya existe.',
+            'tipo.required' => 'Debe seleccionar un tipo de materia.',
+            'tipo.in' => 'El tipo de materia seleccionado no es válido.',
         ]);
 
         $materia->update($validatedData);
@@ -77,6 +71,8 @@ class MateriaController extends Controller
         return redirect()->route('materias.index')
                          ->with('success', 'Materia actualizada exitosamente.');
     }
+
+    // -----------------------------------------------------------------------
 
     /**
      * Elimina la materia. (Sin cambios)

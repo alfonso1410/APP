@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne; // <--- Ya no es estrictamente necesario, pero se deja si lo usas en otro lado
 
 class Materia extends Model
 {
@@ -20,26 +21,44 @@ class Materia extends Model
         'tipo', 
     ];
 
-    // --- INICIO DE LA CORRECCIÓN ---
     /**
      * Los atributos que deben ser visibles en la serialización JSON.
-     * Esto es crucial para que el modal "Ver Materias" en Campos Formativos
-     * pueda acceder a las asignaciones de esta materia.
      */
     protected $visible = [
         'materia_id',
         'nombre',
         'tipo',
-        'asignacionesGrupo', // <-- La clave para el modal
-        // No necesitamos 'camposFormativos' aquí para evitar bucles
+        'asignacionesGrupo',
+        // ❌ ELIMINADA: 'primeraEstructura', 
+        'grados', // ✅ AGREGADA para mostrar todos los grados.
     ];
-    // --- FIN DE LA CORRECCIÓN ---
     
     // --- Relaciones con Estructura Curricular ---
 
     public function estructuraCurricular(): HasMany
     {
         return $this->hasMany(EstructuraCurricular::class, 'materia_id', 'materia_id');
+    }
+
+    // ❌ RELACIÓN ELIMINADA:
+    // public function primeraEstructura(): HasOne
+    // {
+    //     return $this->hasOne(EstructuraCurricular::class, 'materia_id', 'materia_id');
+    // }
+
+    /**
+     * ✅ NUEVA RELACIÓN: Obtiene todos los Grados a los que esta materia está asignada.
+     * Utiliza la tabla pivote 'estructura_curricular'.
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function grados(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Grado::class, 
+            'estructura_curricular', 
+            'materia_id', // foreign_key en tabla pivote
+            'grado_id'    // related_key en tabla pivote
+        );
     }
 
     public function camposFormativos(): BelongsToMany
@@ -61,10 +80,6 @@ class Materia extends Model
 
     // --- Relaciones con Asignación de Maestros ---
 
-    /**
-     * Esta es la relación (camelCase) que cargamos en el controlador
-     * y que ahora será visible en el JSON.
-     */
     public function asignacionesGrupo(): HasMany
     {
         return $this->hasMany(GrupoMateriaMaestro::class, 'materia_id', 'materia_id');

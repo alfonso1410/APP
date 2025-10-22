@@ -22,17 +22,15 @@ class CampoFormativoController extends Controller
             $activeNivelId = $niveles->first()->nivel_id;
         }
 
-        // --- INICIO CORRECCIÓN: Lógica de Filtrado ---
-        // 1. La consulta ahora incluye las relaciones que necesitamos
-        //    para el modal (materias y sus asignaciones).
+        // --- INICIO CORRECCIÓN: Eager Loading ---
+        // 1. La consulta ahora carga la relación correcta para el GRADO.
         $query = CampoFormativo::query()->with([
-            'materias.asignacionesGrupo.maestro',
-            'materias.asignacionesGrupo.grupo.grado',
-            'nivel'
+            'materias.asignacionesGrupo.maestro', // Para la columna "Profesor"
+            'materias.grados',                  // ✅ NUEVA SOLUCIÓN: Carga todos los grados de la materia
+            'nivel' // Para el filtro de Nivel
         ]);
 
-        // 2. Lógica de filtrado NUEVA Y SIMPLIFICADA.
-        //    Filtramos directamente por la columna 'nivel_id' del campo formativo.
+        // 2. Lógica de filtrado (sin cambios)
         if ($activeNivelId) {
             $query->where('nivel_id', $activeNivelId);
         }

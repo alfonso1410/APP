@@ -78,7 +78,7 @@
         <a href="{{ route('grupos.materias.index', $grupo) }}" class="block py-8 text-center bg-blue-500 text-white rounded-2xl hover:bg-blue-500 transition shadow-md hover:shadow-lg transform hover:-translate-y-1">
             <h3 class="text-xl font-bold">Materias</h3>
         </a>
-        <a href="#" class="block py-8 text-center bg-orange-400 text-white rounded-2xl hover:bg-orange-500 transition shadow-md hover:shadow-lg transform hover:-translate-y-1">
+        <a href="{{ route('grupos.maestros.index', $grupo) }}" class="block py-8 text-center bg-orange-400 text-white rounded-2xl hover:bg-orange-500 transition shadow-md hover:shadow-lg transform hover:-translate-y-1">
             <h3 class="text-xl font-bold">Maestros</h3>
         </a>
     </div>

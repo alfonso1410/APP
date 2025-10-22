@@ -13,7 +13,9 @@ use App\Http\Controllers\NivelController;
 use App\Http\Controllers\EstructuraCurricularController;
 use App\Http\Controllers\CampoFormativoController;
 use App\Http\Controllers\MateriaController;
-
+use App\Http\Controllers\GrupoMaestroController;
+use App\Http\Controllers\GrupoMateriaMaestroController;
+use App\Http\Controllers\MateriaCriterioController;
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -50,6 +52,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
          ->name('grupos.materias.create');
     Route::post('/grupos/{grupo}/materias', [GrupoController::class, 'storeMaterias'])
           ->name('grupos.materias.store');
+   Route::get('grupos/{grupo}/maestros', [GrupoMaestroController::class, 'index'])
+     ->name('grupos.maestros.index');
+
+// 2. (GET) Muestra el FORMULARIO para asignar nuevos maestros (los checkboxes)
+Route::get('grupos/{grupo}/maestros/asignar', [GrupoMaestroController::class, 'create'])
+     ->name('grupos.maestros.create');
+// 3. (POST) GUARDA la asignación del formulario
+Route::post('grupos/{grupo}/maestros', [GrupoMaestroController::class, 'store'])
+     ->name('grupos.maestros.store');
+     // (GET) Muestra el FORMULARIO para asignar maestros (del pool) a materias (del grupo)
+Route::get('grupos/{grupo}/maestros-materias', [GrupoMateriaMaestroController::class, 'create'])
+     ->name('grupos.materias-maestros.create');
+// (POST) GUARDA la asignación en la tabla 'grupo_materia_maestro'
+Route::post('grupos/{grupo}/maestros-materias', [GrupoMateriaMaestroController::class, 'store'])
+     ->name('grupos.materias-maestros.store');
 
     // Grados y Estructura
     Route::resource('grados', GradoController::class);
@@ -73,6 +90,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('materias', MateriaController::class)->except([
         'create', 'show', 'edit'
     ]);
+
+     // Ruta para el botón global "Crear Criterio"
+    // Usamos el método 'create' para la vista de definición del criterio base.
+    Route::get('materia-criterios/create', [MateriaCriterioController::class, 'create'])->name('materia-criterios.create');
+    
+    // Rutas para la gestión de criterios base (store, update, destroy)
+    Route::resource('materia-criterios', MateriaCriterioController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    // NOTA: La ruta 'materia-criterios.index' se utilizará para mostrar
+    // la vista de ASIGNACIÓN de criterios a una materia específica,
+    // usando un parámetro de consulta (ej: /materia-criterios?materia=1)
 
 });
 
