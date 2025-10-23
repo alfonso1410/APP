@@ -15,7 +15,7 @@ return new class extends Migration
             // Clave Primaria Sustituta
             $table->id('materia_criterio_id'); 
             
-            // Claves Foráneas (unsignedBigInteger para compatibilidad)
+            // Claves Foráneas
             $table->unsignedBigInteger('materia_id');
             $table->unsignedBigInteger('catalogo_criterio_id');
             
@@ -24,8 +24,16 @@ return new class extends Migration
             $table->boolean('incluido_en_promedio')->default(true); // Usamos boolean para TRUE/FALSE
 
             // Definición de Claves Foráneas
-            $table->foreign('materia_id')->references('materia_id')->on('materias')->onDelete('cascade');
-            $table->foreign('catalogo_criterio_id')->references('catalogo_criterio_id')->on('catalogo_criterios')->onDelete('restrict');
+            // --- CORRECCIÓN: Cambiar onDelete a restrict para materias ---
+            $table->foreign('materia_id')
+                  ->references('materia_id')
+                  ->on('materias')
+                  ->onDelete('restrict'); // <-- CORREGIDO
+
+            $table->foreign('catalogo_criterio_id')
+                  ->references('catalogo_criterio_id')
+                  ->on('catalogo_criterios')
+                  ->onDelete('restrict');
 
             // Restricción ÚNICA: Un criterio solo puede asignarse una vez por materia.
             $table->unique(['materia_id', 'catalogo_criterio_id']);

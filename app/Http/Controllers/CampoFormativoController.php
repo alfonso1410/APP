@@ -6,7 +6,7 @@ use App\Models\CampoFormativo;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\Nivel;
-use App\Models\Materia; // Asegúrate de que este 'use' exista
+use App\Models\Materia; // Necesario para el with() en index()
 
 class CampoFormativoController extends Controller
 {
@@ -22,15 +22,17 @@ class CampoFormativoController extends Controller
             $activeNivelId = $niveles->first()->nivel_id;
         }
 
-        // --- INICIO CORRECCIÓN: Eager Loading ---
-        // 1. La consulta ahora carga la relación correcta para el GRADO.
+        // --- CORRECCIÓN: Eager Loading ---
+        // La consulta ahora carga relaciones necesarias para la vista
         $query = CampoFormativo::query()->with([
-            'materias.asignacionesGrupo.maestro', // Para la columna "Profesor"
-            'materias.grados',                  // ✅ NUEVA SOLUCIÓN: Carga todos los grados de la materia
-            'nivel' // Para el filtro de Nivel
+            // Asumo que 'materias.asignacionesGrupo.maestro' y 'materias.grados'
+            // son para algún modal o detalle, no directamente para la lista de campos.
+            // Si no los usas en esta vista, puedes quitarlos para optimizar.
+            'materias.asignacionesGrupo.maestro',
+            'materias.grados',
+            'nivel' // Necesario para el filtro de Nivel
         ]);
 
-        // 2. Lógica de filtrado (sin cambios)
         if ($activeNivelId) {
             $query->where('nivel_id', $activeNivelId);
         }
@@ -38,8 +40,7 @@ class CampoFormativoController extends Controller
 
         $camposFormativos = $query->orderBy('nombre')->get();
 
-        // Esto es necesario para el modal de "Ver Materias", aunque no lo usemos aquí.
-        // Lo dejamos por si acaso, pero no es parte del error.
+        // Necesario para el modal de "Ver Materias" (si lo usas)
         $allMaterias = Materia::orderBy('nombre')->get();
 
         return view('campos-formativos.index', compact(
@@ -52,11 +53,10 @@ class CampoFormativoController extends Controller
 
     /**
      * Guarda un nuevo campo formativo.
-     * (Este método ya estaba corregido en nuestra iteración anterior)
+     * (Sin cambios)
      */
     public function store(Request $request)
     {
-        // Usamos 'validateWithBag' para manejar errores en el modal 'create'
         $validatedData = $request->validateWithBag('store', [
             'nombre' => [
                 'required', 'string', 'max:100',
@@ -79,11 +79,10 @@ class CampoFormativoController extends Controller
 
     /**
      * Actualiza un campo formativo.
-     * (Este método ya estaba corregido en nuestra iteración anterior)
+     * (Sin cambios)
      */
     public function update(Request $request, CampoFormativo $camposFormativo)
     {
-        // Usamos 'validateWithBag' para manejar errores en el modal 'edit'
         $validatedData = $request->validateWithBag('update', [
             'nombre' => [
                 'required', 'string', 'max:100',
@@ -104,20 +103,31 @@ class CampoFormativoController extends Controller
     }
 
     /**
-     * Elimina un campo formativo.
-     * (Este método ya estaba corregido en nuestra iteración anterior)
+     * Elimina un campo formativo, verificando dependencias primero.
      */
     public function destroy(CampoFormativo $camposFormativo)
     {
+        // --- INICIO DE LA VERIFICACIÓN ---
+        // Usamos la relación 'asignacionesEstructura' del modelo CampoFormativo
+        // para ver si este campo está siendo usado en la tabla estructura_curricular.
+        if ($camposFormativo->asignacionesEstructura()->exists()) {
+            return redirect()->route('admin.campos-formativos.index', ['nivel' => $camposFormativo->nivel_id])
+                            ->with('error', "No se puede eliminar '{$camposFormativo->nombre}'. Está asignado a materias en la estructura curricular.");
+        }
+        // --- FIN DE LA VERIFICACIÓN ---
+
+        // Si pasó la verificación, intentamos borrar
         try {
-            $nivelId = $camposFormativo->nivel_id;
+            $nivelId = $camposFormativo->nivel_id; // Guardamos el nivel para la redirección
             $camposFormativo->delete();
-            
+
             return redirect()->route('admin.campos-formativos.index', ['nivel' => $nivelId])
                              ->with('success', 'Campo formativo eliminado exitosamente.');
         } catch (\Illuminate\Database\QueryException $e) {
+            // Este catch actúa como seguro adicional o para restricciones de BD
+            report($e); // Loguea el error real
             return redirect()->route('admin.campos-formativos.index', ['nivel' => $camposFormativo->nivel_id])
-                             ->with('error', 'No se puede eliminar el campo formativo, está siendo utilizado.');
+                             ->with('error', 'No se pudo eliminar el campo formativo debido a una restricción de base de datos o un error inesperado. Verifica que no esté en uso.');
         }
     }
 }

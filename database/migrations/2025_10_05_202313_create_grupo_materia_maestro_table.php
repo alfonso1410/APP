@@ -15,14 +15,20 @@ return new class extends Migration
             // Clave Primaria Sustituta
             $table->id(); // Laravel le llama 'id' por defecto
             
-            // Claves Foráneas (unsignedBigInteger para compatibilidad)
+            // Claves Foráneas
             $table->unsignedBigInteger('grupo_id');
             $table->unsignedBigInteger('materia_id');
             $table->unsignedBigInteger('maestro_id')->nullable(); // Referencia a Usuarios
             
             // Definición de Claves Foráneas
             $table->foreign('grupo_id')->references('grupo_id')->on('grupos')->onDelete('cascade');
-            $table->foreign('materia_id')->references('materia_id')->on('materias')->onDelete('cascade');
+            
+            // --- CORRECCIÓN: Cambiar onDelete a restrict para materias ---
+            $table->foreign('materia_id')
+                  ->references('materia_id')
+                  ->on('materias')
+                  ->onDelete('restrict'); // <-- CORREGIDO
+
             $table->foreign('maestro_id')->references('id')->on('users')->onDelete('restrict'); 
 
             // Restricción ÚNICA: Solo una materia puede tener un maestro asignado por grupo.

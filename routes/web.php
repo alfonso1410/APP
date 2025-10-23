@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-// Importaciones de Controladores (las que ya tenías)
+// Importaciones de Controladores
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DashboardController;
@@ -19,6 +19,8 @@ use App\Http\Controllers\GrupoMaestroController;
 use App\Http\Controllers\GrupoMateriaMaestroController;
 use App\Http\Controllers\MateriaCriterioController;
 use App\Http\Controllers\AsistenciaController;
+// --- CORRECCIÓN: Añadir importación del modelo ---
+use App\Models\CatalogoCriterio;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,12 +28,10 @@ use App\Http\Controllers\AsistenciaController;
 |--------------------------------------------------------------------------
 */
 
-// Ruta raíz redirige al login
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Carga las rutas de auth (login, logout, register, etc.)
 require __DIR__.'/auth.php';
 
 
@@ -42,11 +42,8 @@ require __DIR__.'/auth.php';
 */
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // 1. EL "DIRECTOR DE TRÁFICO" (Redirige según el rol)
-    // Laravel te envía aquí después de iniciar sesión.
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // 2. RUTAS COMUNES (Para todos los roles)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -55,52 +52,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
     /*
     |--------------------------------------------------------------------------
     | =================== ZONA DE ADMINISTRACIÓN ===================
-    | (Solo accesible para DIRECTOR y COORDINADOR)
     |--------------------------------------------------------------------------
     */
     Route::middleware(['role:DIRECTOR,COORDINADOR'])->prefix('admin')->name('admin.')->group(function () {
-        
-        // Panel de Admin (con estadísticas)
+
         Route::get('/dashboard', [DashboardController::class, 'adminDashboard'])->name('dashboard');
 
-        // --- TODAS TUS RUTAS DE GESTIÓN VAN AQUÍ ---
-        
         // Usuarios
-        Route::resource('users', UserController::class); 
+        Route::resource('users', UserController::class);
 
         // Alumnos
-        Route::resource('alumnos', AlumnoController::class)->except([
-            'create', 'edit', 'show'
-        ]);
+        Route::resource('alumnos', AlumnoController::class)->except(['create', 'edit', 'show']);
 
-        // Grupos
+        // Grupos y sus relaciones
         Route::resource('grupos', GrupoController::class);
         Route::get('/grupos-archivados', [GrupoController::class, 'indexArchivados'])->name('grupos.archivados');
         Route::patch('/grupos/{grupo}/archivar', [GrupoController::class, 'archivar'])->name('grupos.archivar');
-        // Alumnos en Grupos
-        Route::get('/grupos/{grupo}/alumnos', [GrupoController::class, 'mostrarAlumnos'])
-            ->name('grupos.alumnos.index');
-        Route::get('/grupos/{grupo}/asignar-alumnos', [AsignacionGrupalController::class, 'create'])
-            ->name('grupos.alumnos.create');
-        Route::post('/grupos/{grupo}/asignar-alumnos', [AsignacionGrupalController::class, 'store'])
-            ->name('grupos.alumnos.store');
-        // Materias en Grupos
-        Route::get('/grupos/{grupo}/materias', [GrupoController::class, 'indexMaterias'])
-            ->name('grupos.materias.index');
-        Route::get('/grupos/{grupo}/materias/asignar', [GrupoController::class, 'createMaterias'])
-            ->name('grupos.materias.create');
-        Route::post('/grupos/{grupo}/materias', [GrupoController::class, 'storeMaterias'])
-            ->name('grupos.materias.store');
-        Route::get('grupos/{grupo}/maestros', [GrupoMaestroController::class, 'index'])
-            ->name('grupos.maestros.index');
-        Route::get('grupos/{grupo}/maestros/asignar', [GrupoMaestroController::class, 'create'])
-            ->name('grupos.maestros.create');
-        Route::post('grupos/{grupo}/maestros', [GrupoMaestroController::class, 'store'])
-            ->name('grupos.maestros.store');
-        Route::get('grupos/{grupo}/maestros-materias', [GrupoMateriaMaestroController::class, 'create'])
-            ->name('grupos.materias-maestros.create');
-        Route::post('grupos/{grupo}/maestros-materias', [GrupoMateriaMaestroController::class, 'store'])
-            ->name('grupos.materias-maestros.store');
+        Route::get('/grupos/{grupo}/alumnos', [GrupoController::class, 'mostrarAlumnos'])->name('grupos.alumnos.index');
+        Route::get('/grupos/{grupo}/asignar-alumnos', [AsignacionGrupalController::class, 'create'])->name('grupos.alumnos.create');
+        Route::post('/grupos/{grupo}/asignar-alumnos', [AsignacionGrupalController::class, 'store'])->name('grupos.alumnos.store');
+        Route::get('/grupos/{grupo}/materias', [GrupoController::class, 'indexMaterias'])->name('grupos.materias.index');
+        Route::get('/grupos/{grupo}/materias/asignar', [GrupoController::class, 'createMaterias'])->name('grupos.materias.create');
+        Route::post('/grupos/{grupo}/materias', [GrupoController::class, 'storeMaterias'])->name('grupos.materias.store');
+        Route::get('grupos/{grupo}/maestros', [GrupoMaestroController::class, 'index'])->name('grupos.maestros.index');
+        Route::get('grupos/{grupo}/maestros/asignar', [GrupoMaestroController::class, 'create'])->name('grupos.maestros.create');
+        Route::post('grupos/{grupo}/maestros', [GrupoMaestroController::class, 'store'])->name('grupos.maestros.store');
+        Route::get('grupos/{grupo}/maestros-materias', [GrupoMateriaMaestroController::class, 'create'])->name('grupos.materias-maestros.create');
+        Route::post('grupos/{grupo}/maestros-materias', [GrupoMateriaMaestroController::class, 'store'])->name('grupos.materias-maestros.store');
 
         // Grados y Estructura
         Route::resource('grados', GradoController::class);
@@ -110,56 +88,44 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/grados/{grado}/estructura', [EstructuraCurricularController::class, 'update'])->name('grados.estructura.update');
 
         // Maestros
-        Route::resource('maestros', MaestroController::class); 
+        Route::resource('maestros', MaestroController::class);
 
         // Niveles
         Route::post('/niveles', [NivelController::class, 'store'])->name('niveles.store');
 
         // Campos Formativos
-        Route::resource('campos-formativos', CampoFormativoController::class)->except([
-            'create', 'show', 'edit'
-        ]);
+        Route::resource('campos-formativos', CampoFormativoController::class)->except(['create', 'show', 'edit']);
 
-        // Materias 
-        Route::resource('materias', MateriaController::class)->except([
-            'create', 'show', 'edit'
-        ]);
+        // Materias
+        Route::resource('materias', MateriaController::class)->except(['create', 'show', 'edit']);
 
-        // Materia Criterios
-        Route::get('materia-criterios/create', [MateriaCriterioController::class, 'create'])->name('materia-criterios.create');
-        Route::resource('materia-criterios', MateriaCriterioController::class)->only(['index', 'store', 'update', 'destroy']);
+        // --- CORRECCIÓN: Rutas individuales para MateriaCriterio Y CatalogoCriterio ---
+        Route::get('materia-criterios/create', [MateriaCriterioController::class, 'create'])->name('materia-criterios.create'); // Para crear criterios base
+        Route::get('materia-criterios', [MateriaCriterioController::class, 'index'])->name('materia-criterios.index'); // Muestra catálogo o asignación
+        Route::post('materia-criterios', [MateriaCriterioController::class, 'store'])->name('materia-criterios.store'); // Guarda catálogo o asignación
+
+        // Rutas update y destroy para ASIGNACIONES y CATÁLOGO usan {id} genérico y apuntan al mismo controlador
+        Route::put('materia-criterios/{id}', [MateriaCriterioController::class, 'update'])->name('materia-criterios.update');
+        Route::patch('materia-criterios/{id}', [MateriaCriterioController::class, 'update']); // Alias para PATCH
+        Route::delete('materia-criterios/{id}', [MateriaCriterioController::class, 'destroy'])->name('materia-criterios.destroy'); // <- Esta ruta la usarán AMBAS vistas
+
+        // --- FIN CORRECCIÓN ---
 
     }); // <-- Fin de la ZONA DE ADMINISTRACIÓN
 
 
     /*
-    |--------------------------------------------------------------------------
     | =================== ZONA DE MAESTRO ===================
-    | (Solo accesible para MAESTRO)
-    |--------------------------------------------------------------------------
     */
     Route::middleware(['role:MAESTRO'])->prefix('maestro')->name('maestro.')->group(function () {
 
-        // Panel de Maestro (Mis Grupos Asignados)
         Route::get('/inicio', [DashboardController::class, 'maestroDashboard'])->name('inicio');
-
-        // Perfil de Maestro (Mi Perfil)
-        // Reutilizamos el controlador de Profile, pero la ruta es específica de maestro
         Route::get('/perfil', [ProfileController::class, 'edit'])->name('perfil');
 
-        // --- INICIO DE LA MODIFICACIÓN DE ASISTENCIAS ---
-
-        // 1. (GET) Muestra la lista de grupos
+        // Asistencias (Usando lógica automática)
         Route::get('/asistencias', [AsistenciaController::class, 'gruposIndex'])->name('asistencias.index');
-
-        // 2. (GET) Muestra la tabla para tomar asistencia de UN grupo
-        //    Esta es la ruta para tu nuevo diseño
         Route::get('/asistencias/tomar/{grupo}', [AsistenciaController::class, 'tomarAsistencia'])->name('asistencias.tomar');
-
-        // 3. (POST) Guarda los datos de asistencia de esa tabla
         Route::post('/asistencias/guardar/{grupo}', [AsistenciaController::class, 'guardarAsistencia'])->name('asistencias.guardar');
-        
-        // --- FIN DE LA MODIFICACIÓN ---
 
     }); // <-- Fin de la ZONA DE MAESTRO
 
