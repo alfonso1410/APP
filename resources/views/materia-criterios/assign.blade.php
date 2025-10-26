@@ -43,7 +43,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span 
                                             class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $criterio->incluido_en_promedio ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                            {{ $criterio->incluido_en_promedio ? 'Sí (1)' : 'No (0)' }}
+                                            {{ $criterio->incluido_en_promedio ? 'Sí' : 'No' }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

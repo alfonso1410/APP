@@ -78,7 +78,9 @@
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-500">
                                         {{-- El controlador ya precargó el maestro correcto para este grupo --}}
-                                        {{ $materia->maestros->first()->name ?? 'Sin Asignar' }}
+                                        {{ $materia->maestros->first() 
+                                            ? $materia->maestros->first()->name . ' ' . $materia->maestros->first()->apellido_paterno . ' ' . $materia->maestros->first()->apellido_materno 
+                                            : 'Sin Asignar' }}
                                     </td>
                                 </tr>
                             @empty
