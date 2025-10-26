@@ -11,6 +11,13 @@ class Calificacion extends Model
     protected $table = 'calificaciones';
     protected $primaryKey = 'calificacion_id';
 
+    protected $fillable = [
+        'alumno_id',
+        'materia_criterio_id',
+        'periodo_id',
+        'calificacion_obtenida',
+    ];
+
     // 1. Relación con Alumno: Una calificación pertenece a UN Alumno
     public function alumno()
     {

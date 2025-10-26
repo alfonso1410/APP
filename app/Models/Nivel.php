@@ -34,4 +34,9 @@ class Nivel extends Model
         // porque no son las estándar de Laravel.
         return $this->hasMany(CampoFormativo::class, 'nivel_id', 'nivel_id');
     }
+
+    public function getRouteKeyName()
+{
+    return 'nivel_id';
+}
 }

@@ -19,6 +19,8 @@ use App\Http\Controllers\GrupoMaestroController;
 use App\Http\Controllers\GrupoMateriaMaestroController;
 use App\Http\Controllers\MateriaCriterioController;
 use App\Http\Controllers\AsistenciaController;
+use App\Http\Controllers\CalificacionController; // <-- AÑADIR ESTA LÍNEA
+use App\Http\Controllers\CalificacionJsonController;
 // --- CORRECCIÓN: Añadir importación del modelo ---
 use App\Models\CatalogoCriterio;
 
@@ -109,8 +111,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('materia-criterios/{id}', [MateriaCriterioController::class, 'update']); // Alias para PATCH
         Route::delete('materia-criterios/{id}', [MateriaCriterioController::class, 'destroy'])->name('materia-criterios.destroy'); // <- Esta ruta la usarán AMBAS vistas
 
-        // --- FIN CORRECCIÓN ---
+        // Esta ruta carga la página/vista principal
+    Route::get('/calificaciones', [CalificacionController::class, 'index'])->name('calificaciones.index');
 
+    // Esta ruta recibe el POST del formulario para guardar
+    Route::post('/calificaciones', [CalificacionController::class, 'store'])->name('calificaciones.store');
+
+    // --- Rutas JSON para Alpine.js (para los selects dinámicos) ---
+    Route::get('/json/grados/{grado}/grupos', [CalificacionJsonController::class, 'getGrupos'])->name('json.grados.grupos');
+    Route::get('/json/grados/{grado}/materias', [CalificacionJsonController::class, 'getMaterias'])->name('json.grados.materias');
+
+    // --- Ruta JSON para cargar la tabla de alumnos vs criterios ---
+    Route::get('/json/tabla-calificaciones', [CalificacionJsonController::class, 'getTablaCalificaciones'])->name('json.tabla.calificaciones');
+    Route::get('/json/niveles/{nivel}/grados', [CalificacionJsonController::class, 'getGradosPorNivel'])->name('json.niveles.grados');
+        // ==========================================================
+        // == FIN: RUTAS DE CALIFICACIONES                         ==
+        // ==========================================================
     }); // <-- Fin de la ZONA DE ADMINISTRACIÓN
 
 

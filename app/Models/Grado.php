@@ -64,4 +64,9 @@ class Grado extends Model
                     ->withPivot('campo_id')
                     ->withTimestamps();
     }
+    public function getRouteKeyName()
+{
+    return 'grado_id';
+}
+    
 }

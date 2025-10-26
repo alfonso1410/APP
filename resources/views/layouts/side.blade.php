@@ -97,6 +97,17 @@
                             <span class="flex-1 ms-3 whitespace-nowrap">Gestionar Materias</span>
                         </a>
                     </li>
+    
+                    {{-- ENLACE PARA GESTIONAR CALIFICACIONES --}}
+                    <li>
+                        <a href="{{ route('admin.calificaciones.index') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">
+                            <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
+                                {{-- Reutilizamos el ícono de 'grade'. Cambia '#icon-grade' si tienes uno mejor --}}
+                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-grade"> </use> 
+                            </svg>
+                            <span class="flex-1 ms-3 whitespace-nowrap">Calificaciones</span>
+                        </a>
+                    </li>
 
                 @elseif (Auth::user()->rol === 'MAESTRO')
 
