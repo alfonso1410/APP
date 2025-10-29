@@ -34,24 +34,35 @@
                             <h2 class="text-2xl font-semibold text-gray-800">
                                 Asistencia para: {{ $grupo->grado->nombre ?? '' }} {{ $grupo->nombre }}
                             </h2>
-                            <p class="text-gray-600">
-                                Ciclo Escolar {{ $grupo->ciclo_escolar }}
-                                
-                                <span class="font-bold text-blue-600">({{ $idiomaDelMaestro }})</span>
-                            </p>
+                          <p class="text-gray-600">
+                Ciclo Escolar {{ $cicloActivo ? $cicloActivo->nombre : 'N/A' }}
+                <span class="font-bold text-blue-600">({{ $idiomaDelMaestro }})</span>
+            </p>
                         </div>
 
                         <form method="GET" action="{{ route('maestro.asistencias.tomar', $grupo) }}" class="mt-4 md:mt-0 flex items-end space-x-2">
-    
+                          
+                        <div>
+                <x-input-label for="periodo_id" :value="__('Seleccionar Periodo')" />
+                <select id="periodo_id" name="periodo_id" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" onchange="this.form.submit()">
+                    @foreach ($periodosDisponibles as $periodo)
+                        <option value="{{ $periodo->periodo_id }}" @selected($periodo->periodo_id == $periodoSeleccionadoId)>
+                            {{ $periodo->nombre }} ({{ Carbon::parse($periodo->fecha_inicio)->format('d/m') }} - {{ Carbon::parse($periodo->fecha_fin)->format('d/m') }})
+                        </option>
+                    @endforeach
+                </select>
+            </div>
                             {{-- Selector de Semana --}}
                             <div>
                                 <x-input-label for="semana" :value="__('Seleccionar Semana')" />
                                 <select id="semana" name="semana" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" onchange="this.form.submit()">
-                                    @foreach ($semanasDisponibles as $valorLunes => $textoSemana)
-                                        <option value="{{ $valorLunes }}" @selected($lunesSeleccionado->isSameDay($valorLunes))>
-                                            {{ $textoSemana }}
-                                        </option>
-                                    @endforeach
+                                   @forelse ($semanasDisponibles as $valorLunes => $textoSemana)
+                        <option value="{{ $valorLunes }}" @selected($lunesSeleccionado->isSameDay(Carbon::parse($valorLunes)))>
+                            {{ $textoSemana }}
+                        </option>
+                    @empty
+                        <option value="">No hay semanas en este periodo</option>
+                    @endforelse
                                 </select>
                             </div>
                             
@@ -61,6 +72,8 @@
                     {{-- Formulario POST para guardar la asistencia --}}
                     <form method="POST" action="{{ route('maestro.asistencias.guardar', $grupo) }}">
                         @csrf
+                        <input type="hidden" name="periodo_id" value="{{ $periodoSeleccionadoId }}">
+        <input type="hidden" name="semana" value="{{ $lunesSeleccionado->format('Y-m-d') }}">
 
                         {{-- 2. TABLA DE ASISTENCIA (Esta parte no necesita cambios) --}}
                         <div class="overflow-x-auto">

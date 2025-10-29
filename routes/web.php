@@ -21,6 +21,8 @@ use App\Http\Controllers\MateriaCriterioController;
 use App\Http\Controllers\AsistenciaController;
 use App\Http\Controllers\CalificacionController; // <-- AÑADIR ESTA LÍNEA
 use App\Http\Controllers\CalificacionJsonController;
+use App\Http\Controllers\CicloEscolarController;
+use App\Http\Controllers\PeriodoController;
 // --- CORRECCIÓN: Añadir importación del modelo ---
 use App\Models\CatalogoCriterio;
 
@@ -124,9 +126,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- Ruta JSON para cargar la tabla de alumnos vs criterios ---
     Route::get('/json/tabla-calificaciones', [CalificacionJsonController::class, 'getTablaCalificaciones'])->name('json.tabla.calificaciones');
     Route::get('/json/niveles/{nivel}/grados', [CalificacionJsonController::class, 'getGradosPorNivel'])->name('json.niveles.grados');
+
+    Route::get('/json/grados-extracurriculares', [CalificacionJsonController::class, 'getGradosExtracurriculares'])->name('json.grados.extra');
+    
         // ==========================================================
         // == FIN: RUTAS DE CALIFICACIONES                         ==
         // ==========================================================
+
+        Route::resource('ciclo-escolar', CicloEscolarController::class);
+        Route::resource('periodos', PeriodoController::class);
     }); // <-- Fin de la ZONA DE ADMINISTRACIÓN
 
 

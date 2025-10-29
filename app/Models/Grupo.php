@@ -18,8 +18,8 @@ class Grupo extends Model
 
     protected $fillable = [
         'grado_id', 
+        'ciclo_escolar_id',
         'nombre_grupo',
-        'ciclo_escolar',
         'estado',
         'tipo_grupo',
     ];
@@ -75,5 +75,10 @@ class Grupo extends Model
     public function asignacionesMaestros(): HasMany
     {
         return $this->hasMany(GrupoMateriaMaestro::class, 'grupo_id', 'grupo_id');
+    }
+
+    public function cicloEscolar(): BelongsTo
+    {
+        return $this->belongsTo(CicloEscolar::class, 'ciclo_escolar_id', 'ciclo_escolar_id');
     }
 }

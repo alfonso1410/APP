@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             NivelSeeder::class,
             GradoSeeder::class,
             CampoFormativosSeeder::class,
+            CicloEscolarSeeder::class,
             MateriaSeeder::class,
             PeriodoSeeder::class,
             CatalogoCriteriosSeeder::class,

@@ -9,6 +9,9 @@ use Illuminate\View\View;
 use Illuminate\Support\Facades\DB; 
 use App\Models\Alumno;
 use App\Models\Materia; 
+use App\Models\CicloEscolar; // <-- 1. Importar CicloEscolar
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\Rule;
 
 class GrupoController extends Controller
 {
@@ -23,32 +26,43 @@ class GrupoController extends Controller
         // 2. Buscamos el grado para mostrar su nombre en la vista (ej: "Crear grupo para Primero").
         $grado = Grado::findOrFail($request->query('grado'));
 
+        $cicloActivo = CicloEscolar::where('estado', 'ACTIVO')->first();
+
         // 3. Devolvemos la vista con la información del grado.
-        return view('grupos.create', compact('grado'));
+        return view('grupos.create', compact('grado', 'cicloActivo'));
     }
 
     /**
      * Guarda el nuevo grupo en la base de datos.
      */
-     public function store(Request $request)
+     public function store(Request $request): RedirectResponse
     {
         // 1. Validamos solo los datos que vienen del formulario.
-        $validated = $request->validate([
-            'grado_id'      => 'required|exists:grados,grado_id',
-            'nombre_grupo'  => 'required|string|max:50',
-            'ciclo_escolar' => 'required|string|max:10',
+      $validated = $request->validate([
+            'grado_id'         => 'required|exists:grados,grado_id',
+            'ciclo_escolar_id' => 'required|integer|exists:ciclo_escolars,ciclo_escolar_id', // <-- Nuevo
+            'nombre_grupo'     => [ // <-- Validación de unique actualizada
+                                'required',
+                                'string',
+                                'max:50',
+                                Rule::unique('grupos')->where(function ($query) use ($request) {
+                                    return $query->where('grado_id', $request->grado_id)
+                                                 ->where('ciclo_escolar_id', $request->ciclo_escolar_id);
+                                }),
+                              ],
+            // 'ciclo_escolar' => 'required|string|max:10', // <-- Viejo (Eliminado)
         ]);
-
         // 2. Buscamos el grado padre para obtener su tipo.
         $gradoPadre = Grado::find($validated['grado_id']);
 
         // 3. Creamos el nuevo grupo, añadiendo el tipo de grupo y el estado.
         Grupo::create([
-            'grado_id'       => $validated['grado_id'],
-            'nombre_grupo'   => $validated['nombre_grupo'],
-            'ciclo_escolar'  => $validated['ciclo_escolar'],
-            'tipo_grupo'     => $gradoPadre->tipo_grado, // <-- Lógica automática
-            'estado'         => 'ACTIVO',
+            'grado_id'         => $validated['grado_id'],
+            'ciclo_escolar_id' => $validated['ciclo_escolar_id'], // <-- Nuevo
+            'nombre_grupo'     => $validated['nombre_grupo'],
+            // 'ciclo_escolar'    => $validated['ciclo_escolar'], // <-- Viejo (Eliminado)
+            'tipo_grupo'       => $gradoPadre->tipo_grado,
+            'estado'           => 'ACTIVO',
         ]);
 
         // 4. Preparamos los parámetros para la redirección inteligente.
@@ -71,14 +85,28 @@ class GrupoController extends Controller
     return view('grupos.edit', compact('grupo'));
 }
 
-public function update(Request $request, Grupo $grupo)
+public function update(Request $request, Grupo $grupo): RedirectResponse
 {
     $validated = $request->validate([
-        'nombre_grupo'  => 'required|string|max:50',
-        'ciclo_escolar' => 'required|string|max:10',
-    ]);
+            // La validación de unique debe ignorar el grupo actual
+             'nombre_grupo'     => [
+                                'required',
+                                'string',
+                                'max:50',
+                                Rule::unique('grupos')->where(function ($query) use ($grupo) {
+                                    return $query->where('grado_id', $grupo->grado_id)
+                                                 ->where('ciclo_escolar_id', $grupo->ciclo_escolar_id);
+                                })->ignore($grupo->grupo_id, 'grupo_id'), // Ignorar el ID actual
+                              ],
+            // No permitimos cambiar ciclo_escolar_id al editar un grupo
+            // 'ciclo_escolar_id' => 'required|integer|exists:ciclos_escolares,ciclo_escolar_id',
+            // 'ciclo_escolar' => 'required|string|max:10', // <-- Viejo (Eliminado)
+        ]);
 
-    $grupo->update($validated);
+    $grupo->update([
+            'nombre_grupo' => $validated['nombre_grupo']
+            // 'estado' => $request->estado // Si añades un selector de estado
+        ]);
 
     // Redirección inteligente
     $redirectParams = $grupo->grado->tipo_grado === 'REGULAR' 

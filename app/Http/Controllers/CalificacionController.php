@@ -10,21 +10,40 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\MateriaCriterio;
 use App\Models\Nivel;
+use App\Models\CicloEscolar;
+
 class CalificacionController extends Controller
 {
     /**
      * Muestra la vista principal de captura de calificaciones.
      */
-    public function index()
+ public function index()
     {
-        // 2. Ya no cargamos Grados, ahora cargamos Niveles
+        // 1. Encontrar el ciclo escolar ACTIVO
+        $cicloActivo = CicloEscolar::where('estado', 'ACTIVO')->first();
+
+        // 2. Cargar niveles (esto no cambia)
         $niveles = Nivel::orderBy('nivel_id')->get(['nivel_id as id', 'nombre']);
-        $periodos = Periodo::where('estado', 'ABIERTO')->get(['periodo_id as id', 'nombre']); 
+        $niveles->push((object)[
+            'id' => 'extra',
+            'nombre' => 'Extracurricular'
+        ]);
+
+        // --- INICIO DE MODIFICACIÓN ---
+        // 3. Cargar periodos ABIERTOS SÓLO del ciclo ACTIVO
+        $periodos = collect(); // Colección vacía por defecto
+        if ($cicloActivo) {
+            $periodos = Periodo::where('ciclo_escolar_id', $cicloActivo->ciclo_escolar_id)
+                               ->where('estado', 'ABIERTO') // Solo periodos abiertos
+                               ->orderBy('fecha_inicio')
+                               ->get(['periodo_id as id', 'nombre']);
+        }
+        // --- FIN DE MODIFICACIÓN ---
 
         return view('admin.calificaciones.index', [
-            'niveles' => $niveles, // 3. Pasamos niveles
-            'periodos' => $periodos,
-            // 'grados' => $grados, // <-- 4. Ya no pasamos grados
+            'niveles' => $niveles,
+            'periodos' => $periodos, // Ahora solo contiene periodos del ciclo activo
+            // 'cicloActivo' => $cicloActivo // Puedes pasar esto si lo necesitas
         ]);
     }
 
@@ -69,22 +88,41 @@ class CalificacionController extends Controller
         // 3. Recalcular promedios ANTES de guardar
         $calificacionesParaGuardar = $calificacionesInput;
 
-        foreach ($calificacionesInput as $alumnoId => $criterios) {
-            $sumaPonderada = 0;
-            $sumaPonderaciones = 0;
-
-            foreach ($criterios as $criterioId => $valor) {
-                if (isset($criteriosParaPromediar[$criterioId]) && is_numeric($valor)) {
-                    $ponderacion = $criteriosParaPromediar[$criterioId];
-                    $sumaPonderada += $valor * $ponderacion;
-                    $sumaPonderaciones += $ponderacion;
-                }
+     foreach ($calificacionesInput as $alumnoId => $criterios) {
+            
+            $totalFaltasCalculadas = 0; // Guardamos el valor calculado aquí
+            // Recalcular FALTAS
+            if ($criterioFaltasId) {
+                 $totalFaltasCalculadas = RegistroAsistencia::where('alumno_id', $alumnoId)
+                    ->where('grupo_id', $grupoId)
+                    ->where('tipo_asistencia', 'FALTA')
+                    ->whereBetween('fecha', [$periodo->fecha_inicio, $periodo->fecha_fin])
+                    ->count();
+                // Sobrescribimos el valor del input con el valor calculado
+                $calificacionesParaGuardar[$alumnoId][$criterioFaltasId] = $totalFaltasCalculadas;
             }
 
-            // Sobrescribir el valor del promedio en el array que vamos a guardar
+            // Recalcular PROMEDIO (usando los valores actualizados, incluyendo faltas)
+            $sumaPonderada = 0;
+            $sumaPonderaciones = 0;
+            foreach ($calificacionesParaGuardar[$alumnoId] as $criterioId => $valor) {
+                 // Usamos $totalFaltasCalculadas si es el criterio de faltas
+                 $valorReal = ($criterioId == $criterioFaltasId) ? $totalFaltasCalculadas : $valor;
+
+                 if (isset($criteriosParaPromediar[$criterioId]) && is_numeric($valorReal)) {
+                     $ponderacion = $criteriosParaPromediar[$criterioId];
+                     // NOTA: Convierte el valor de faltas si es necesario para el promedio
+                     
+                     $sumaPonderada += $calificacionParaPromedio * $ponderacion;
+                     $sumaPonderaciones += $ponderacion;
+                 }
+            }
+
             if ($criterioPromedioId && $sumaPonderaciones > 0) {
                 $promedioCalculado = $sumaPonderada / $sumaPonderaciones;
                 $calificacionesParaGuardar[$alumnoId][$criterioPromedioId] = round($promedioCalculado, 2);
+            } else if ($criterioPromedioId) {
+                $calificacionesParaGuardar[$alumnoId][$criterioPromedioId] = 0;
             }
         }
 

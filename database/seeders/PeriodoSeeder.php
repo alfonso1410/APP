@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use App\Models\CicloEscolar; 
+use App\Models\Periodo;
 class PeriodoSeeder extends Seeder
 {
     /**
@@ -12,15 +14,22 @@ class PeriodoSeeder extends Seeder
      */
     public function run(): void
     {
-      // Se insertan periodos de ejemplo para pruebas
-        // Usamos fechas claramente distintas para evitar conflictos en la clave UNIQUE compuesta.
+        // --- INICIO DE MODIFICACIÓN ---
+        // 1. Obtén el ID del ciclo escolar activo
+        $cicloActivo = CicloEscolar::where('nombre', '2025-2026')->first();
+
+        if (!$cicloActivo) {
+            $this->command->error('Ciclo Escolar 2025-2026 no encontrado para Periodos.');
+            return;
+        }
+        $cicloId = $cicloActivo->ciclo_escolar_id;
+        // --- FIN DE MODIFICACIÓN ---
         
         $periodos = [
             [
                 'nombre' => 'Trimestre 1',
                 'fecha_inicio' => '2025-09-01',
                 'fecha_fin' => '2025-12-05',
-                // estado: 'ABIERTO' (Se usa el valor por defecto de la migración)
             ],
             [
                 'nombre' => 'Trimestre 2',
@@ -34,21 +43,21 @@ class PeriodoSeeder extends Seeder
             ],
         ];
 
+        // Limpia la tabla ANTES de insertar (para este ciclo específico)
+        DB::table('periodos')->where('ciclo_escolar_id', $cicloId)->delete(); 
+
         foreach ($periodos as $periodo) {
-            // Usamos updateOrInsert con las columnas únicas como clave de búsqueda
-            DB::table('periodos')->updateOrInsert(
-                // Clave de Búsqueda: nombre y fecha_inicio
+            DB::table('periodos')->insert( // Usamos insert simple ahora
                 [
+                    // --- INICIO DE MODIFICACIÓN ---
+                    'ciclo_escolar_id' => $cicloId, // <-- 2. Añade el ID
+                    // --- FIN DE MODIFICACIÓN ---
                     'nombre' => $periodo['nombre'],
-                    'fecha_inicio' => $periodo['fecha_inicio']
-                ],
-                // Valores a Insertar/Actualizar
-                [
+                    'fecha_inicio' => $periodo['fecha_inicio'],
                     'fecha_fin' => $periodo['fecha_fin'],
+                    'estado' => 'ABIERTO', // Asegura el estado
                     'created_at' => now(),
                     'updated_at' => now(),
-                    // El campo 'estado' tomará 'ABIERTO' por defecto
-                    'estado' => 'ABIERTO',
                 ]
             );
         }

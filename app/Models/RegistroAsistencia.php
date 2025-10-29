@@ -14,12 +14,13 @@ class RegistroAsistencia extends Model
     /**
      * CORRECCIÓN: 'turno' se reemplaza por 'idioma'
      */
-    protected $fillable = [
+   protected $fillable = [
         'alumno_id',
         'grupo_id',
+        'periodo_id', // <-- ¡Asegúrate de añadir esto si lo necesitas!
         'fecha',
+        'idioma',
         'tipo_asistencia',
-        'idioma', // <-- CORREGIDO
     ];
 
     // 1. Relación con Alumno: Un registro pertenece a UN Alumno
@@ -33,13 +34,10 @@ class RegistroAsistencia extends Model
     {
         return $this->belongsTo(Grupo::class, 'grupo_id', 'grupo_id');
     }
-    
-    // NOTA: Aunque el campo 'periodo_id' no está en la migración de esta tabla,
-    // si lo agregaras después para restringir el cálculo de reportes,
-    // esta función sería necesaria:
-    /* public function periodo()
+
+    public function periodo(): BelongsTo
     {
-         return $this->belongsTo(Periodo::class, 'periodo_id', 'periodo_id');
+        return $this->belongsTo(Periodo::class, 'periodo_id', 'periodo_id');
     }
-    */
+    /* --- FIN NUEVA RELACIÓN --- */
 }

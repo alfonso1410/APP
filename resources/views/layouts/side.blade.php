@@ -78,6 +78,17 @@
                         </a>
                     </li>
 
+                    {{-- ENLACE PARA GESTIONAR CICLOS ESCOLARES --}}
+                    <li>
+                        <a href="{{ route('admin.ciclo-escolar.index') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">
+                            <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
+                                {{-- Usa un ícono apropiado, ej: calendario --}}
+                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-calendar"> </use>
+                            </svg>
+                            <span class="flex-1 ms-3 whitespace-nowrap">Gestionar Ciclos Escolares</span>
+                        </a>
+                    </li>
+
                       {{-- ENLACE PARA GESTIONAR maestros --}}
                     <li>
                         <a href="{{ route('admin.maestros.index') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">

@@ -117,6 +117,10 @@
                         </span>
                     </button>
                 </div>
+                {{-- INICIO: Mostrar Nombre del Maestro --}}
+            <div x-show="tabla.nombreMaestro && tabla.alumnos.length > 0" class="mb-4 text-sm text-gray-700">
+                Maestro asignado: <strong x-text="tabla.nombreMaestro"></strong>
+            </div>
 <div x-show="tabla.alumnos.length > 0" class="mt-6">
     <form action="{{ route('admin.calificaciones.store') }}" method="POST">
         @csrf
@@ -155,8 +159,9 @@
                                            :value="tabla.calificaciones[alumno.id] && tabla.calificaciones[alumno.id][criterio.id] ? tabla.calificaciones[alumno.id][criterio.id] : ''"
                                            class="w-24 rounded-md border-gray-300 ... text-center"
                                            
-                                           :disabled="criterio.es_promedio"
-                                           :class="{ 'bg-gray-100 font-bold': criterio.es_promedio }"
+                                           :disabled="criterio.es_promedio || criterio.es_faltas"
+       :class="{ 'bg-gray-100 font-bold': criterio.es_promedio, 'bg-gray-100': criterio.es_faltas }"
+>
                                     >
                                 </td>
                             </template>
@@ -216,6 +221,7 @@
                     criterios: [],
                     calificaciones: {},
                     promedioGrupo: 0,
+                    nombreMaestro: '',
                     intentado: false 
                 },
 
@@ -246,7 +252,11 @@
                     try {
                         // --- 4. MODIFICAR AUTOLOAD ---
                         // Primero, esperamos a que carguen los grados
-                        const gradosData = await fetch(`{{ url('/admin/json/niveles') }}/${this.selectedNivel}/grados`).then(res => res.json());
+                        let gradosUrl = (this.selectedNivel === 'extra')
+                            ? '{{ route("admin.json.grados.extra") }}'
+                            : `{{ url('/admin/json/niveles') }}/${this.selectedNivel}/grados`;
+
+                        const gradosData = await fetch(gradosUrl).then(res => res.json());
                         this.grados = gradosData;
                         this.loading.grados = false;
                         if (!this.grados.find(g => g.id == this.selectedGrado)) {
@@ -300,7 +310,12 @@
                     if (!this.selectedNivel) return;
                     
                     this.loading.grados = true;
-                    fetch(`{{ url('/admin/json/niveles') }}/${this.selectedNivel}/grados`)
+
+                    let url = (this.selectedNivel === 'extra')
+                        ? '{{ route("admin.json.grados.extra") }}'
+                        : `{{ url('/admin/json/niveles') }}/${this.selectedNivel}/grados`;
+                        
+                    fetch(url)
                         .then(res => res.json())
                         .then(data => {
                             this.grados = data;
@@ -402,6 +417,7 @@
                             this.tabla.criterios = data.criterios;
                             this.tabla.calificaciones = data.calificaciones;
                             this.tabla.promedioGrupo = data.promedioGrupo;
+                            this.tabla.nombreMaestro = data.nombreMaestro;
                             this.loading.tabla = false;
                         })
                         .catch(err => {
@@ -418,6 +434,7 @@
                     this.tabla.criterios = [];
                     this.tabla.calificaciones = {};
                     this.tabla.promedioGrupo = 0;
+                    this.tabla.nombreMaestro = '';
                     this.tabla.intentado = false;
                 }
             }
