@@ -23,6 +23,7 @@ use App\Http\Controllers\CalificacionController; // <-- AÑADIR ESTA LÍNEA
 use App\Http\Controllers\CalificacionJsonController;
 use App\Http\Controllers\CicloEscolarController;
 use App\Http\Controllers\PeriodoController;
+use App\Http\Controllers\ReporteController;
 // --- CORRECCIÓN: Añadir importación del modelo ---
 use App\Models\CatalogoCriterio;
 
@@ -135,6 +136,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::resource('ciclo-escolar', CicloEscolarController::class);
         Route::resource('periodos', PeriodoController::class);
+        Route::get('/reportes/concentrado-periodo/{grupo}/{periodo}', [ReporteController::class, 'generarConcentradoPeriodo'])
+     ->name('admin.reportes.concentrado.periodo');
     }); // <-- Fin de la ZONA DE ADMINISTRACIÓN
 
 
