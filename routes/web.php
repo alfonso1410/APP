@@ -19,12 +19,11 @@ use App\Http\Controllers\GrupoMaestroController;
 use App\Http\Controllers\GrupoMateriaMaestroController;
 use App\Http\Controllers\MateriaCriterioController;
 use App\Http\Controllers\AsistenciaController;
-use App\Http\Controllers\CalificacionController; // <-- AÑADIR ESTA LÍNEA
+use App\Http\Controllers\CalificacionController;
 use App\Http\Controllers\CalificacionJsonController;
 use App\Http\Controllers\CicloEscolarController;
 use App\Http\Controllers\PeriodoController;
 use App\Http\Controllers\ReporteController;
-// --- CORRECCIÓN: Añadir importación del modelo ---
 use App\Models\CatalogoCriterio;
 
 /*
@@ -58,6 +57,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |--------------------------------------------------------------------------
     | =================== ZONA DE ADMINISTRACIÓN ===================
     |--------------------------------------------------------------------------
+    | Rutas exclusivas para Directores y Coordinadores
     */
     Route::middleware(['role:DIRECTOR,COORDINADOR'])->prefix('admin')->name('admin.')->group(function () {
 
@@ -104,45 +104,54 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Materias
         Route::resource('materias', MateriaController::class)->except(['create', 'show', 'edit']);
 
-        // --- CORRECCIÓN: Rutas individuales para MateriaCriterio Y CatalogoCriterio ---
-        Route::get('materia-criterios/create', [MateriaCriterioController::class, 'create'])->name('materia-criterios.create'); // Para crear criterios base
-        Route::get('materia-criterios', [MateriaCriterioController::class, 'index'])->name('materia-criterios.index'); // Muestra catálogo o asignación
-        Route::post('materia-criterios', [MateriaCriterioController::class, 'store'])->name('materia-criterios.store'); // Guarda catálogo o asignación
+        // Criterios de Evaluación (Catálogo y Asignación)
+        Route::resource('materia-criterios', MateriaCriterioController::class)->except(['show', 'edit']);
 
-        // Rutas update y destroy para ASIGNACIONES y CATÁLOGO usan {id} genérico y apuntan al mismo controlador
-        Route::put('materia-criterios/{id}', [MateriaCriterioController::class, 'update'])->name('materia-criterios.update');
-        Route::patch('materia-criterios/{id}', [MateriaCriterioController::class, 'update']); // Alias para PATCH
-        Route::delete('materia-criterios/{id}', [MateriaCriterioController::class, 'destroy'])->name('materia-criterios.destroy'); // <- Esta ruta la usarán AMBAS vistas
-
-        // Esta ruta carga la página/vista principal
-    Route::get('/calificaciones', [CalificacionController::class, 'index'])->name('calificaciones.index');
-
-    // Esta ruta recibe el POST del formulario para guardar
-    Route::post('/calificaciones', [CalificacionController::class, 'store'])->name('calificaciones.store');
-
-    // --- Rutas JSON para Alpine.js (para los selects dinámicos) ---
-    Route::get('/json/grados/{grado}/grupos', [CalificacionJsonController::class, 'getGrupos'])->name('json.grados.grupos');
-    Route::get('/json/grados/{grado}/materias', [CalificacionJsonController::class, 'getMaterias'])->name('json.grados.materias');
-
-    // --- Ruta JSON para cargar la tabla de alumnos vs criterios ---
-    Route::get('/json/tabla-calificaciones', [CalificacionJsonController::class, 'getTablaCalificaciones'])->name('json.tabla.calificaciones');
-    Route::get('/json/niveles/{nivel}/grados', [CalificacionJsonController::class, 'getGradosPorNivel'])->name('json.niveles.grados');
-
-    Route::get('/json/grados-extracurriculares', [CalificacionJsonController::class, 'getGradosExtracurriculares'])->name('json.grados.extra');
-    
-        // ==========================================================
-        // == FIN: RUTAS DE CALIFICACIONES                         ==
-        // ==========================================================
-
+        // Administración Escolar (Ciclos y Periodos)
         Route::resource('ciclo-escolar', CicloEscolarController::class);
         Route::resource('periodos', PeriodoController::class);
-        Route::get('/reportes/concentrado-periodo/{grupo}/{periodo}', [ReporteController::class, 'generarConcentradoPeriodo'])
-     ->name('admin.reportes.concentrado.periodo');
+
     }); // <-- Fin de la ZONA DE ADMINISTRACIÓN
 
 
     /*
+    |--------------------------------------------------------------------------
+    | ===== ZONA COMPARTIDA (ADMINS Y MAESTROS) =====
+    |--------------------------------------------------------------------------
+    | Rutas accesibles por ambos roles, pero que muestran
+    | vistas/datos diferentes según el rol.
+    */
+    Route::middleware(['role:DIRECTOR,COORDINADOR,MAESTRO'])
+         ->prefix('admin') // Mantenemos el prefijo /admin/ para que las URLs de Alpine no se rompan
+         ->name('admin.')  // Mantenemos el nombre 'admin.' por la misma razón
+         ->group(function () {
+    
+        // ==========================================================
+        // == INICIO: RUTAS DE CALIFICACIONES (COMPARTIDAS)        ==
+        // ==========================================================
+        
+        Route::resource('calificaciones', CalificacionController::class)->only(['index', 'store']);
+
+        // --- Rutas JSON para Alpine.js (para los selects dinámicos) ---
+        // Estas rutas ahora podrán ser consumidas por la vista de admin y la de maestro
+        Route::get('/json/grados/{grado}/grupos', [CalificacionJsonController::class, 'getGrupos'])->name('json.grados.grupos');
+        Route::get('/json/grados/{grado}/materias', [CalificacionJsonController::class, 'getMaterias'])->name('json.grados.materias');
+        Route::get('/json/tabla-calificaciones', [CalificacionJsonController::class, 'getTablaCalificaciones'])->name('json.tabla.calificaciones');
+        Route::get('/json/niveles/{nivel}/grados', [CalificacionJsonController::class, 'getGradosPorNivel'])->name('json.niveles.grados');
+        Route::get('/json/grados-extracurriculares', [CalificacionJsonController::class, 'getGradosExtracurriculares'])->name('json.grados.extra');
+    
+        // ==========================================================
+        // == FIN: RUTAS DE CALIFICACIONES                         ==
+        // ==========================================================
+        Route::get('/reportes/concentrado-periodo/{grupo}/{periodo}/{materia}', [ReporteController::class, 'generarConcentradoPeriodo'])
+            ->name('reportes.concentrado.periodo');
+            
+    }); // <-- Fin de la ZONA COMPARTIDA
+
+
+    /*
     | =================== ZONA DE MAESTRO ===================
+    | Rutas exclusivas para Maestros
     */
     Route::middleware(['role:MAESTRO'])->prefix('maestro')->name('maestro.')->group(function () {
 

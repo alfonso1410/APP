@@ -19,16 +19,13 @@
            class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0" 
            :class="{'translate-x-0': open}" 
            aria-label="Sidebar">
-           
+        
         <div class="h-full px-3 py-4 overflow-y-auto bg-princeton">
-            {{-- Logo (apunta a 'dashboard' que es el redirector, está bien) --}}
+            {{-- Logo (sin cambios) --}}
             <a href="{{ route ('dashboard') }}" class="flex items-center ps-2.5 mb-5">
                <img src="{{ asset('Assets/logo-princeton.png') }}" alt="Logo del sistema boletas" />
             </a>
             
-            {{-- =============================================== --}}
-            {{-- =========== INICIO DE LA CORRECCIÓN =========== --}}
-            {{-- =============================================== --}}
             <ul class="space-y-2 font-medium">
 
                 @if (Auth::user()->rol === 'DIRECTOR' || Auth::user()->rol === 'COORDINADOR')
@@ -39,7 +36,6 @@
                     
                     {{-- 1. ENLACE DE DASHBOARD (ADMIN) --}}
                     <li>
-                        {{-- Corregido: apunta a 'admin.dashboard' --}}
                         <a href="{{ route('admin.dashboard') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">
                             <svg class="size-5 text-white-500 transition duration-150 group-hover:text-gray-900">
                                 <use xlink:href="{{ asset('Assets/sprite.svg') }}#dalo"> </use> 
@@ -48,23 +44,25 @@
                         </a>
                     </li>
     
-                    {{-- 2. ENLACE PARA GESTIONAR USUARIOS --}}
+                    {{-- ... (Resto de enlaces de Admin: Usuarios, Alumnos, Grados, etc.) ... --}}
+                    
+                    {{-- ENLACE PARA GESTIONAR USUARIOS --}}
                     <li>
                         <a href="{{ route('admin.users.index') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">
                             <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
                                 <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-user"> </use>
                             </svg>
-                            <span class="flex-1 ms-3 whitespace-nowrap">Gestionar Usuarios</span>
+                            <span class="flex-1 ms-3 whitespace-nowrap">Usuarios</span>
                         </a>
                     </li>
     
-                    {{-- 3. ENLACE PARA GESTIONAR ALUMNOS --}}
+                    {{-- ENLACE PARA GESTIONAR ALUMNOS --}}
                     <li>
                         <a href="{{ route('admin.alumnos.index') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">
                             <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
                                 <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-user"> </use>
                             </svg>
-                            <span class="flex-1 ms-3 whitespace-nowrap">Gestionar Alumnos</span>
+                            <span class="flex-1 ms-3 whitespace-nowrap">Alumnos</span>
                         </a>
                     </li>
 
@@ -74,7 +72,7 @@
                             <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
                                 <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-grade"> </use>
                             </svg>
-                            <span class="flex-1 ms-3 whitespace-nowrap">Gestionar Grados</span>
+                            <span class="flex-1 ms-3 whitespace-nowrap">Grados y Grupos</span>
                         </a>
                     </li>
 
@@ -82,10 +80,9 @@
                     <li>
                         <a href="{{ route('admin.ciclo-escolar.index') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">
                             <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
-                                {{-- Usa un ícono apropiado, ej: calendario --}}
                                 <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-calendar"> </use>
                             </svg>
-                            <span class="flex-1 ms-3 whitespace-nowrap">Gestionar Ciclos Escolares</span>
+                            <span class="flex-1 ms-3 whitespace-nowrap">Ciclos Escolares</span>
                         </a>
                     </li>
 
@@ -95,7 +92,7 @@
                             <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
                                 <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-user"> </use>
                             </svg>
-                            <span class="flex-1 ms-3 whitespace-nowrap">Gestionar Maestros</span>
+                            <span class="flex-1 ms-3 whitespace-nowrap">Maestros</span>
                         </a>
                     </li>
 
@@ -105,15 +102,15 @@
                             <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
                                 <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-grade"> </use>
                             </svg>
-                            <span class="flex-1 ms-3 whitespace-nowrap">Gestionar Materias</span>
+                            <span class="flex-1 ms-3 whitespace-nowrap">Materias y Criterios</span>
                         </a>
                     </li>
     
-                    {{-- ENLACE PARA GESTIONAR CALIFICACIONES --}}
+                    {{-- ENLACE PARA GESTIONAR CALIFICACIONES (Admin) --}}
                     <li>
-                        <a href="{{ route('admin.calificaciones.index') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">
+                        <a href="{{ route('admin.calificaciones.index') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group
+                           {{ request()->routeIs('admin.calificaciones.index') ? 'bg-gray-700' : 'hover:bg-gray-700' }}">
                             <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
-                                {{-- Reutilizamos el ícono de 'grade'. Cambia '#icon-grade' si tienes uno mejor --}}
                                 <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-grade"> </use> 
                             </svg>
                             <span class="flex-1 ms-3 whitespace-nowrap">Calificaciones</span>
@@ -128,7 +125,6 @@
                     
                     {{-- 1. ENLACE DE INICIO (MAESTRO) --}}
                     <li>
-                        {{-- Corregido: apunta a 'maestro.inicio' --}}
                         <a href="{{ route('maestro.inicio') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">
                             <svg class="size-5 text-white-500 transition duration-150 group-hover:text-gray-900">
                                 <use xlink:href="{{ asset('Assets/sprite.svg') }}#dalo"> </use> 
@@ -139,32 +135,50 @@
                     
                     {{-- 2. ENLACE MI PERFIL --}}
                     <li>
-                        {{-- Corregido: apunta a 'maestro.perfil' --}}
                         <a href="{{ route('maestro.perfil') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">
                             <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
-                                {{-- Reusamos el ícono de usuario --}}
                                 <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-user"> </use>
                             </svg>
                             <span class="flex-1 ms-3 whitespace-nowrap">Mi Perfil</span>
                         </a>
                     </li>
                     
-                    {{-- 3. ENLACE ASISTENCIAS (MODIFICADO AQUÍ) --}}
+                    {{-- 3. ENLACE ASISTENCIAS --}}
                     <li>
-                        <a href="{{ route('maestro.asistencias.index') }}" {{-- Asumiendo esta ruta --}}
+                        <a href="{{ route('maestro.asistencias.index') }}"
                            class="flex items-center p-2 text-white rounded-lg group
-                               {{ request()->routeIs('maestro.asistencias.index') ? 'bg-gray-700' : 'hover:bg-gray-700' }}">
+                                {{ request()->routeIs('maestro.asistencias.index') ? 'bg-gray-700' : 'hover:bg-gray-700' }}">
                             <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
-                                {{-- Icono de lista de tareas o similar para asistencias --}}
-                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-checklist"> </use> {{-- Asegúrate de que este ícono exista en tu sprite.svg --}}
+                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-checklist"> </use>
                             </svg>
                             <span class="flex-1 ms-3 whitespace-nowrap">Asistencias</span>
                         </a>
                     </li>
                 
+                    {{-- =============================================== --}}
+                    {{-- =========== INICIO DE LA CORRECCIÓN =========== --}}
+                    {{-- =============================================== --}}
+
+                    {{-- 4. ENLACE PARA GESTIONAR CALIFICACIONES (Maestro) --}}
+                    <li>
+                        {{-- Apunta a la MISMA ruta que el admin, ya que la hicimos compartida --}}
+                        <a href="{{ route('admin.calificaciones.index') }}" 
+                           class="flex items-center p-2 text-white rounded-lg group
+                                  {{ request()->routeIs('admin.calificaciones.index') ? 'bg-gray-700' : 'hover:bg-gray-700' }}">
+                            <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
+                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-grade"> </use> 
+                            </svg>
+                            <span class="flex-1 ms-3 whitespace-nowrap">Calificaciones</span>
+                        </a>
+                    </li>
+
+                    {{-- =============================================== --}}
+                    {{-- ============= FIN DE LA CORRECCIÓN ============ --}}
+                    {{-- =============================================== --}}
+                
                 @endif
     
-                {{-- 4. ENLACE PARA CERRAR SESIÓN (Este es común para todos) --}}
+                {{-- 4. ENLACE PARA CERRAR SESIÓN (Común para todos) --}}
                 <li>
                     <a href="#" 
                        class="flex items-center p-2 text-white rounded-lg hover:bg-red-600 group"
@@ -175,9 +189,6 @@
                 </li>
                 
             </ul>
-            {{-- =============================================== --}}
-            {{-- ============= FIN DE LA CORRECCIÓN ============ --}}
-            {{-- =============================================== --}}
         </div>
     </aside>
 

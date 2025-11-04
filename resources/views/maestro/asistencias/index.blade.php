@@ -37,9 +37,18 @@
                             <div class="{{ $color }} text-white rounded-xl shadow-lg p-6 flex flex-col justify-between">
                                 <div>
                                     {{-- Nombre del Grado y Grupo --}}
+                                    
+                                    {{-- =============================================== --}}
+                                    {{-- =========== INICIO DE LA CORRECCIÓN =========== --}}
+                                    {{-- =============================================== --}}
                                     <h4 class="text-3xl font-bold">
-                                        {{ $grupo->grado->nombre ?? '' }} {{ $grupo->nombre ?? 'Grupo' }}
+                                        {{-- Corregido para mostrar Nivel, Grado y Grupo --}}
+                                        {{ $grupo->grado->nivel->nombre ?? '' }} {{ $grupo->grado->nombre ?? '' }} - {{ $grupo->nombre_grupo ?? 'Grupo' }}
                                     </h4>
+                                    {{-- =============================================== --}}
+                                    {{-- ============= FIN DE LA CORRECCIÓN ============ --}}
+                                    {{-- =============================================== --}}
+
                                     <span class="text-lg opacity-90">
                                         {{-- Usamos el ciclo escolar dinámico --}}
                                         Ciclo {{ $grupo->ciclo_escolar }} 

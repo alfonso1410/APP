@@ -5,54 +5,40 @@ namespace App\Http\Controllers;
 use App\Models\Alumno;
 use App\Models\Grupo;
 use App\Models\User;
+use App\Models\CicloEscolar; // <-- Importación correcta
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // ¡Importante!
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB; // <-- Importación correcta
 
 class DashboardController extends Controller
 {
     /**
      * DIRECTOR DE TRÁFICO.
-     * Revisa el rol del usuario logueado y lo redirige a su panel correcto.
-     * (Esta parte está PERFECTA)
      */
     public function index()
     {
         $usuario = Auth::user();
-        $rol = strtoupper($usuario->rol); // Estandarizar a MAYÚSCULAS
+        $rol = strtoupper($usuario->rol);
 
         if ($rol === 'DIRECTOR' || $rol === 'COORDINADOR') {
-            
-            // Lo mandamos a la ruta del panel de Admin
             return redirect()->route('admin.dashboard');
-
         } elseif ($rol === 'MAESTRO') {
-            
-            // Lo mandamos a la ruta del panel de Maestro
             return redirect()->route('maestro.inicio');
-        
         } else {
-            // Fallback de seguridad
             Auth::logout();
             return redirect('/login')->with('error', 'Rol de usuario no reconocido.');
         }
     }
 
     /**
-     * MUESTRA EL PANEL DE ADMINISTRACIÓN (Director/Coordinador)
-     * (Esta parte está PERFECTA)
+     * MUESTRA EL PANEL DE ADMINISTRACIÓN
      */
     public function adminDashboard()
     {
-        // 1. Contamos solo los alumnos activos.
         $totalAlumnos = Alumno::where('estado_alumno', 'activo')->count();
-
-        // 2. Contamos los usuarios con rol MAESTRO
-        $totalMaestros = User::where('rol', 'MAESTRO')->count(); // Asegúrate que sea MAYÚSCULAS
-
-        // 3. Contamos los grupos activos.
+        $totalMaestros = User::where('rol', 'MAESTRO')->count();
         $totalGrupos = Grupo::where('estado', 'activo')->count();
 
-        // 4. Pasamos todas las variables a la VISTA DE ADMIN
         return view('admin.dashboard', [
             'totalAlumnos' => $totalAlumnos,
             'totalMaestros' => $totalMaestros,
@@ -61,22 +47,43 @@ class DashboardController extends Controller
     }
 
     /**
-     * ==========================================================
-     * MUESTRA EL PANEL DEL MAESTRO (¡ESTA ES LA CORRECCIÓN!)
-     * ==========================================================
+     * MUESTRA EL PANEL DEL MAESTRO
      */
     public function maestroDashboard()
     {
         $maestro = Auth::user();
+        $maestroId = $maestro->id;
+        
+        // Obtenemos el ciclo activo para filtrar ambas consultas
+        $cicloActivo = CicloEscolar::where('estado', 'ACTIVO')->first();
+        $cicloActivoId = $cicloActivo ? $cicloActivo->ciclo_escolar_id : null;
 
-        // 1. Cargamos los grupos donde este maestro es Titular.
-        //    (Asumiendo que tienes la relación 'gruposTitulares' en tu modelo User)
-        $grupos = $maestro->gruposTitulares()
-                          ->with('grado') // Carga la info del grado (Ej: "1°", "2°")
-                          ->withCount('alumnos') // Cuenta alumnos y lo guarda en 'alumnos_count'
-                          ->get();
+        // --- CORRECCIÓN 1: Obtener el nombre del ciclo para el modal ---
+        $cicloActivoNombre = $cicloActivo ? $cicloActivo->nombre : 'Ciclo no activo';
 
-        // 2. Definimos las notificaciones (como en tu diseño)
+        // 1. GRUPOS DONDE ES TITULAR (Tutor)
+        $gruposTitulares = $maestro->gruposTitulares()
+            ->where('ciclo_escolar_id', $cicloActivoId)
+            // --- CORRECCIÓN 2: Carga eficiente de Nivel ---
+            ->with('grado.nivel') // Carga Grado Y el Nivel del grado
+            ->withCount('alumnos')
+            ->get();
+
+        // 2. GRUPOS DONDE IMPARTE MATERIAS
+        $gruposDondeImparteIds = DB::table('grupo_materia_maestro as gmm')
+            ->join('grupos', 'gmm.grupo_id', '=', 'grupos.grupo_id')
+            ->where('gmm.maestro_id', $maestroId)
+            ->where('grupos.ciclo_escolar_id', $cicloActivoId)
+            ->distinct()
+            ->pluck('grupos.grupo_id');
+
+        $gruposDondeImparte = Grupo::whereIn('grupo_id', $gruposDondeImparteIds)
+            // --- CORRECCIÓN 2: Carga eficiente de Nivel ---
+            ->with('grado.nivel') // Carga Grado Y el Nivel del grado
+            ->withCount('alumnos')
+            ->get();
+        
+        // 3. Definimos las notificaciones
         $notificaciones = [
             [
                 'tipo' => 'warning',
@@ -84,11 +91,13 @@ class DashboardController extends Controller
             ]
         ];
 
-        // 3. Pasamos todo a la vista del maestro
+        // 4. Pasamos todo a la vista del maestro
         return view('maestro.inicio', [
             'maestro' => $maestro,
-            'gruposAsignados' => $grupos,      // <-- Dato añadido
-            'notificaciones' => $notificaciones, // <-- Dato añadido
+            'gruposTitulares' => $gruposTitulares,
+            'gruposDondeImparte' => $gruposDondeImparte,
+            'notificaciones' => $notificaciones,
+            'cicloActivoNombre' => $cicloActivoNombre, // <-- CORRECCIÓN 1: Pasar el nombre
         ]);
     }
 }

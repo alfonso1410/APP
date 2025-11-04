@@ -118,14 +118,14 @@
                     </button>
 
                     <a x-show="tabla.alumnos.length > 0"
-            :href="reportUrlTemplate.replace(':grupoId', selectedGrupo).replace(':periodoId', selectedPeriodo)"
-   target="_blank"
-           class="px-5 py-2 bg-teal-600 text-white font-semibold rounded-lg shadow-md hover:bg-teal-700 transition flex items-center gap-2">
-           
-           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-           
-           Generar Reporte
-        </a>
+                        :href="reportUrlTemplate.replace(':grupoId', selectedGrupo).replace(':periodoId', selectedPeriodo).replace(':materiaId', selectedMateria)"
+                        target="_blank"
+                        class="px-5 py-2 bg-teal-600 text-white font-semibold rounded-lg shadow-md hover:bg-teal-700 transition flex items-center gap-2">
+                            
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            
+                            Generar Reporte
+                        </a>
                 </div>
                 {{-- INICIO: Mostrar Nombre del Maestro --}}
             <div x-show="tabla.nombreMaestro && tabla.alumnos.length > 0" class="mb-4 text-sm text-gray-700">
@@ -164,7 +164,7 @@
                                     <input type="number"
                                            step="0.1" 
                                            min="0" 
-                                           max="100"
+                                           max="10"
                                            :name="`calificaciones[${alumno.id}][${criterio.id}]`"
                                            :value="tabla.calificaciones[alumno.id] && tabla.calificaciones[alumno.id][criterio.id] ? tabla.calificaciones[alumno.id][criterio.id] : ''"
                                            class="w-24 rounded-md border-gray-300 ... text-center"
@@ -220,8 +220,7 @@
                 selectedMateria: '{{ old('materia_id') }}' || '',
                 selectedPeriodo: '{{ old('periodo_id') }}' || '',
 
-               reportUrlTemplate: '{{ url("/admin/reportes/concentrado-periodo") }}/:grupoId/:periodoId',
-
+                reportUrlTemplate: '{{ url("/admin/reportes/concentrado-periodo") }}/:grupoId/:periodoId/:materiaId',
                 // --- FIN DE MODIFICACIÓN ---
                    // Datos para los dropdowns
                 grados: [],
