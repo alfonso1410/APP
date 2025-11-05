@@ -12,8 +12,10 @@
             <div x-data="calificacionesManager()" 
                  class="bg-white p-6 shadow-sm rounded-lg">
                 
+                {{-- Selectores (Sin cambios) --}}
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-                  <div>
+                    {{-- ... (selects de Nivel, Grado, Grupo, etc.) ... --}}
+                    <div>
                         <label for="nivel" class="block text-sm font-medium text-gray-700">Nivel</label>
                         <select id="nivel" x-model="selectedNivel" @change="nivelChanged()"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
@@ -33,7 +35,7 @@
                                 :disabled="loading.grados || !selectedNivel"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100">
                             
-                         <option value="">
+                           <option value="">
                                 <span x-show="loading.grados">Cargando grados...</span>
                                 <span x-show="!loading.grados && !selectedNivel">Selecciona un nivel</span>
                                 <span x-show="!loading.grados && selectedNivel && grados.length === 0">Sin grados</span>
@@ -48,7 +50,7 @@
                         </select>
                     </div>
                     
-                     <div>
+                      <div>
                         <label for="grupo" class="block text-sm font-medium text-gray-700">Grupo</label>
                         <select id="grupo" x-model="selectedGrupo" :disabled="loading.grupos || !selectedGrado"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100">
@@ -61,9 +63,9 @@
                             </option>
                             <template x-for="grupo in grupos" :key="grupo.id">
                                 <option :value="grupo.id" 
-            x-text="grupo.nombre_grupo"
-            :selected="grupo.id == selectedGrupo">
-    </option>
+                                    x-text="grupo.nombre_grupo"
+                                    :selected="grupo.id == selectedGrupo">
+                                </option>
                             </template>
                         </select>
                     </div>
@@ -81,9 +83,9 @@
                             </option>
                             <template x-for="materia in materias" :key="materia.id">
                                 <option :value="materia.id" 
-            x-text="materia.nombre"
-            :selected="materia.id == selectedMateria">
-    </option>
+                                    x-text="materia.nombre"
+                                    :selected="materia.id == selectedMateria">
+                                </option>
                             </template>
                         </select>
                     </div>
@@ -95,9 +97,9 @@
                             <option value="">Selecciona un periodo</option>
                             @foreach($periodos as $periodo)
                                <option value="{{ $periodo->id }}" 
-                        @selected(old('periodo_id') == $periodo->id)>
-                    {{ $periodo->nombre }}
-                </option>
+                                    @selected(old('periodo_id') == $periodo->id)>
+                                   {{ $periodo->nombre }}
+                               </option>
                             @endforeach
                         </select>
                     </div>
@@ -116,94 +118,120 @@
                             Cargando...
                         </span>
                     </button>
-
-                    <a x-show="tabla.alumnos.length > 0"
-                        :href="reportUrlTemplate.replace(':grupoId', selectedGrupo).replace(':periodoId', selectedPeriodo).replace(':materiaId', selectedMateria)"
-                        target="_blank"
-                        class="px-5 py-2 bg-teal-600 text-white font-semibold rounded-lg shadow-md hover:bg-teal-700 transition flex items-center gap-2">
-                            
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            
-                            Generar Reporte
-                        </a>
+                    
+                    {{-- 
+                      ===============================================
+                      CORRECCIÓN: Se elimina el botón "Generar Reporte" 
+                      de aquí, ya que lo moviste al final.
+                      ===============================================
+                    --}}
                 </div>
+                
                 {{-- INICIO: Mostrar Nombre del Maestro --}}
-            <div x-show="tabla.nombreMaestro && tabla.alumnos.length > 0" class="mb-4 text-sm text-gray-700">
-                Maestro asignado: <strong x-text="tabla.nombreMaestro"></strong>
-            </div>
-<div x-show="tabla.alumnos.length > 0" class="mt-6">
-    <form action="{{ route('admin.calificaciones.store') }}" method="POST">
-        @csrf
-        <input type="hidden" name="periodo_id" :value="selectedPeriodo">
-        <input type="hidden" name="materia_id" :value="selectedMateria">
-        <input type="hidden" name="grado_id" :value="selectedGrado">
-        <input type="hidden" name="grupo_id" :value="selectedGrupo">
-        <input type="hidden" name="nivel_id" :value="selectedNivel">
-        <div class="overflow-x-auto border rounded-lg">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase ...">
-                            Alumno
-                        </th>
-                        <template x-for="criterio in tabla.criterios" :key="criterio.id">
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase"
-                                x-text="criterio.nombre_criterio"></th>
-                        </template>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <template x-for="(alumno, index) in tabla.alumnos" :key="alumno.id">
-                        <tr :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
-                            <td class="px-6 py-4 ... sticky left-0 ..."
-                                x-text="`${alumno.apellido_paterno} ${alumno.apellido_materno} ${alumno.nombres}`">
-                            </td>
-                            
-                            <template x-for="criterio in tabla.criterios" :key="criterio.id">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <input type="number"
-                                           step="0.1" 
-                                           min="0" 
-                                           max="10"
-                                           :name="`calificaciones[${alumno.id}][${criterio.id}]`"
-                                           :value="tabla.calificaciones[alumno.id] && tabla.calificaciones[alumno.id][criterio.id] ? tabla.calificaciones[alumno.id][criterio.id] : ''"
-                                           class="w-24 rounded-md border-gray-300 ... text-center"
-                                           
-                                           :disabled="criterio.es_promedio || criterio.es_faltas"
-       :class="{ 'bg-gray-100 font-bold': criterio.es_promedio, 'bg-gray-100': criterio.es_faltas }"
->
-                                    >
-                                </td>
-                            </template>
-                        </tr>
-                    </template>
-                </tbody>
-                <tfoot x-show="tabla.promedioGrupo > 0" 
-                           class="bg-gray-100 border-t-2 border-gray-400">
-                        <tr>
-                            <td class="px-6 py-3 text-right text-sm font-bold text-gray-800 uppercase"
-                                :colspan="tabla.criterios.length">
-                                Promedio del Grupo
-                            </td>
-                            
-                            <td class="px-6 py-3 text-center text-sm font-bold text-gray-900">
-                                <span x-text="tabla.promedioGrupo.toFixed(2)"></span>
-                            </td>
-                        </tr>
-                    </tfoot>
-            </table>
-        </div>
+                <div x-show="tabla.nombreMaestro && tabla.alumnos.length > 0" class="mb-4 text-sm text-gray-700">
+                    Maestro asignado: <strong x-text="tabla.nombreMaestro"></strong>
+                </div>
 
-        <div class="mt-6 flex justify-end">
-            <button type="submit" class="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition"> Guardar Calificaciones </button>
-            </div>
-    </form>
-</div>
+                {{-- Inicio de la Tabla --}}
+                <div x-show="tabla.alumnos.length > 0" class="mt-6">
+                    <form action="{{ route('admin.calificaciones.store') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="periodo_id" :value="selectedPeriodo">
+                        <input type="hidden" name="materia_id" :value="selectedMateria">
+                        <input type="hidden" name="grado_id" :value="selectedGrado">
+                        <input type="hidden" name="grupo_id" :value="selectedGrupo">
+                        <input type="hidden" name="nivel_id" :value="selectedNivel">
+                        
+                        <div class="overflow-x-auto border rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                {{-- ... (El <thead> y <tbody> de tu tabla no cambian) ... --}}
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase ...">
+                                            Alumno
+                                        </th>
+                                        <template x-for="criterio in tabla.criterios" :key="criterio.id">
+                                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase"
+                                                x-text="criterio.nombre_criterio"></th>
+                                        </template>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <template x-for="(alumno, index) in tabla.alumnos" :key="alumno.id">
+                                        <tr :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+                                            <td class="px-6 py-4 ... sticky left-0 ..."
+                                                x-text="`${alumno.apellido_paterno} ${alumno.apellido_materno} ${alumno.nombres}`">
+                                            </td>
+                                            
+                                            <template x-for="criterio in tabla.criterios" :key="criterio.id">
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <input type="number"
+                                                           step="0.1" 
+                                                           min="0" 
+                                                           max="10"
+                                                           :name="`calificaciones[${alumno.id}][${criterio.id}]`"
+                                                           :value="tabla.calificaciones[alumno.id] && tabla.calificaciones[alumno.id][criterio.id] ? tabla.calificaciones[alumno.id][criterio.id] : ''"
+                                                           class="w-24 rounded-md border-gray-300 ... text-center"
+                                                           
+                                                           :disabled="criterio.es_promedio || criterio.es_faltas"
+                                                           :class="{ 'bg-gray-100 font-bold': criterio.es_promedio, 'bg-gray-100': criterio.es_faltas }"
+                                                    >
+                                                </td>
+                                            </template>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                                <tfoot x-show="tabla.promedioGrupo > 0" 
+                                       class="bg-gray-100 border-t-2 border-gray-400">
+                                    <tr>
+                                        <td class="px-6 py-3 text-right text-sm font-bold text-gray-800 uppercase"
+                                            :colspan="tabla.criterios.length">
+                                            Promedio del Grupo
+                                        </td>
+                                        
+                                        <td class="px-6 py-3 text-center text-sm font-bold text-gray-900">
+                                            <span x-text="tabla.promedioGrupo.toFixed(2)"></span>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
 
+                        {{-- =============================================== --}}
+                        {{-- =========== INICIO DE LA CORRECCIÓN =========== --}}
+                        {{-- =============================================== --}}
+
+                        {{-- 
+                            Se añade 'gap-4' al 'flex justify-end' 
+                            para crear espacio entre los botones.
+                        --}}
+                        <div class="mt-6 flex justify-end gap-4">
+                            
+                            {{-- Botón de Guardar --}}
+                            <button type="submit" class="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition"> Guardar Calificaciones </button>
+                            
+                            {{-- Botón de Generar Reporte --}}
+                            <a x-show="tabla.alumnos.length > 0"
+                               :href="reportUrlTemplate.replace(':grupoId', selectedGrupo).replace(':periodoId', selectedPeriodo).replace(':materiaId', selectedMateria)"
+                               target="_blank"
+                               class="px-5 py-2 bg-teal-600 text-white font-semibold rounded-lg shadow-md hover:bg-teal-700 transition flex items-center gap-2">
+                                
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                
+                                Generar Reporte
+                            </a>
+                        </div>
+                        {{-- =============================================== --}}
+                        {{-- ============= FIN DE LA CORRECCIÓN ============ --}}
+                        {{-- =============================================== --}}
+                    </form>
+                </div>
+
+                {{-- Mensajes de "No encontrado" (sin cambios) --}}
                 <div x-show="!loading.tabla && (tabla.alumnos.length === 0 || tabla.criterios.length === 0) && tabla.intentado"
                      class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
-                     <p x-show="tabla.alumnos.length === 0">No se encontraron alumnos en el grupo seleccionado.</p>
-                     <p x-show="tabla.criterios.length === 0">La materia seleccionada no tiene criterios de evaluación asignados.</p>
+                    <p x-show="tabla.alumnos.length === 0">No se encontraron alumnos en el grupo seleccionado.</p>
+                    <p x-show="tabla.criterios.length === 0">La materia seleccionada no tiene criterios de evaluación asignados.</p>
                 </div>
             </div>
 

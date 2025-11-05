@@ -24,7 +24,10 @@ use App\Http\Controllers\CalificacionJsonController;
 use App\Http\Controllers\CicloEscolarController;
 use App\Http\Controllers\PeriodoController;
 use App\Http\Controllers\ReporteController;
+use App\Http\Controllers\PonderacionController;
+use App\Http\Controllers\BoletaController;
 use App\Models\CatalogoCriterio;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -111,6 +114,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('ciclo-escolar', CicloEscolarController::class);
         Route::resource('periodos', PeriodoController::class);
 
+        Route::get('/ponderaciones', [PonderacionController::class, 'index'])
+             ->name('ponderaciones.index');
+             
+        Route::post('/ponderaciones/guardar', [PonderacionController::class, 'store'])
+             ->name('ponderaciones.store');
+
+        // 1. Página de selectores para generar boletas
+        Route::get('/boletas', [BoletaController::class, 'index'])->name('boletas.index');
+        
+        // 2. Ruta que genera el PDF de la boleta final
+        // (Se movió aquí desde el grupo 'compartido')
+        Route::get('/reportes/boleta-alumno/{grupo}/{alumno}', [BoletaController::class, 'generarBoletaAlumno'])
+            ->name('reportes.boleta.alumno');
+
+        // 3. Ruta JSON para que la página de boletas cargue alumnos dinámicamente
+        Route::get('/json/grupo/{grupo}/alumnos', [BoletaController::class, 'getAlumnosPorGrupo'])->name('json.grupo.alumnos');
+
     }); // <-- Fin de la ZONA DE ADMINISTRACIÓN
 
 
@@ -145,6 +165,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // ==========================================================
         Route::get('/reportes/concentrado-periodo/{grupo}/{periodo}/{materia}', [ReporteController::class, 'generarConcentradoPeriodo'])
             ->name('reportes.concentrado.periodo');
+
+        // La ruta ahora apunta al nuevo BoletaController
+        Route::get('/reportes/boleta-alumno/{grupo}/{alumno}', [BoletaController::class, 'generarBoletaAlumno'])
+            ->name('reportes.boleta.alumno');
             
     }); // <-- Fin de la ZONA COMPARTIDA
 

@@ -86,6 +86,16 @@
                         </a>
                     </li>
 
+                    {{-- ENLACE PARA GESTIONAR PONDERACIONES --}}
+                    <li>
+                        <a href="{{ route('admin.ponderaciones.index') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group {{ request()->routeIs('admin.ponderaciones.*') ? 'bg-gray-700' : '' }}">
+                            <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path>
+                            </svg>
+                            <span class="flex-1 ms-3 whitespace-nowrap">Ponderaciones</span>
+                        </a>
+                    </li>
+
                       {{-- ENLACE PARA GESTIONAR maestros --}}
                     <li>
                         <a href="{{ route('admin.maestros.index') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">
@@ -114,6 +124,15 @@
                                 <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-grade"> </use> 
                             </svg>
                             <span class="flex-1 ms-3 whitespace-nowrap">Calificaciones</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('admin.boletas.index') }}" class="flex items-center p-2 text-white rounded-lg group {{ request()->routeIs('admin.boletas.index') ? 'bg-gray-700' : '' }}">
+                            <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span class="flex-1 ms-3 whitespace-nowrap">Generar Boletas</span>
                         </a>
                     </li>
 

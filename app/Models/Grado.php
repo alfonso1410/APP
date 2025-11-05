@@ -21,23 +21,16 @@ class Grado extends Model
         'tipo_grado',
     ];
 
-    // --- INICIO CORRECCIÓN ---
-    /**
-     * Atributos visibles en JSON para el modal de campos formativos.
-     */
     protected $visible = [
         'grado_id',
-        'nombre' // <-- El atributo clave
+        'nombre'
     ];
-    // --- FIN CORRECCIÓN ---
 
-    // 3. Definir la relación con Nivel: Un Grado pertenece a UN Nivel
     public function nivel()
     {
         return $this->belongsTo(Nivel::class, 'nivel_id', 'nivel_id');
     }
 
-    // --- Otras relaciones (sin cambios) ---
     public function grupos(): HasMany
     {
         return $this->hasMany(Grupo::class, 'grado_id', 'grado_id');
@@ -51,22 +44,35 @@ class Grado extends Model
     public function gradosRegularesMapeados()
     {
         return $this->belongsToMany(
-            Grado::class,          
-            'grado_mapeo',        
-            'extra_grado_id',     
-            'regular_grado_id'    
+            Grado::class,        
+            'grado_mapeo',       
+            'extra_grado_id',    
+            'regular_grado_id'   
         );
     }
 
+    // ===============================================
+    // =========== INICIO DE LA CORRECCIÓN ===========
+    // ===============================================
+
+    /**
+     * Define la relación con Materias a través de la tabla pivote 'estructura_curricular'.
+     * Le decimos a Eloquent que cargue las columnas extra 'campo_id' y 'ponderacion_materia'.
+     */
     public function materias()
     {
         return $this->belongsToMany(Materia::class, 'estructura_curricular', 'grado_id', 'materia_id')
-                    ->withPivot('campo_id')
-                    ->withTimestamps();
+                   ->withPivot('campo_id', 'ponderacion_materia') // <-- LÍNEA CORREGIDA
+                   ->withTimestamps();
     }
+    
+    // ===============================================
+    // ============= FIN DE LA CORRECCIÓN ============
+    // ===============================================
+    
     public function getRouteKeyName()
-{
-    return 'grado_id';
-}
+    {
+        return 'grado_id';
+    }
     
 }
