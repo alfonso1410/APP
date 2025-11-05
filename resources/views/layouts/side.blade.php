@@ -70,7 +70,7 @@
                     <li>
                         <a href="{{ route('admin.grados.index') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">
                             <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
-                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-grade"> </use>
+                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-grupos"> </use>
                             </svg>
                             <span class="flex-1 ms-3 whitespace-nowrap">Grados y Grupos</span>
                         </a>
@@ -80,7 +80,7 @@
                     <li>
                         <a href="{{ route('admin.ciclo-escolar.index') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">
                             <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
-                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-calendar"> </use>
+                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-ciclos"> </use>
                             </svg>
                             <span class="flex-1 ms-3 whitespace-nowrap">Ciclos Escolares</span>
                         </a>
@@ -110,7 +110,7 @@
                     <li>
                         <a href="{{ route('admin.materias.index') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">
                             <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
-                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-grade"> </use>
+                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-materias"> </use>
                             </svg>
                             <span class="flex-1 ms-3 whitespace-nowrap">Materias y Criterios</span>
                         </a>
@@ -168,7 +168,7 @@
                            class="flex items-center p-2 text-white rounded-lg group
                                 {{ request()->routeIs('maestro.asistencias.index') ? 'bg-gray-700' : 'hover:bg-gray-700' }}">
                             <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
-                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-checklist"> </use>
+                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-asistencias"> </use>
                             </svg>
                             <span class="flex-1 ms-3 whitespace-nowrap">Asistencias</span>
                         </a>

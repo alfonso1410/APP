@@ -24,7 +24,9 @@ class EstructuraCurricularController extends Controller
         $materiasDisponibles = Materia::where('tipo', 'REGULAR')
                                     ->orderBy('nombre')
                                     ->get();
-        $camposFormativos = CampoFormativo::orderBy('nombre')->get();
+        $camposFormativos = CampoFormativo::where('nivel_id', $grado->nivel_id)
+                                          ->orderBy('nombre')
+                                          ->get();
 
         // --- INICIO DE CORRECCIÓN ---
         // Obtenemos las asignaciones actuales con todos sus datos (incluyendo ponderación)

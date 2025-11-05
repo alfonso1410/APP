@@ -6,29 +6,26 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Grupo;
 use App\Models\Periodo;
-use App\Models\User;
-use App\Models\Materia;
+use App\Models\User; // Para el maestro
+use App\Models\Materia; // <-- Importante: Asegurarse que esté importada
 use App\Models\MateriaCriterio;
 use App\Models\Calificacion;
-use App\Models\Alumno;                 // <-- AÑADIR
-use App\Models\PonderacionCampo;     // <-- AÑADIR
-use App\Models\EstructuraCurricular; // <-- AÑADIR (Si tienes este modelo)
-use App\Models\CatalogoCriterio;     // <-- AÑADIR (Si tienes este modelo)
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;    // <-- AÑADIR
 use PDF;
+use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\Auth; // <-- CORRECCIÓN: Importar Auth
 
 class ReporteController extends Controller
 {
     /**
      * Genera el PDF del concentrado de calificaciones para un grupo, periodo y materia.
-     * (Este es tu método existente)
      */
+    
     public function generarConcentradoPeriodo(Grupo $grupo, Periodo $periodo, Materia $materia)
     {
         $user = Auth::user();
 
-        // --- VALIDACIÓN DE SEGURIDAD ---
+        // --- INICIO DE CORRECCIÓN: VALIDACIÓN DE SEGURIDAD ---
+        // Se añade esta validación para prevenir el error 403
         if ($user->rol === 'MAESTRO') {
             $esAsignado = DB::table('grupo_materia_maestro')
                 ->where('maestro_id', $user->id)
@@ -37,32 +34,46 @@ class ReporteController extends Controller
                 ->exists();
             
             if (!$esAsignado) {
+                // Si no es su grupo/materia, prohibir acceso.
                 abort(403, 'Usted no tiene permiso para generar este reporte.');
             }
         }
-        
-        // ... (El resto de tu lógica para este método) ...
-        $grupo->load('grado');
-        $periodo->load('cicloEscolar');
+        // --- FIN DE CORRECCIÓN ---
+
+
+        // 1. Cargar datos del Grupo y Periodo (Laravel ya lo hace por Route Model Binding)
+        $grupo->load('grado'); // Cargar el nombre del grado
+        $periodo->load('cicloEscolar'); // Cargar el ciclo escolar
+
+        // 2. Cargar Alumnos del Grupo (Tu lógica es correcta)
         $alumnos = $grupo->alumnosActuales()
                           ->orderBy('apellido_paterno')
                           ->orderBy('apellido_materno')
                           ->orderBy('nombres')
                           ->get();
+
+        // 3. Lógica del Maestro refactorizada
         $nombreMaestro = 'Sin asignar';
+
         $asignacion = $grupo->materias()
                             ->where('materias.materia_id', $materia->materia_id)
                             ->first();
+
+        // Leemos el 'maestro_id' desde el pivote
         if ($asignacion && $asignacion->pivot->maestro_id) {
             $maestro = User::find($asignacion->pivot->maestro_id);
             if ($maestro) {
+                // Se usa 'trim' para limpiar espacios extra si un apellido no existe
                 $nombreMaestro = trim($maestro->name . ' ' . $maestro->apellido_paterno . ' ' . $maestro->apellido_materno);
             }
         }
+
+        // 4. Cargar Criterios de la Materia
         $materiaCriterios = MateriaCriterio::where('materia_id', $materia->materia_id)
                                           ->with('catalogoCriterio')
                                           ->orderBy('materia_criterio_id')
                                           ->get();
+        
         $criterios = $materiaCriterios->map(function ($mc) {
             $nombre = $mc->catalogoCriterio->nombre ?? 'Criterio s/n';
             return [
@@ -71,283 +82,39 @@ class ReporteController extends Controller
                 'es_promedio' => (strcasecmp($nombre, 'Promedio') == 0),
             ];
         });
+
+        // Reordenar "Promedio" al final
         list($promedios, $otrosCriterios) = $criterios->partition(fn($c) => $c['es_promedio']);
         $criteriosOrdenados = $otrosCriterios->merge($promedios)->values();
+
+
+        // 5. Cargar Calificaciones (Tu lógica es correcta y eficiente)
         $calificaciones = Calificacion::where('periodo_id', $periodo->periodo_id)
                                       ->whereIn('alumno_id', $alumnos->pluck('alumno_id'))
                                       ->whereIn('materia_criterio_id', $criteriosOrdenados->pluck('id'))
                                       ->get()
+                                      // Mapear para acceso fácil: [alumno_id][criterio_id]
                                       ->groupBy('alumno_id')
                                       ->map(fn($califs) => $califs->keyBy('materia_criterio_id'));
+
+        // 6. Preparar datos para la vista
         $data = [
             'grupo' => $grupo,
             'periodo' => $periodo,
             'alumnos' => $alumnos,
-            'materia' => $materia,
+            'materia' => $materia, // $materia ahora es el objeto inyectado
             'nombreMaestro' => $nombreMaestro,
             'criterios' => $criteriosOrdenados,
             'calificaciones' => $calificaciones,
         ];
+
+        // 7. Generar el PDF
         $pdf = Pdf::loadView('reportes.concentrado-periodo', $data, [], [
-            'format' => 'Legal',
-            'orientation' => 'L'
+            'format' => 'Legal', // Tamaño Oficio (Legal)
+            'orientation' => 'L'  // Orientación Horizontal (Landscape)
         ]);
+
+        // Se añade el nombre de la materia al archivo
         return $pdf->stream('concentrado-' . $grupo->nombre_grupo . '-' . $materia->nombre . '.pdf');
     }
-
-
-    // ==========================================================
-    // == INICIO DE CÓDIGO NUEVO
-    // ==========================================================
-
-    /**
-     * Genera la Boleta de Calificaciones final para un alumno específico.
-     */
-    public function generarBoletaAlumno(Grupo $grupo, Alumno $alumno)
-    {
-        // --- 1. OBTENER CONTEXTO ---
-        $grupo->load('grado.nivel', 'cicloEscolar');
-        $grado = $grupo->grado;
-        $ciclo = $grupo->cicloEscolar;
-
-        // --- 2. VALIDAR PERMISOS (Seguridad) ---
-        $user = Auth::user();
-        if ($user->rol === 'MAESTRO') {
-            $esAsignado = DB::table('grupo_materia_maestro')
-                ->where('maestro_id', $user->id)
-                ->where('grupo_id', $grupo->grupo_id)
-                ->exists();
-            $esTutor = DB::table('grupo_titular')
-                ->where('maestro_id', $user->id)
-                ->where('grupo_id', $grupo->grupo_id)
-                ->exists();
-            if (!$esAsignado && !$esTutor) {
-                abort(403, 'No tiene permisos para ver la boleta de este grupo.');
-            }
-        }
-
-        // --- 3. OBTENER REGLAS DE CÁLCULO (PONDERACIONES) ---
-        
-        // A) Ponderaciones de Campos (ej. Lenguajes = 30%)
-        $ponderacionesCampos = PonderacionCampo::where('ciclo_escolar_id', $ciclo->ciclo_escolar_id)
-            ->where('grado_id', $grado->grado_id)
-            ->pluck('ponderacion', 'campo_formativo_id');
-
-        // B) Ponderaciones de Materias (ej. Español = 60% de Lenguajes)
-        //    y la estructura de la boleta
-        $estructura = DB::table('estructura_curricular as ec')
-            ->join('campos_formativos as cf', 'ec.campo_id', '=', 'cf.campo_id')
-            ->join('materias as m', 'ec.materia_id', '=', 'm.materia_id')
-            ->where('ec.grado_id', $grado->grado_id)
-            ->select(
-                'ec.campo_id', 
-                'cf.nombre as nombre_campo',
-                'ec.materia_id',
-                'm.nombre as nombre_materia',
-                'ec.ponderacion_materia' // La ponderación de la materia
-            )
-            ->orderBy('cf.nombre') // Ordenar por Campo
-            ->orderBy('m.nombre')  // Luego por Materia
-            ->get();
-
-        // Agrupamos la estructura para la vista
-        $camposFormativos = $estructura->groupBy('nombre_campo');
-
-        // --- 4. OBTENER DATOS DEL ALUMNO ---
-        $periodos = Periodo::where('ciclo_escolar_id', $ciclo->ciclo_escolar_id)
-                           ->orderBy('fecha_inicio')
-                           ->get();
-        
-        $materiaIds = $estructura->pluck('materia_id');
-
-        // Buscamos el ID del criterio "Promedio" para CADA materia
-        $criteriosPromedioIds = MateriaCriterio::whereIn('materia_id', $materiaIds)
-            ->whereHas('catalogoCriterio', function ($query) {
-                $query->where('nombre', 'Promedio');
-            })
-            // ->pluck('materia_criterio_id', 'materia_id'); // [materia_id => criterio_promedio_id]
-             ->pluck('materia_criterio_id'); // <-- Solo los IDs
-
-        // Buscamos TODAS las calificaciones "Promedio" (PAS) del alumno en este ciclo
-        $calificacionesPAS = Calificacion::where('alumno_id', $alumno->alumno_id)
-            ->whereIn('periodo_id', $periodos->pluck('periodo_id'))
-            ->whereIn('materia_criterio_id', $criteriosPromedioIds)
-            ->get();
-            
-        // Mapeamos las calificaciones PAS para acceso rápido
-        // [materia_id_periodo_id => calificacion]
-        $mapaCalificacionesPAS = [];
-        $mapaMateriaCriterio = MateriaCriterio::whereIn('materia_criterio_id', $criteriosPromedioIds)
-                                            ->pluck('materia_id', 'materia_criterio_id');
-        
-        foreach($calificacionesPAS as $cal) {
-            $materiaId = $mapaMateriaCriterio->get($cal->materia_criterio_id);
-            if ($materiaId) {
-                $llave = $materiaId . '_' . $cal->periodo_id;
-                $mapaCalificacionesPAS[$llave] = $cal->calificacion_obtenida;
-            }
-        }
-
-        // --- 5. PREPARAR DATOS Y CALCULAR PROMEDIOS SEP ---
-        $boletaData = $this->procesarDatosBoleta(
-            $camposFormativos, 
-            $periodos, 
-            $mapaCalificacionesPAS, 
-            $ponderacionesCampos
-        );
-
-        // --- 6. PREPARAR DATOS FINALES PARA LA VISTA ---
-        $data = [
-            'alumno' => $alumno,
-            'grupo' => $grupo,
-            'ciclo' => $ciclo,
-            'periodos' => $periodos,
-            'dataCampos' => $boletaData['campos'], // Contiene toda la estructura
-            'promediosFinales' => $boletaData['promediosFinales'] // Contiene la fila "PROMEDIO"
-        ];
-        
-        // Cargar la nueva vista del PDF
-        $pdf = PDF::loadView('reportes.boleta-alumno', $data, [], [
-            'format' => 'Letter',
-            'orientation' => 'P' // Portrait (Vertical)
-        ]);
-
-        return $pdf->stream('boleta-' . $alumno->apellido_paterno . '-' . $alumno->nombres . '.pdf');
-    }
-
-    /**
-     * Función privada para procesar y calcular todos los promedios (PAS y SEP).
-     */
-    private function procesarDatosBoleta($camposFormativos, $periodos, $mapaCalificacionesPAS, $ponderacionesCampos)
-    {
-        $dataCampos = [];
-        
-        // Prepara el array para la fila final "PROMEDIO"
-        $promediosFinales = [];
-        foreach($periodos as $periodo) {
-            $promediosFinales[$periodo->periodo_id] = ['suma_ponderada' => 0, 'total_ponderacion' => 0];
-        }
-        $promediosFinales['promedio_final_sep'] = ['suma' => 0, 'contador' => 0];
-
-
-        foreach ($camposFormativos as $nombreCampo => $materias) {
-            $campoId = $materias->first()->campo_id;
-            // Ponderación del Campo (ej. Lenguajes = 30%)
-            $ponderacionCampo = $ponderacionesCampos->get($campoId, 0) / 100.0;
-            
-            $dataMaterias = [];
-            
-            // Prepara el array para la fila "SEP" de este campo
-            $promediosSEP_Campo = [];
-            foreach($periodos as $periodo) {
-                $promediosSEP_Campo[$periodo->periodo_id] = ['suma_ponderada' => 0, 'total_ponderacion' => 0];
-            }
-            $promediosSEP_Campo['promedio_pas'] = ['suma' => 0, 'contador' => 0];
-            $promediosSEP_Campo['promedio_sep'] = ['suma' => 0, 'contador' => 0];
-
-            
-            foreach ($materias as $materia) {
-                $califsMateria_PAS = [];
-                $sumaMateriaPAS = 0;
-                $countMateriaPAS = 0;
-                // Ponderación de la Materia (ej. Español = 60%)
-                $ponderacionMateria = $materia->ponderacion_materia / 100.0;
-                
-                foreach ($periodos as $periodo) {
-                    // 1. BUSCAR CALIFICACIÓN "PAS"
-                    $llave = $materia->materia_id . '_' . $periodo->periodo_id;
-                    $notaPAS = $mapaCalificacionesPAS[$llave] ?? null;
-                    
-                    $califsMateria_PAS[$periodo->periodo_id] = $notaPAS;
-                    
-                    if (is_numeric($notaPAS)) {
-                        $sumaMateriaPAS += $notaPAS;
-                        $countMateriaPAS++;
-                        
-                        // 2. ACUMULAR PARA CALIFICACIÓN "SEP" (Promedio Ponderado del Campo)
-                        $promediosSEP_Campo[$periodo->periodo_id]['suma_ponderada'] += ($notaPAS * $ponderacionMateria);
-                        $promediosSEP_Campo[$periodo->periodo_id]['total_ponderacion'] += $ponderacionMateria;
-                    }
-                }
-                
-                // Promedio "PAS" de la materia (columna PROMEDIO -> PAS)
-                $promedioPAS_Materia = ($countMateriaPAS > 0) ? round($sumaMateriaPAS / $countMateriaPAS, 1) : null;
-                if(is_numeric($promedioPAS_Materia)) {
-                    $promediosSEP_Campo['promedio_pas']['suma'] += $promedioPAS_Materia;
-                    $promediosSEP_Campo['promedio_pas']['contador']++;
-                }
-                
-                $dataMaterias[] = [
-                    'nombre' => $materia->nombre_materia,
-                    'calificaciones_pas' => $califsMateria_PAS,
-                    'promedio_pas' => $promedioPAS_Materia
-                ];
-            }
-
-            // 3. CALCULAR "SEP" (Promedio Ponderado del Campo)
-            $califsMateria_SEP = [];
-            foreach ($periodos as $periodo) {
-                $totalPond = $promediosSEP_Campo[$periodo->periodo_id]['total_ponderacion'];
-                $sumaPond = $promediosSEP_Campo[$periodo->periodo_id]['suma_ponderada'];
-                
-                // Redondeamos a 1 decimal como en la boleta de ejemplo
-                $promedioSEP = ($totalPond > 0) ? round($sumaPond / $totalPond, 1) : null;
-                $califsMateria_SEP[$periodo->periodo_id] = $promedioSEP;
-
-                if (is_numeric($promedioSEP)) {
-                    // Acumular para el promedio final SEP de la materia
-                    $promediosSEP_Campo['promedio_sep']['suma'] += $promedioSEP;
-                    $promediosSEP_Campo['promedio_sep']['contador']++;
-
-                    // 4. ACUMULAR PARA "PROMEDIO FINAL" (Ponderado de Campos)
-                    $promediosFinales[$periodo->periodo_id]['suma_ponderada'] += ($promedioSEP * $ponderacionCampo);
-                    $promediosFinales[$periodo->periodo_id]['total_ponderacion'] += $ponderacionCampo;
-                }
-            }
-            
-            // Promedio "SEP" del Campo (columna PROMEDIO -> SEP)
-            $promedioSEP_Materia = ($promediosSEP_Campo['promedio_sep']['contador'] > 0) 
-                ? round($promediosSEP_Campo['promedio_sep']['suma'] / $promediosSEP_Campo['promedio_sep']['contador'], 1) 
-                : null;
-
-            $dataCampos[] = [
-                'nombre' => $nombreCampo,
-                'materias' => $dataMaterias,
-                'calificaciones_sep' => $califsMateria_SEP,
-                'promedio_final_pas' => ($promediosSEP_Campo['promedio_pas']['contador'] > 0) 
-                    ? round($promediosSEP_Campo['promedio_pas']['suma'] / $promediosSEP_Campo['promedio_pas']['contador'], 1) 
-                    : null,
-                'promedio_final_sep' => $promedioSEP_Materia
-            ];
-            
-            if(is_numeric($promedioSEP_Materia)) {
-                $promediosFinales['promedio_final_sep']['suma'] += $promedioSEP_Materia;
-                $promediosFinales['promedio_final_sep']['contador']++;
-            }
-        }
-
-        // 5. CALCULAR "PROMEDIO FINAL" (Fila "PROMEDIO")
-        $promediosFinalesCalculados = [];
-        foreach ($periodos as $periodo) {
-            $totalPond = $promediosFinales[$periodo->periodo_id]['total_ponderacion'];
-            $sumaPond = $promediosFinales[$periodo->periodo_id]['suma_ponderada'];
-            // Promedio final ponderado por periodo
-            $promedioFinalPond = ($totalPond > 0) ? round($sumaPond / $totalPond, 1) : null;
-            $promediosFinalesCalculados[$periodo->periodo_id] = $promedioFinalPond;
-        }
-        
-        // Promedio final SEP (simple)
-        $promediosFinalesCalculados['promedio_final_sep'] = ($promediosFinales['promedio_final_sep']['contador'] > 0)
-            ? round($promediosFinales['promedio_final_sep']['suma'] / $promediosFinales['promedio_final_sep']['contador'], 1)
-            : null;
-
-        return [
-            'campos' => $dataCampos,
-            'promediosFinales' => $promediosFinalesCalculados
-        ];
-    }
-    
-    // ==========================================================
-    // == FIN DE CÓDIGO NUEVO
-    // ==========================================================
 }

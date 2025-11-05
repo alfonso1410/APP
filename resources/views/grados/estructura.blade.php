@@ -145,7 +145,7 @@
                                             >
                                                 <option value="">-- Selecciona un Campo Formativo --</option>
                                                 @foreach ($camposFormativos as $campo)
-                                                    <option value="{{ $campo->campo_id }}">{{ $campo->nombre }} ({{ $campo->nivel_id }})</option>
+                                                   <option value="{{ $campo->campo_id }}">{{ $campo->nombre }}</option>
                                                 @endforeach
                                             </select>
                                             @error('materias.' . $materia->materia_id)
