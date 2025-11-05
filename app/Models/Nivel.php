@@ -4,7 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-
+use App\Models\Grado;
+use App\Models\CampoFormativo;
 class Nivel extends Model
 {
     use HasFactory;

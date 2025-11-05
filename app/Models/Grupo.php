@@ -61,17 +61,12 @@ class Grupo extends Model
                     ->wherePivot('es_actual', 1); 
     }
 
-   public function maestrosTitulares()
-    {
-        // --- CORRECCIÓN: Añadir withPivot para leer la columna 'idioma' de la tabla pivote ---
-        return $this->belongsToMany(
-            User::class,
-            'grupo_titular', // Nombre de la tabla pivote
-            'grupo_id',      // Llave foránea de este modelo (Grupo)
-            'maestro_id'     // <-- ¡CAMBIO AQUÍ! (en lugar de 'user_id')
-        )->withPivot('idioma'); // <-- AÑADIDO
-    }
-    
+   public function asignacionesTitulares(): HasMany
+ {
+        // Esta es la relación que usa el nuevo controlador
+return $this->hasMany(GrupoTitular::class, 'grupo_id', 'grupo_id');
+ }
+    // ==
     public function asignacionesMaestros(): HasMany
     {
         return $this->hasMany(GrupoMateriaMaestro::class, 'grupo_id', 'grupo_id');

@@ -2,30 +2,50 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class GrupoTitular extends Model
 {
-    use HasFactory;
-
+    // Nombre de la tabla
     protected $table = 'grupo_titular';
-    
-    // Indicamos que esta tabla no tiene un ID autoincremental simple
-    public $incrementing = false; 
-    
-    // Definimos las claves primarias compuestas (para el modelo)
-    protected $primaryKey = ['grupo_id', 'maestro_id']; 
 
-    // Relación: Un registro pertenece a UN Grupo
+    // Desactivar auto-incremento ya que la PK es compuesta
+    public $incrementing = false;
+
+    // Llave primaria compuesta (¡Esta es la parte clave!)
+    protected $primaryKey = ['grupo_id', 'idioma'];
+
+    // Campos permitidos para asignación masiva (updateOrCreate)
+    protected $fillable = [
+        'grupo_id',
+        'idioma',
+        'maestro_titular_id',
+        'maestro_auxiliar_id', // <-- Importante
+    ];
+
+    /**
+     * Relación al Grupo
+     */
     public function grupo()
     {
-        return $this->belongsTo(Grupo::class, 'grupo_id', 'grupo_id');
+        return $this->belongsTo(Grupo::class, 'grupo_id');
     }
 
-    // Relación: Un registro pertenece a UN Maestro (User)
-    public function maestro()
+    /**
+     * Relación al Maestro TITULAR
+     */
+    public function titular()
     {
-        return $this->belongsTo(User::class, 'maestro_id', 'id');
+        // Se conecta a la columna 'maestro_titular_id'
+        return $this->belongsTo(User::class, 'maestro_titular_id');
+    }
+
+    /**
+     * Relación al Maestro AUXILIAR (NUEVO)
+     */
+    public function auxiliar()
+    {
+        // Se conecta a la columna 'maestro_auxiliar_id'
+        return $this->belongsTo(User::class, 'maestro_auxiliar_id');
     }
 }

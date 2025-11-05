@@ -7,7 +7,7 @@
     <style>
         /* Fuentes y estilos generales */
         body {
-            font-family: Arial, sans-serif;
+            font-family: DejaVu Sans, Arial, sans-serif;
             font-size: 10px;
             margin: 0;
             padding: 0;
@@ -134,27 +134,37 @@
         }
         /* --- FIN DE CORRECCIONES CSS --- */
 
-        /* Pie de página (Firmas) */
-        .footer-table {
+        /* Pie de página (Firmas) - SOLUCIÓN CON HR */
+        .footer-firmas {
             width: 100%;
             margin-top: 40px;
-            font-size: 12px;
-            text-align: center;
-            border-collapse: collapse; /* Para que no tenga bordes */
-        }
-        .footer-table td {
-            width: 50%;
-            padding: 0 100px;
-        }
-        .firma-linea {
-             padding-top: 40px; /* Espacio para la firma */
-             width: 80%;
-             border-top: 1px solid #000;
-             font-weight: bold;
-             
-             
+            padding: 0;
         }
 
+        .footer-firmas table {
+            width: 80%;
+            border-collapse: collapse;
+        }
+
+        .footer-firmas td {
+            width: 50%;
+            padding: 0 90px;
+            text-align: center;
+            vertical-align: top;
+        }
+
+        .firma-container hr {
+            border: none;
+            border-top: 2px solid #000;
+            margin: 0 0 8px 0;
+            width: 100%;
+        }
+
+        .firma-texto {
+            font-weight: bold;
+            font-size: 10px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -162,35 +172,40 @@
     <div class="container">
         
         <table class="header-table">
-    <tr>
-        <td class="logo-izquierda" style="text-align: left; width: 200px;">
-            @if(file_exists(public_path('Assets/logo-princeton.png')))
-            <img src="{{ public_path('Assets/logo-princeton.png') }}" alt="Logo" style="width: 200px;">
-            @endif
-        </td>
-        <td class="titulo-centro">
-            <div class="principal">"FORMACIÓN INTEGRAL PARA EL DESARROLLO DE LÍDERES"</div>
-            <div class="subtitulo">SISTEMA BILINGÜE PRIMARIA CLAVE: 28PPR0307Y</div>
-            <div class="concentrado">CONCENTRADO DE CALIFICACIONES</div>
-</td>
- <td class="logo-derecha" style="text-align: right; width: 100px; vertical-align: bottom;">
-            <div style="font-weight: bold; font-size: 11px; margin-bottom: 5px;">2024-2025</div>
-
- @if(file_exists(public_path('Assets/logo-ciclo.png')))
-<img src="{{ public_path('Assets/logo-ciclo.png') }}" alt="Logo Ciclo" style="width: 80px;">
-@endif
- </td>
-    </tr>
-</table>
+            <tr>
+                <td class="logo-izquierda" style="text-align: left; width: 200px;">
+                    @if(file_exists(public_path('Assets/logo-princeton.png')))
+                    <img src="{{ public_path('Assets/logo-princeton.png') }}" alt="Logo" style="width: 200px;">
+                    @endif
+                </td>
+                <td class="titulo-centro">
+                    <div class="principal">"FORMACIÓN INTEGRAL PARA EL DESARROLLO DE LÍDERES"</div>
+                    <div class="subtitulo">SISTEMA BILINGÜE PRIMARIA CLAVE: 28PPR0307Y</div>
+                    <div class="concentrado">CONCENTRADO DE CALIFICACIONES</div>
+                </td>
+                <td class="logo-derecha" style="text-align: right; width: 100px; vertical-align: bottom;">
+                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 5px;">2024-2025</div>
+                    @if(file_exists(public_path('Assets/logo-ciclo.png')))
+                    <img src="{{ public_path('Assets/logo-ciclo.png') }}" alt="Logo Ciclo" style="width: 80px;">
+                    @endif
+                </td>
+            </tr>
+        </table>
         
-       <table class="info-table">
-<tr>
-<td class="label" style="width: 10%;">DOCENTE:</td>
-    <td style="width: 50%;">{{ $nombreMaestro ?? 'Marina Emilia Flad' }}</td>
-<td class="label" style="width: 10%;">GRADO:</td>
-        <td style="width: 30%;">{{ $grupo->grado->nombre ?? 'PRIMERO' }} {{ $grupo->nombre_grupo ? '- '.$grupo->nombre_grupo : '' }}</td>
-</tr>
-</table>
+        <table class="info-table">
+               <tr>
+<td class="label" style="width: 10%;">MATERIA:</td>
+<td colspan="3">{{ $materia->nombre }}</td>
+ </tr>
+            <tr>
+                <td class="label" style="width: 10%;">DOCENTE:</td>
+                <td style="width: 50%;">{{ $nombreMaestro ?? 'Marina Emilia Flad' }}</td>
+                <td class="label" style="width: 10%;">GRADO:</td>
+                <td style="width: 30%;">{{ $grupo->grado->nombre ?? 'PRIMERO' }} {{ $grupo->nombre_grupo ? '- '.$grupo->nombre_grupo : '' }}</td>
+            </tr>
+
+         
+        </table>
 
         <table style="width: 100%; border-collapse: collapse; border-spacing: 0;">
             <tr>
@@ -202,7 +217,8 @@
                                 <th class="cell-num">#</th>
                                 <th class="cell-alumno">ALUMNO</th>
                                 @foreach($criterios as $criterio)
-                                    <th>{{ strtoupper($criterio['nombre']) }}</th>
+                                    <th style="text-transform: uppercase;">{{ $criterio['nombre'] }}</th>
+
                                 @endforeach
                             </tr>
                         </thead>
@@ -240,12 +256,56 @@
             </tr>
         </table>
 
-        <table class="footer-table">
+        <!-- Resumen de Alumnos y Promedio -->
+        <table style="width: 100%; margin-top: 15px; margin-bottom: 10px; border-collapse: collapse;">
             <tr>
-                <td><div class="firma-linea">FIRMA DOCENTE</div></td>
-                <td><div class="firma-linea">Vo.Bo. COORDINACIÓN ACADÉMICA</div></td>
+                <td style="width: 25%; text-align: right; padding-right: 10px;">
+                    <span style="font-weight: bold; font-size: 12px;">TOTAL ALUMNOS EVALUADOS</span>
+                </td>
+                <td style="width: 10%; text-align: center; padding: 0;">
+                    <table style="border: 2px solid #000; margin: 0 auto; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 0px 16px; font-weight: bold; font-size: 12px; text-align: center; border: none;">
+                                {{ count($alumnos) }}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="width: 30%; text-align: center;"></td>
+                <td style="width: 10%; text-align: right; padding-right: 10px;">
+                    <span style="font-weight: bold; font-size: 12px;">PROMEDIO</span>
+                </td>
+                <td style="width: 10%; text-align: center; padding: 0;">
+                    <table style="border: 2px solid #000; margin: 0 auto; border-collapse: collapse; background-color: #C0EA81;">
+                        <tr>
+                            <td style="padding: 0px 16px; font-weight: bold; font-size: 12px; text-align: center; border: none;">
+                                {{ number_format($promedioGrupo ?? 0, 1) }}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="width: 15%;"></td>
             </tr>
         </table>
+
+        <div class="footer-firmas">
+            <table>
+                <tr>
+                    <td>
+                        <div class="firma-container">
+                            <hr>
+                            <div class="firma-texto">FIRMA DOCENTE</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="firma-container">
+                            <hr>
+                            <div class="firma-texto">Vo.Bo. COORDINACIÓN ACADEMICA</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
 
     </div>
 

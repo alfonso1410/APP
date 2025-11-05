@@ -99,7 +99,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('maestros', MaestroController::class);
 
         // Niveles
-        Route::post('/niveles', [NivelController::class, 'store'])->name('niveles.store');
+        Route::resource('niveles', NivelController::class)->parameters([
+    'niveles' => 'nivel'
+]);
+
 
         // Campos Formativos
         Route::resource('campos-formativos', CampoFormativoController::class)->except(['create', 'show', 'edit']);

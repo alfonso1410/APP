@@ -144,11 +144,10 @@ public function archivar(Grupo $grupo)
 public function indexArchivados()
 {
     // Vista temporal para mantenimiento
-    $gruposArchivados = Grupo::where('estado', 'ARCHIVADO')
-                             // ¡Añadimos todas las relaciones que la modal necesita!
-                             ->with('grado.nivel', 'grado.gradosRegularesMapeados')
-                             ->latest()
-                             ->paginate(25);
+   $gruposArchivados = Grupo::where('estado', 'ARCHIVADO')
+->with('grado.nivel', 'grado.gradosRegularesMapeados', 'cicloEscolar')
+->latest()
+->paginate(25);
 
     return view('grupos.archivados', compact('gruposArchivados'));
 }

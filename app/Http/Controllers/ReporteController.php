@@ -87,6 +87,12 @@ class ReporteController extends Controller
         list($promedios, $otrosCriterios) = $criterios->partition(fn($c) => $c['es_promedio']);
         $criteriosOrdenados = $otrosCriterios->merge($promedios)->values();
 
+        // Filtramos la colección para excluir el criterio 'FALTAS'
+        $criteriosOrdenados = $criteriosOrdenados->filter(function ($criterio) {
+            // Usamos strcasecmp para ignorar mayúsculas/minúsculas y trim por si hay espacios.
+            // Queremos mantener los criterios donde el nombre NO SEA 'FALTAS'.
+            return strcasecmp(trim($criterio['nombre']), 'FALTAS') != 0;
+        })->values();
 
         // 5. Cargar Calificaciones (Tu lógica es correcta y eficiente)
         $calificaciones = Calificacion::where('periodo_id', $periodo->periodo_id)
@@ -97,21 +103,46 @@ class ReporteController extends Controller
                                       ->groupBy('alumno_id')
                                       ->map(fn($califs) => $califs->keyBy('materia_criterio_id'));
 
+
+                                      // Calcular el promedio del grupo
+$promedioGrupo = 0;
+$promediosIndividuales = [];
+
+// Buscar el criterio de "Promedio"
+$criterioPromedioId = $criteriosOrdenados->firstWhere('es_promedio', true)['id'] ?? null;
+
+if ($criterioPromedioId) {
+    foreach ($alumnos as $alumno) {
+        $calif = $calificaciones->get($alumno->alumno_id)
+                                ?->get($criterioPromedioId)
+                                ?->calificacion_obtenida;
+        
+        if (is_numeric($calif)) {
+            $promediosIndividuales[] = $calif;
+        }
+    }
+    
+    if (count($promediosIndividuales) > 0) {
+        $promedioGrupo = array_sum($promediosIndividuales) / count($promediosIndividuales);
+    }
+}
         // 6. Preparar datos para la vista
-        $data = [
-            'grupo' => $grupo,
-            'periodo' => $periodo,
-            'alumnos' => $alumnos,
-            'materia' => $materia, // $materia ahora es el objeto inyectado
-            'nombreMaestro' => $nombreMaestro,
-            'criterios' => $criteriosOrdenados,
-            'calificaciones' => $calificaciones,
-        ];
+    $data = [
+    'grupo' => $grupo,
+    'periodo' => $periodo,
+    'alumnos' => $alumnos,
+    'materia' => $materia,
+    'nombreMaestro' => $nombreMaestro,
+    'criterios' => $criteriosOrdenados,
+    'calificaciones' => $calificaciones,
+    'promedioGrupo' => $promedioGrupo, // <-- AGREGAR ESTA LÍNEA
+];
 
         // 7. Generar el PDF
         $pdf = Pdf::loadView('reportes.concentrado-periodo', $data, [], [
-            'format' => 'Legal', // Tamaño Oficio (Legal)
-            'orientation' => 'L'  // Orientación Horizontal (Landscape)
+            'format' => 'A4', // Tamaño Oficio (Legal)
+            'orientation' => 'L',  // Orientación Horizontal (Landscape)
+            'mode' => 'utf-8',
         ]);
 
         // Se añade el nombre de la materia al archivo

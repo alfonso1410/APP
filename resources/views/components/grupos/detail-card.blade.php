@@ -46,7 +46,7 @@
             {{ $grupo->grado->nombre }} {{ $grupo->nombre_grupo }} {{-- Mostrando el nombre completo para mayor claridad --}}
         </h3>
         <div class="mt-2 space-y-1 text-sm">
-            <p><span class="text-gray-500">Ciclo Escolar:</span> <span class="font-semibold text-gray-700">{{ $grupo->ciclo_escolar }}</span></p>
+            <p><span class="text-gray-500">Ciclo Escolar:</span> <span class="font-semibold text-gray-700">{{ $grupo->cicloEscolar->nombre ?? 'N/A' }}</span></p>
             <p><span class="text-gray-500">Estado del Grupo:</span>
                 @if ($grupo->estado === 'ACTIVO')
                     <span class="font-semibold text-green-600">Activo</span>

@@ -33,6 +33,15 @@
             Extracurricular
         </a>
 
+        {{-- ===== INICIO DE LA MODIFICACIÓN ===== --}}
+        <a href="{{ route('admin.niveles.index') }}"
+           class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+           title="Gestionar Niveles Educativos"
+        >
+            Niveles
+        </a>
+        {{-- ===== FIN DE LA MODIFICACIÓN ===== --}}
+
         <a href="{{ route('admin.grupos.archivados') }}"
        class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
        title="Ver historial de grupos"
