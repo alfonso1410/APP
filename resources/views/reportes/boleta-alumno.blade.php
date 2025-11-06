@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <title>Boleta de Calificaciones</title>
     <style>
-        /* Estilos CSS para el PDF */
         body {
-            font-family: 'Helvetica', sans-serif; /* Usamos una fuente común de PDF */
+            font-family: 'Helvetica', sans-serif;
             font-size: 10px;
             line-height: 1.4;
             color: #333;
@@ -21,7 +20,7 @@
         .header {
             text-align: center;
             margin-bottom: 15px;
-            position: relative; /* Para el logo */
+            position: relative;
         }
         .header h3, .header h4 {
             margin: 2px 0;
@@ -31,10 +30,8 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 80px; /* Ajusta el tamaño de tu logo */
+            width: 80px;
         }
-        
-        /* Información del Alumno */
         .info-table {
             width: 100%;
             border-collapse: collapse;
@@ -50,8 +47,6 @@
             font-weight: bold;
             width: 15%;
         }
-
-        /* Tabla Principal de Calificaciones */
         .boleta-table {
             width: 100%;
             border-collapse: collapse;
@@ -62,23 +57,21 @@
         .boleta-table td {
             border: 1px solid #000;
             padding: 3px;
-            height: 20px; /* Alto de fila estándar */
+            height: 20px;
         }
-        
-        /* Encabezados de Tabla */
         .boleta-table thead th {
-            background-color: #E0E0E0; /* Gris claro */
+            background-color: #E0E0E0;
             font-weight: bold;
             padding: 5px;
         }
         .boleta-table .th-materia {
-            background-color: #F5F5F5; /* Gris más claro */
+            background-color: #F5F5F5;
             text-align: left;
             font-weight: bold;
             padding-left: 5px;
         }
         .boleta-table .th-campo {
-            background-color: #B0C4DE; /* Azul claro (como en tu imagen) */
+            background-color: #B0C4DE;
             text-align: left;
             font-size: 11px;
             font-weight: bold;
@@ -90,8 +83,6 @@
             font-weight: bold;
             padding-left: 5px;
         }
-
-        /* Celdas de Calificaciones */
         .boleta-table .cal-pas {
             font-weight: bold;
         }
@@ -104,14 +95,12 @@
             font-weight: bold;
         }
         .boleta-table .col-promedio-materia {
-            background-color: #F0F8FF; /* Azul muy claro */
+            background-color: #F0F8FF;
         }
         .boleta-table .col-promedio-campo {
-            background-color: #E6E6FA; /* Lavanda */
+            background-color: #E6E6FA;
             font-weight: bold;
         }
-        
-        /* Celda vacía (para mPDF) */
         .empty-cell {
             background-color: #ffffff;
         }
@@ -119,9 +108,8 @@
 </head>
 <body>
     <div class="container">
-        
         <div class="header">
-            <img src="{{ public_path('Assets/logo-princeton.png') }}" alt="Logo" class="logo">
+            <img src="{{ asset('Assets/logo-princeton.png') }}" alt="Logo" class="logo">
             <h3>"FORMACIÓN INTEGRAL PARA EL DESARROLLO DE LÍDERES"</h3>
             <h4>SISTEMA BILINGÜE PRIMARIA CLAVE: 28PPR0307Y</h4>
             <h4>BOLETA DE EVALUACIÓN</h4>
@@ -148,8 +136,7 @@
                 <tr>
                     <th rowspan="2" style="width: 25%;">CAMPOS FORMATIVOS / MATERIAS</th>
                     @foreach($periodos as $periodo)
-                        {{-- Usamos el nombre del periodo (ej. "Trimestre 1") --}}
-                        <th colspan="2">{{ $periodo->nombre }}</th> 
+                        <th colspan="2">{{ $periodo->nombre }}</th>
                     @endforeach
                     <th colspan="2">PROMEDIO</th>
                 </tr>
@@ -167,40 +154,76 @@
                     <tr class="th-campo">
                         <td>{{ $campo['nombre'] }}</td>
                         @foreach($periodos as $periodo)
-                            <td class="empty-cell"></td> {{-- Celda PAS vacía --}}
-                            {{-- Calificación SEP (Promedio Ponderado del Campo) --}}
-                            <td class="cal-sep">{{ $campo['calificaciones_sep'][$periodo->periodo_id] }}</td>
+                            <td class="empty-cell"></td>
+                            <td class="cal-sep">
+                                @if($esPreescolar)
+                                    {{ \App\Helpers\CalificacionHelper::convertirANivelPreescolar($campo['calificaciones_sep'][$periodo->periodo_id]) }}
+                                @else
+                                    {{ $campo['calificaciones_sep'][$periodo->periodo_id] }}
+                                @endif
+                            </td>
                         @endforeach
-                        {{-- Promedio PAS (Simple de materias) y SEP (Simple de SEPs) --}}
-                        <td class="col-promedio-campo">{{ $campo['promedio_final_pas'] }}</td>
-                        <td class="col-promedio-campo cal-sep">{{ $campo['promedio_final_sep'] }}</td>
+                        <td class="col-promedio-campo">
+                            @if($esPreescolar)
+                                {{ \App\Helpers\CalificacionHelper::convertirANivelPreescolar($campo['promedio_final_pas']) }}
+                            @else
+                                {{ $campo['promedio_final_pas'] }}
+                            @endif
+                        </td>
+                        <td class="col-promedio-campo cal-sep">
+                            @if($esPreescolar)
+                                {{ \App\Helpers\CalificacionHelper::convertirANivelPreescolar($campo['promedio_final_sep']) }}
+                            @else
+                                {{ $campo['promedio_final_sep'] }}
+                            @endif
+                        </td>
                     </tr>
-                    
+
                     @foreach($campo['materias'] as $materia)
                         <tr>
                             <td class="th-materia">{{ $materia['nombre'] }}</td>
                             @foreach($periodos as $periodo)
-                                {{-- Calificación PAS (Promedio de Criterios) --}}
-                                <td class="cal-pas">{{ $materia['calificaciones_pas'][$periodo->periodo_id] }}</td>
-                                <td class="empty-cell"></td> {{-- Columna SEP vacía para materias --}}
+                                <td class="cal-pas">
+                                    @if($esPreescolar)
+                                        {{ \App\Helpers\CalificacionHelper::convertirANivelPreescolar($materia['calificaciones_pas'][$periodo->periodo_id]) }}
+                                    @else
+                                        {{ $materia['calificaciones_pas'][$periodo->periodo_id] }}
+                                    @endif
+                                </td>
+                                <td class="empty-cell"></td>
                             @endforeach
-                            {{-- Promedio PAS de la materia --}}
-                            <td class="col-promedio-materia cal-pas">{{ $materia['promedio_pas'] }}</td>
-                            <td class="empty-cell"></td> {{-- Columna Promedio SEP vacía para materias --}}
+                            <td class="col-promedio-materia cal-pas">
+                                @if($esPreescolar)
+                                    {{ \App\Helpers\CalificacionHelper::convertirANivelPreescolar($materia['promedio_pas']) }}
+                                @else
+                                    {{ $materia['promedio_pas'] }}
+                                @endif
+                            </td>
+                            <td class="empty-cell"></td>
                         </tr>
                     @endforeach
                 @endforeach
-                
+
                 <tr class="th-promedio-final">
                     <td>PROMEDIO</td>
                     @foreach($periodos as $periodo)
-                        <td class="empty-cell"></td> {{-- Columna PAS vacía --}}
-                        {{-- Promedio Final Ponderado del Periodo --}}
-                        <td class="cal-promedio-final cal-sep">{{ $promediosFinales[$periodo->periodo_id] }}</td>
+                        <td class="empty-cell"></td>
+                        <td class="cal-promedio-final cal-sep">
+                            @if($esPreescolar)
+                                {{ \App\Helpers\CalificacionHelper::convertirANivelPreescolar($promediosFinales[$periodo->periodo_id]) }}
+                            @else
+                                {{ $promediosFinales[$periodo->periodo_id] }}
+                            @endif
+                        </td>
                     @endforeach
-                    <td class="empty-cell"></td> {{-- Columna Promedio PAS vacía --}}
-                    {{-- Promedio Final SEP (Promedio simple de SEPs de campo) --}}
-                    <td class="cal-promedio-final cal-sep">{{ $promediosFinales['promedio_final_sep'] }}</td>
+                    <td class="empty-cell"></td>
+                    <td class="cal-promedio-final cal-sep">
+                        @if($esPreescolar)
+                            {{ \App\Helpers\CalificacionHelper::convertirANivelPreescolar($promediosFinales['promedio_final_sep']) }}
+                        @else
+                            {{ $promediosFinales['promedio_final_sep'] }}
+                        @endif
+                    </td>
                 </tr>
             </tbody>
         </table>
