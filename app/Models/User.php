@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Auth\Passwords\CanResetPassword; // <--- AÑADE ESTA LÍNEA
 use Illuminate\Database\Eloquent\Relations\HasMany; // Importante
 use Illuminate\Database\Eloquent\Relations\BelongsToMany; // Importante
 
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany; // Importante
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, CanResetPassword;
 
     protected $fillable = [
         'name',             
