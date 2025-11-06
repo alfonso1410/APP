@@ -14,8 +14,8 @@
                     <span class="block sm:inline">{{ session('success') }}</span>
                 </div>
             @endif
-             {{-- Alerta de errores generales --}}
-             @if ($errors->any() && !$errors->store->any() && !$errors->update->any())
+            {{-- Alerta de errores generales --}}
+            @if ($errors->any() && !$errors->store->any() && !$errors->update->any())
                 <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
                     <strong class="font-bold">Error:</strong>
                     <ul class="mt-3 list-disc list-inside">
@@ -111,60 +111,75 @@
                                     </td>
                                 </tr>
 
-                                {{-- Modal de Edición DENTRO del bucle --}}
-                                <x-modal :name="'editar-alumno-'.$alumno->alumno_id" :show="$errors->update->isNotEmpty() && old('alumno_id_error_key') == $alumno->alumno_id" focusable>
-                                    <form method="POST" action="{{ route('admin.alumnos.update', $alumno) }}" class="p-6">
-                                        @method('PUT')
-                                        @csrf
-                                        <input type="hidden" name="current_nivel_id" value="{{ request()->input('nivel', 0) }}">
-                                        <input type="hidden" name="alumno_id_error_key" value="{{ $alumno->alumno_id }}">
-                                        <h2 class="text-lg font-medium text-gray-900 mb-4">Editar Alumno: {{ $alumno->nombres }} {{ $alumno->apellido_paterno }}</h2>
-                                        {{-- Nombres --}}
-                                        <div class="mt-4">
-                                            <x-input-label for="edit_{{ $alumno->alumno_id }}_nombres" :value="__('Nombre(s)')" />
-                                            <x-text-input id="edit_{{ $alumno->alumno_id }}_nombres" class="block mt-1 w-full" type="text" name="nombres" :value="old('nombres', $alumno->nombres)" required autofocus />
-                                            @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('nombres')" class="mt-2" />@endif
-                                        </div>
-                                        {{-- Apellido Paterno --}}
-                                        <div class="mt-4">
-                                             <x-input-label for="edit_{{ $alumno->alumno_id }}_apellido_paterno" :value="__('Apellido Paterno')" />
-                                             <x-text-input id="edit_{{ $alumno->alumno_id }}_apellido_paterno" class="block mt-1 w-full" type="text" name="apellido_paterno" :value="old('apellido_paterno', $alumno->apellido_paterno)" required />
-                                             @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('apellido_paterno')" class="mt-2" />@endif
-                                        </div>
-                                        {{-- Apellido Materno --}}
-                                        <div class="mt-4">
-                                             <x-input-label for="edit_{{ $alumno->alumno_id }}_apellido_materno" :value="__('Apellido Materno')" />
-                                             <x-text-input id="edit_{{ $alumno->alumno_id }}_apellido_materno" class="block mt-1 w-full" type="text" name="apellido_materno" :value="old('apellido_materno', $alumno->apellido_materno)" required />
-                                             @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('apellido_materno')" class="mt-2" />@endif
-                                        </div>
-                                        {{-- Fecha Nacimiento --}}
-                                         <div class="mt-4">
-                                             <x-input-label for="edit_{{ $alumno->alumno_id }}_fecha_nacimiento" :value="__('Fecha de Nacimiento')" />
-                                             <x-text-input id="edit_{{ $alumno->alumno_id }}_fecha_nacimiento" class="block mt-1 w-full" type="date" name="fecha_nacimiento" :value="old('fecha_nacimiento', $alumno->fecha_nacimiento)" required />
-                                             @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('fecha_nacimiento')" class="mt-2" />@endif
-                                        </div>
-                                        {{-- CURP --}}
-                                        <div class="mt-4">
-                                             <x-input-label for="edit_{{ $alumno->alumno_id }}_curp" :value="__('CURP')" />
-                                             <x-text-input id="edit_{{ $alumno->alumno_id }}_curp" class="block mt-1 w-full uppercase" type="text" name="curp" :value="old('curp', $alumno->curp)" required pattern="[A-Z]{4}[0-9]{6}[H,M][A-Z]{5}[A-Z0-9]{2}" title="Formato CURP inválido" maxlength="18" />
-                                             @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('curp')" class="mt-2" />@endif
-                                        </div>
-                                        {{-- Estado --}}
-                                        <div class="mt-4">
-                                             <x-input-label for="edit_{{ $alumno->alumno_id }}_estado_alumno" :value="__('Estado del Alumno')" />
-                                             <select name="estado_alumno" id="edit_{{ $alumno->alumno_id }}_estado_alumno" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                                                 <option value="ACTIVO" {{ old('estado_alumno', $alumno->estado_alumno) === 'ACTIVO' ? 'selected' : '' }}>Activo</option>
-                                                 <option value="INACTIVO" {{ old('estado_alumno', $alumno->estado_alumno) === 'INACTIVO' ? 'selected' : '' }}>Inactivo</option>
-                                             </select>
-                                             @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('estado_alumno')" class="mt-2" />@endif
-                                        </div>
-                                        {{-- Botones --}}
-                                        <div class="flex items-center justify-end mt-6">
-                                            <x-secondary-button x-on:click="$dispatch('close')">Cancelar</x-secondary-button>
-                                            <x-primary-button class="ms-4">Actualizar Alumno</x-primary-button>
-                                        </div>
-                                    </form>
-                                </x-modal>
+                                {{-- ============================================= --}}
+                                {{-- ===== INICIO DE CAMBIOS (MODAL EDITAR) ===== --}}
+                                {{-- ============================================= --}}
+          <x-modal :name="'editar-alumno-'.$alumno->alumno_id" :show="$errors->update->isNotEmpty() && old('alumno_id_error_key') == $alumno->alumno_id" focusable >
+    
+    <form 
+        method="POST" 
+        action="{{ route('admin.alumnos.update', $alumno) }}" 
+        class="p-6"
+        x-data="{ isEditSubmitting: false }"
+        @submit="isEditSubmitting = true"
+    >
+        @method('PUT')
+        @csrf
+        <input type="hidden" name="current_nivel_id" value="{{ request()->input('nivel', 0) }}">
+        <input type="hidden" name="alumno_id_error_key" value="{{ $alumno->alumno_id }}">
+        
+     
+        <div class="max-w-xl mx-auto space-y-4">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Editar Alumno: {{ $alumno->nombres }} {{ $alumno->apellido_paterno }}</h2>
+            <div>
+                <x-input-label for="edit_{{ $alumno->alumno_id }}_nombres" :value="__('Nombre(s)')" />
+                <x-text-input id="edit_{{ $alumno->alumno_id }}_nombres" class="block mt-1 w-full" type="text" name="nombres" :value="old('nombres', $alumno->nombres)" required autofocus />
+                @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('nombres')" class="mt-2" />@endif
+            </div>
+            <div>
+                <x-input-label for="edit_{{ $alumno->alumno_id }}_apellido_paterno" :value="__('Apellido Paterno')" />
+                <x-text-input id="edit_{{ $alumno->alumno_id }}_apellido_paterno" class="block mt-1 w-full" type="text" name="apellido_paterno" :value="old('apellido_paterno', $alumno->apellido_paterno)" required />
+                @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('apellido_paterno')" class="mt-2" />@endif
+            </div>
+            <div>
+                <x-input-label for="edit_{{ $alumno->alumno_id }}_apellido_materno" :value="__('Apellido Materno')" />
+                <x-text-input id="edit_{{ $alumno->alumno_id }}_apellido_materno" class="block mt-1 w-full" type="text" name="apellido_materno" :value="old('apellido_materno', $alumno->apellido_materno)" required />
+                @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('apellido_materno')" class="mt-2" />@endif
+            </div>
+            <div>
+                <x-input-label for="edit_{{ $alumno->alumno_id }}_fecha_nacimiento" :value="__('Fecha de Nacimiento')" />
+                <x-text-input id="edit_{{ $alumno->alumno_id }}_fecha_nacimiento" class="block mt-1 w-full" type="date" name="fecha_nacimiento" :value="old('fecha_nacimiento', $alumno->fecha_nacimiento)" required />
+                @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('fecha_nacimiento')" class="mt-2" />@endif
+            </div>
+            <div>
+                <x-input-label for="edit_{{ $alumno->alumno_id }}_curp" :value="__('CURP')" />
+                <x-text-input id="edit_{{ $alumno->alumno_id }}_curp" class="block mt-1 w-full uppercase" type="text" name="curp" :value="old('curp', $alumno->curp)" required pattern="[A-Z]{4}[0-9]{6}[H,M][A-Z]{5}[A-Z0-9]{2}" title="Formato CURP inválido" maxlength="18" />
+                @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('curp')" class="mt-2" />@endif
+            </div>
+            <div>
+                <x-input-label for="edit_{{ $alumno->alumno_id }}_estado_alumno" :value="__('Estado del Alumno')" />
+                <select name="estado_alumno" id="edit_{{ $alumno->alumno_id }}_estado_alumno" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                    <option value="ACTIVO" {{ old('estado_alumno', $alumno->estado_alumno) === 'ACTIVO' ? 'selected' : '' }}>Activo</option>
+                    <option value="INACTIVO" {{ old('estado_alumno', $alumno->estado_alumno) === 'INACTIVO' ? 'selected' : '' }}>Inactivo</option>
+                </select>
+                @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('estado_alumno')" class="mt-2" />@endif
+            </div>
+        </div>
+
+        <div class="flex items-center justify-end mt-6 ">
+            <x-secondary-button x-on:click="$dispatch('close')" ::disabled="isEditSubmitting" class="disabled:opacity-50">
+                Cancelar
+            </x-secondary-button>
+            <x-primary-button class="ms-4 disabled:opacity-50" ::disabled="isEditSubmitting">
+                <span ::x-show="!isEditSubmitting">Actualizar Alumno</span>
+                <span ::x-show="isEditSubmitting" style="display: none;">Actualizando...</span>
+            </x-primary-button>
+        </div>
+    </form>
+</x-modal>
+                                {{-- =========================================== --}}
+                                {{-- ===== FIN DE CAMBIOS (MODAL EDITAR) ===== --}}
+                                {{-- =========================================== --}}
 
                             @empty
                                 <tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No se encontraron alumnos...</td></tr>
@@ -177,51 +192,67 @@
                 </div>
             </div>
 
-            {{-- Modal AGREGAR ALUMNO (Fuera del bucle) --}}
+            {{-- ============================================= --}}
+            {{-- ===== INICIO DE CAMBIOS (MODAL CREAR) ===== --}}
+            {{-- ============================================= --}}
             <x-modal name="agregar-alumno" :show="$errors->store->isNotEmpty()" focusable>
-                 <form method="POST" action="{{ route('admin.alumnos.store') }}" class="p-6">
-                     @csrf
-                     <input type="hidden" name="current_nivel_id" value="{{ request()->input('nivel', 0) }}">
-                     <h2 class="text-lg font-medium text-gray-900 mb-4">Agregar Nuevo Alumno</h2>
-                     {{-- Nombres --}}
-                     <div class="mt-4">
-                         <x-input-label for="create_nombres" :value="__('Nombre(s)')" />
-                         <x-text-input id="create_nombres" class="block mt-1 w-full" type="text" name="nombres" :value="old('nombres')" required autofocus />
-                         @if(!$errors->update->any())<x-input-error :messages="$errors->store->get('nombres')" class="mt-2" />@endif
-                     </div>
-                     {{-- Apellido Paterno --}}
-                     <div class="mt-4">
-                         <x-input-label for="create_apellido_paterno" :value="__('Apellido Paterno')" />
-                         <x-text-input id="create_apellido_paterno" class="block mt-1 w-full" type="text" name="apellido_paterno" :value="old('apellido_paterno')" required />
-                          @if(!$errors->update->any())<x-input-error :messages="$errors->store->get('apellido_paterno')" class="mt-2" />@endif
-                     </div>
-                    {{-- Apellido Materno --}}
+                
+                {{-- 1. Añadimos x-data y @submit al formulario --}}
+                <form 
+                    method="POST" 
+                    action="{{ route('admin.alumnos.store') }}" 
+                    class="p-6"
+                    x-data="{ isAlumnoSubmitting: false }"
+                    @submit="isAlumnoSubmitting = true"
+                >
+                    @csrf
+                    <input type="hidden" name="current_nivel_id" value="{{ request()->input('nivel', 0) }}">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Agregar Nuevo Alumno</h2>
+                    
+                    {{-- (Aquí van todos tus campos de formulario: nombres, curp, etc.) --}}
                     <div class="mt-4">
-                         <x-input-label for="create_apellido_materno" :value="__('Apellido Materno')" />
-                         <x-text-input id="create_apellido_materno" class="block mt-1 w-full" type="text" name="apellido_materno" :value="old('apellido_materno')" required />
-                         @if(!$errors->update->any())<x-input-error :messages="$errors->store->get('apellido_materno')" class="mt-2" />@endif
-                     </div>
-                     {{-- Fecha Nacimiento --}}
-                     <div class="mt-4">
-                         <x-input-label for="create_fecha_nacimiento" :value="__('Fecha de Nacimiento')" />
-                         <x-text-input id="create_fecha_nacimiento" class="block mt-1 w-full" type="date" name="fecha_nacimiento" :value="old('fecha_nacimiento')" required />
-                          @if(!$errors->update->any())<x-input-error :messages="$errors->store->get('fecha_nacimiento')" class="mt-2" />@endif
-                     </div>
-                     {{-- CURP --}}
-                     <div class="mt-4">
-                         <x-input-label for="create_curp" :value="__('CURP')" />
-                         <x-text-input id="create_curp" class="block mt-1 w-full uppercase" type="text" name="curp" :value="old('curp')" required pattern="[A-Z]{4}[0-9]{6}[H,M][A-Z]{5}[A-Z0-9]{2}" title="Formato CURP inválido" maxlength="18" />
-                         @if(!$errors->update->any())<x-input-error :messages="$errors->store->get('curp')" class="mt-2" />@endif
-                     </div>
-                     {{-- Estado (Oculto) --}}
-                     <input type="hidden" name="estado_alumno" value="ACTIVO">
-                     {{-- Botones --}}
-                     <div class="flex items-center justify-end mt-6">
-                         <x-secondary-button x-on:click="$dispatch('close')">Cancelar</x-secondary-button>
-                         <x-primary-button class="ms-4">Guardar Alumno</x-primary-button>
-                     </div>
-                 </form>
+                        <x-input-label for="create_nombres" :value="__('Nombre(s)')" />
+                        <x-text-input id="create_nombres" class="block mt-1 w-full" type="text" name="nombres" :value="old('nombres')" required autofocus />
+                        @if(!$errors->update->any())<x-input-error :messages="$errors->store->get('nombres')" class="mt-2" />@endif
+                    </div>
+                    <div class="mt-4">
+                        <x-input-label for="create_apellido_paterno" :value="__('Apellido Paterno')" />
+                        <x-text-input id="create_apellido_paterno" class="block mt-1 w-full" type="text" name="apellido_paterno" :value="old('apellido_paterno')" required />
+                        @if(!$errors->update->any())<x-input-error :messages="$errors->store->get('apellido_paterno')" class="mt-2" />@endif
+                    </div>
+                    <div class="mt-4">
+                        <x-input-label for="create_apellido_materno" :value="__('Apellido Materno')" />
+                        <x-text-input id="create_apellido_materno" class="block mt-1 w-full" type="text" name="apellido_materno" :value="old('apellido_materno')" required />
+                        @if(!$errors->update->any())<x-input-error :messages="$errors->store->get('apellido_materno')" class="mt-2" />@endif
+                    </div>
+                    <div class="mt-4">
+                        <x-input-label for="create_fecha_nacimiento" :value="__('Fecha de Nacimiento')" />
+                        <x-text-input id="create_fecha_nacimiento" class="block mt-1 w-full" type="date" name="fecha_nacimiento" :value="old('fecha_nacimiento')" required />
+                        @if(!$errors->update->any())<x-input-error :messages="$errors->store->get('fecha_nacimiento')" class="mt-2" />@endif
+                    </div>
+                    <div class="mt-4">
+                        <x-input-label for="create_curp" :value="__('CURP')" />
+                        <x-text-input id="create_curp" class="block mt-1 w-full uppercase" type="text" name="curp" :value="old('curp')" required pattern="[A-Z]{4}[0-9]{6}[H,M][A-Z]{5}[A-Z0-9]{2}" title="Formato CURP inválido" maxlength="18" />
+                        @if(!$errors->update->any())<x-input-error :messages="$errors->store->get('curp')" class="mt-2" />@endif
+                    </div>
+                    
+                    <input type="hidden" name="estado_alumno" value="ACTIVO">
+                    
+                    {{-- 2. Modificamos los botones --}}
+                    <div class="flex items-center justify-end mt-6">
+                        <x-secondary-button x-on:click="$dispatch('close')" ::disabled="isAlumnoSubmitting" class="disabled:opacity-50">
+                            Cancelar
+                        </x-secondary-button>
+                        <x-primary-button class="ms-4 disabled:opacity-50" ::disabled="isAlumnoSubmitting">
+                            <span x-show="!isAlumnoSubmitting">Guardar Alumno</span>
+                            <span x-show="isAlumnoSubmitting" style="display: none;">Guardando...</span>
+                        </x-primary-button>
+                    </div>
+                </form>
             </x-modal>
+            {{-- =========================================== --}}
+            {{-- ===== FIN DE CAMBIOS (MODAL CREAR) ===== --}}
+            {{-- =========================================== --}}
 
         </div>
     </div>

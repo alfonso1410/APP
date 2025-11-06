@@ -62,10 +62,10 @@
             id="rol_edit_{{ $user->id }}" {{-- CORREGIDO --}}
             name="rol" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full" required>
             <option value="">Seleccione un Rol</option>
-            @php $currentRol = old('rol', $user->rol); @endphp
-            <option value="Administrador" @selected($currentRol == 'Administrador')>Administrador</option> {{-- Ajustado 'DIRECTOR' a 'Administrador' según tu código anterior --}}
-            {{-- <option value="COORDINADOR" @selected($currentRol == 'COORDINADOR')>Coordinador</option> --}} {{-- Comentado si no lo usas --}}
-            <option value="Maestro" @selected($currentRol == 'Maestro')>Maestro</option> {{-- Ajustado 'MAESTRO' a 'Maestro' --}}
+           @php $currentRol = old('rol', $user->rol); @endphp
+ <option value="DIRECTOR" @selected($currentRol == 'DIRECTOR')>Director</option>
+ <option value="COORDINADOR" @selected($currentRol == 'COORDINADOR')>Coordinador</option>
+<option value="MAESTRO" @selected($currentRol == 'MAESTRO')>Maestro</option>
         </select>
         {{-- CORREGIDO: Condición para mostrar error --}}
         @if(old('user_id') == $user->id)

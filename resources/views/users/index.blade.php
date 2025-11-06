@@ -29,11 +29,12 @@
 
 @if (session('success'))
     <div class="p-4 mb-4 text-sm text-green-800 bg-green-100 rounded-lg">
+        
         {{ session('success') }}
     </div>
 @endif
 
-    <x-modal name="agregar-usuario" :show="$errors->any()" focusable>
+    <x-modal name="agregar-usuario" :show="$errors->any() && old('form_type') === 'create_user'" focusable>
         <div class="p-6">
             <h2 class="text-lg font-medium text-princeton mb-4">Agregar Nuevo Usuario</h2>
             {{-- Usar el componente del formulario --}}
@@ -43,6 +44,7 @@
     
 
     <div class="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-200">
         <thead>
             <tr>

@@ -87,7 +87,7 @@ class UserController extends Controller
         'rol' => ['required', 'string', 'in:DIRECTOR,COORDINADOR,MAESTRO'],
         'activo' => ['required', 'boolean'],
         // Regla UNIQUE para email, ignorando el email del usuario actual.
-        'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+        'email' => ['required', 'string','lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
     ];
 
     // 2. Si el usuario proporcionó una contraseña, la hacemos requerida y la validamos.

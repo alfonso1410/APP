@@ -12,7 +12,12 @@
 
                     {{-- INICIO MODIFICACIÓN: Verificar si hay ciclo activo --}}
                     @if($cicloActivo)
-                        <form action="{{ route('admin.grupos.store') }}" method="POST">
+                        <form 
+                            action="{{ route('admin.grupos.store') }}" 
+                            method="POST"
+                            x-data="{ isSubmitting: false }"
+                            x-on:submit.prevent="if (!isSubmitting) { isSubmitting = true; $el.submit(); }"
+                        >
                             @csrf
 
                             {{-- Campos ocultos necesarios --}}
@@ -41,8 +46,13 @@
                                 <a href="{{ route('admin.grados.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">
                                     Cancelar
                                 </a>
-                                <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                                    Guardar Grupo
+                                <button 
+                                    type="submit" 
+                                    :disabled="isSubmitting"
+                                    class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 disabled:opacity-50"
+                                >
+                                    <span x-show="!isSubmitting">Guardar Grupo</span>
+                                    <span x-show="isSubmitting" style="display: none;">Guardando...</span>
                                 </button>
                             </div>
                         </form>

@@ -1,9 +1,14 @@
 @props(['action', 'method' => 'POST'])
 
 {{-- El método real para Laravel (si no es GET/POST) --}}
-<form method="POST" action="{{ $action }}">
+<form 
+    method="POST" 
+    action="{{ $action }}" 
+    x-data="{ formIsSubmitting: false }" 
+    @submit="formIsSubmitting = true"
+>
     @csrf
-    
+    <input type="hidden" name="form_type" value="create_user">
     {{-- Si el método es PUT, PATCH o DELETE, Laravel necesita esta directiva --}}
     @if (strtoupper($method) !== 'POST' && strtoupper($method) !== 'GET')
         @method($method)
@@ -108,23 +113,26 @@
 </div>
     {{-- Mostrar errores de validación si existen para 'is_active' --}}
     <x-input-error :messages="$errors->get('is_active')" class="mt-2" />
-</div>
-<div class="flex items-center justify-end mt-6 mb-2 mr-2"> 
-        {{-- Aumentamos el margen superior a mt-6 para separarlo del formulario --}}
+{{-- 2. MODIFICAMOS LOS BOTONES CON LA NUEVA VARIABLE --}}
+    <div class="flex items-center justify-end mt-6 mb-2 mr-2"> 
 
-        {{-- Botón Cancelar (Debe tener padding para igualar altura al otro botón) --}}
+        {{-- Botón Cancelar (usamos 'formIsSubmitting') --}}
         <button type="button" 
                 x-on:click.prevent="$dispatch('close-modal', 'agregar-usuario')" 
-                class="px-4 py-2 bg-princeton text-sm font-semibold text-white hover:bg-gray-100 rounded-md transition-colors"
+                class="px-4 py-2 bg-princeton text-sm font-semibold text-white hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
+                :disabled="formIsSubmitting" 
         >
             Cancelar
         </button>
 
-        {{-- Botón Guardar (Eliminamos el 'pb-1' para evitar desalineación) --}}
+        {{-- Botón Guardar (usamos 'formIsSubmitting') --}}
         <button type="submit" 
-                class="ms-4 bg-princeton hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                class="ms-4 bg-princeton hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="formIsSubmitting"
         >
-            Guardar Usuario
+            {{-- Texto dinámico con la variable correcta --}}
+            <span x-show="!formIsSubmitting">Guardar Usuario</span>
+            <span x-show="formIsSubmitting" style="display: none;">Guardando...</span>
         </button>
     </div>
 </form>
