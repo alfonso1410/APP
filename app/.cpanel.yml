@@ -1,0 +1,7 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYDIR="$HOME/sistemaescolar.princeton.edu.mx/"
+    - /bin/cp -R * $DEPLOYDIR
+    - cd $DEPLOYDIR
+    - composer install --no-dev --optimize-autoloader
