@@ -13,7 +13,7 @@ class GrupoTitular extends Model
     public $incrementing = false;
 
     // Llave primaria compuesta (¡Esta es la parte clave!)
-    protected $primaryKey = ['grupo_id', 'idioma'];
+    protected $primaryKey = 'grupo_id';
 
     // Campos permitidos para asignación masiva (updateOrCreate)
     protected $fillable = [

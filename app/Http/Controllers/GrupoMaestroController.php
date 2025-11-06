@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\GrupoTitular; // <-- IMPORTANTE
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule; // <-- IMPORTANTE
+use Illuminate\Support\Facades\DB;
 
 class GrupoMaestroController extends Controller
 {
@@ -54,9 +55,9 @@ class GrupoMaestroController extends Controller
     /**
      * Guarda la asignación del formulario (de los cuatro <select>).
      */
-    public function store(Request $request, Grupo $grupo)
+   public function store(Request $request, Grupo $grupo)
     {
-        // 1. Validamos los 4 campos
+        // 1. Validamos los 4 campos (esto está bien)
         $request->validate([
             'maestro_titular_espanol_id'   => 'nullable|exists:users,id',
             'maestro_auxiliar_espanol_id'  => 'nullable|exists:users,id',
@@ -64,28 +65,44 @@ class GrupoMaestroController extends Controller
             'maestro_auxiliar_ingles_id'   => 'nullable|exists:users,id',
         ]);
 
-        // 2. Usamos updateOrCreate para ESPAÑOL
-        // Busca por (grupo_id, idioma) y actualiza o crea el registro
-        $grupo->asignacionesTitulares()->updateOrCreate(
+        // =======================================================
+        // ===== INICIO DE LA SOLUCIÓN =====
+        //
+        // Usamos updateOrInsert (del Query Builder) que maneja llaves
+        // compuestas perfectamente.
+        // =======================================================
+
+        // 2. Usamos updateOrInsert para ESPAÑOL
+        DB::table('grupo_titular')->updateOrInsert(
+            // Columnas para BUSCAR:
             [
-                'idioma'   => 'ESPAÑOL',
+                'grupo_id' => $grupo->grupo_id,
+                'idioma'   => 'ESPAÑOL'
             ],
+            // Columnas para ACTUALIZAR o CREAR:
             [
                 'maestro_titular_id'  => $request->input('maestro_titular_espanol_id'),
                 'maestro_auxiliar_id' => $request->input('maestro_auxiliar_espanol_id'),
+                'updated_at'          => now() // updateOrInsert no maneja timestamps
             ]
         );
 
-        // 3. Usamos updateOrCreate para INGLÉS
-        $grupo->asignacionesTitulares()->updateOrCreate(
+        // 3. Usamos updateOrInsert para INGLÉS
+        DB::table('grupo_titular')->updateOrInsert(
+            // Columnas para BUSCAR:
             [
-                'idioma'   => 'INGLES',
+                'grupo_id' => $grupo->grupo_id,
+                'idioma'   => 'INGLES'
             ],
+            // Columnas para ACTUALIZAR o CREAR:
             [
                 'maestro_titular_id'  => $request->input('maestro_titular_ingles_id'),
                 'maestro_auxiliar_id' => $request->input('maestro_auxiliar_ingles_id'),
+                'updated_at'          => now()
             ]
         );
+        
+        // ===== FIN DE LA SOLUCIÓN =====
 
         // 4. Redirigimos de vuelta a la LISTA
         return redirect()->route('admin.grupos.maestros.index', $grupo)

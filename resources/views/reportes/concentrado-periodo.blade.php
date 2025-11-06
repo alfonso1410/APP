@@ -7,307 +7,372 @@
     <style>
         /* Fuentes y estilos generales */
         body {
-            font-family: DejaVu Sans, Arial, sans-serif;
-            font-size: 10px;
+            font-family: "DejaVu Sans", sans-serif;
+            font-size: 9px;
             margin: 0;
             padding: 0;
         }
-        .container {
-            width: 98%;
-            margin: 1%;
+
+        /* Definir márgenes de página */
+        @page {
+            margin-top: 10px; /* Reducido para aprovechar espacio */
+            margin-bottom: 5px; /* Reducido para aprovechar espacio */
+            margin-left: 5px;
+            margin-right: 0;
         }
 
-        /* Encabezado */
+        /* Encabezado (solo en la primera página) */
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
         .header-table td {
             vertical-align: middle;
-            padding: 5px;
+            padding: 2px;
         }
         .logo-izquierda {
-            width: 200px;
+            width: 170px;
         }
         .logo-derecha {
-            width: 80px;
+            width: 60px;
         }
         .titulo-centro {
             text-align: center;
             font-weight: bold;
         }
         .titulo-centro .principal {
-            font-size: 14px;
+            font-size: 11px;
         }
         .titulo-centro .subtitulo {
-            font-size: 12px;
+            font-size: 9px;
         }
         .titulo-centro .concentrado {
-            font-size: 12px;
+            font-size: 9px;
             background-color: #E0E0E0;
-            padding: 2px;
+            padding: 1px;
         }
 
-        /* Tabla de Información */
-        .info-table {
+        /* Información de Docente/Grado/Materia (solo en la primera página) */
+       .info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 5px;
+}
+   .info-table tr.info-table-row td {
+    border: 1px solid #000;
+    padding: 4px; /* Aumentado de 2px a 4px */
+    font-weight: bold;
+    font-size: 9px; /* Aumentado de 8px a 9px */
+    text-align: left;
+    vertical-align: middle;
+    background-color: #FFFFFF;
+}
+      .info-table tr.info-table-row td.label {
+    background-color: #E0E0E0;
+    font-weight: bold;
+    width: 15%;
+    font-size: 9px; /* Aumentado de 8px a 9px */
+}
+
+        /* Tabla Principal con barra lateral integrada */
+        .tabla-con-barra {
             width: 100%;
             border-collapse: collapse;
-            font-size: 11px;
-            margin-bottom: 10px;
-        }
-        .info-table td {
-            border: 1px solid #000;
-            padding: 4px;
-            font-weight: bold;
-        }
-        .info-table .label {
-            background-color: #E0E0E0;
-            width: 15%;
-        }
-
-        /* --- INICIO DE CORRECCIONES CSS --- */
-
-        /* Tabla Principal de Calificaciones */
-        .main-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 9px;
-            table-layout: fixed; 
-        }
-        .main-table th, .main-table td {
-            border: 1px solid #000;
-            padding: 3px;
-            height: 25px; /* Alto de fila estándar */
+            border-spacing: 0;
         }
         
-        /* 1. Estilos del Encabezado (THEAD) - La corrección clave */
-        .main-table thead th { 
-            font-weight: bold;
-            vertical-align: middle;
-            font-size: 8px;
-            text-align: center;
-            word-wrap: break-word;
-            padding: 4px;
-        }
-        
-        /* 2. Estilos del Cuerpo (TBODY) - Centrar calificaciones */
-        .main-table tbody td {
-            text-align: center; /* Centrar números */
-            vertical-align: middle;
-        }
-        
-        /* 3. Celdas de Alumno (Excepción para alinear a la izquierda) */
-        .main-table tbody td.cell-alumno {
-            text-align: left; /* Alinear nombres a la izquierda */
-            padding-left: 5px;
-            font-weight: bold;
-            font-size: 9px;
-        }
-        .main-table .cell-num {
-            width: 3%;
-            font-weight: bold;
-            text-align: center;
-        }
-        .main-table .cell-alumno {
-            width: 20%;
-        }
-
-        /* 4. Celda de Texto Vertical (Trimestre) */
-        .cell-vertical-container {
-            width: 3%;
+        .tabla-con-barra > tbody > tr > td {
             padding: 0;
             margin: 0;
-            background-color: #004A99 !important; /* Azul (forzado) */
-            color: #FFFFFF !important; /* Blanco (forzado) */
-            font-weight: bold;
-            font-size: 14px;
-            text-align: center;
-            vertical-align: middle;
-            border: 1px solid #000;
-        }
-        .text-vertical {
-            writing-mode: vertical-rl;
-            transform: rotate(180deg);
-            white-space: nowrap;
-            padding: 5px 0;
-        }
-        /* --- FIN DE CORRECCIONES CSS --- */
-
-        /* Pie de página (Firmas) - SOLUCIÓN CON HR */
-        .footer-firmas {
-            width: 100%;
-            margin-top: 40px;
-            padding: 0;
-        }
-
-        .footer-firmas table {
-            width: 80%;
-            border-collapse: collapse;
-        }
-
-        .footer-firmas td {
-            width: 50%;
-            padding: 0 90px;
-            text-align: center;
             vertical-align: top;
         }
 
-        .firma-container hr {
-            border: none;
-            border-top: 2px solid #000;
-            margin: 0 0 8px 0;
-            width: 100%;
+        /* Tabla Principal de Calificaciones */
+       .main-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8px; /* Aumentado de 8px a 9px */
+    table-layout: fixed;
+}
+     .main-table th, .main-table td {
+    border: 1px solid #000;
+    padding: 3px; /* Aumentado de 2px a 4px */
+    height: 24px; /* Aumentado de 20px a 25px */
+    text-align: center;
+    vertical-align: middle;
+}
+        
+        /* THEAD se repite en cada página */
+        .main-table thead {
+            display: table-header-group;
+        }
+        
+     /* Headers de columnas */
+.main-table thead tr.column-headers th { 
+    font-weight: bold;
+    font-size: 8px; /* Aumentado de 7px a 8px */
+    background-color: #F0F0F0;
+    padding: 4px; /* Aumentado de 2px a 4px */
+    word-wrap: break-word;
+    line-height: 1.2;
+}
+
+    /* Columnas específicas */
+.main-table .cell-num {
+    width: 3%;
+    font-weight: bold;
+}
+      .main-table .cell-alumno {
+    width: 25%;
+    text-align: left;
+    padding-left: 5px; /* Aumentado de 3px a 5px */
+    font-weight: bold;
+    font-size: 8px; /* Aumentado de 7px a 8px */
+}
+
+       /* Filas de datos */
+.main-table tbody tr {
+    height: 25px; /* Aumentado de 20px a 25px */
+}
+     .main-table tbody td {
+    font-size: 9px; /* Aumentado de 8px a 9px */
+}
+        /* Barra lateral vertical */
+        .barra-lateral {
+            width: 3%;
+            background-color: #004A99;
+            color: #FFFFFF;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+            vertical-align: middle;
+            border: 1px solid #000;
+        }
+        .barra-lateral .text-vertical {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            white-space: nowrap;
+            padding: 3px 0;
         }
 
+        /* Resumen (más pequeño) */
+        .resumen-promedio {
+            width: 100%;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            border-collapse: collapse;
+            font-size: 8px;
+        }
+        .resumen-promedio td {
+            padding: 1px;
+            text-align: center;
+        }
+        .resumen-promedio .label {
+            font-weight: bold;
+            font-size: 8px;
+            padding-right: 5px;
+        }
+        .resumen-promedio .value-box {
+            border: 1px solid #000;
+            padding: 2px 5px;
+            font-weight: bold;
+            font-size: 9px;
+            background-color: #FFFFFF;
+        }
+        .resumen-promedio .promedio-box {
+            border: 1px solid #000;
+            padding: 2px 5px;
+            font-weight: bold;
+            font-size: 9px;
+            background-color: #90EE90;
+        }
+
+        /* Pie de página (Firmas, más pequeñas) */
+        .footer-firmas {
+            width: 100%;
+            margin-top: 30px;
+            padding: 0;
+            font-size: 7px;
+        }
+       .footer-firmas table {
+    width: 80%; /* Ancho de la tabla que contiene las firmas */
+    border-collapse: collapse;
+    margin: 0 auto; /* Centra la tabla */
+}
+        .footer-firmas td {
+            width: 50%;
+            text-align: center;
+            padding: 0 90px;
+            vertical-align: top;
+        }
+        .firma-container hr {
+            border: none;
+            border-top: 1px solid #000;
+            margin: 0 0 2px 0;
+            width: 100%;
+            
+        }
         .firma-texto {
             font-weight: bold;
-            font-size: 10px;
+            font-size: 7px;
             text-align: center;
+        }
+
+        /* Contenedor para evitar salto de página */
+        .contenido-no-separar {
+            page-break-inside: avoid;
+            margin-bottom: 5px;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        
-        <table class="header-table">
-            <tr>
-                <td class="logo-izquierda" style="text-align: left; width: 200px;">
-                    @if(file_exists(public_path('Assets/logo-princeton.png')))
-                    <img src="{{ public_path('Assets/logo-princeton.png') }}" alt="Logo" style="width: 200px;">
-                    @endif
-                </td>
-                <td class="titulo-centro">
-                    <div class="principal">"FORMACIÓN INTEGRAL PARA EL DESARROLLO DE LÍDERES"</div>
-                    <div class="subtitulo">SISTEMA BILINGÜE PRIMARIA CLAVE: 28PPR0307Y</div>
-                    <div class="concentrado">CONCENTRADO DE CALIFICACIONES</div>
-                </td>
-                <td class="logo-derecha" style="text-align: right; width: 100px; vertical-align: bottom;">
-                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 5px;">2024-2025</div>
-                    @if(file_exists(public_path('Assets/logo-ciclo.png')))
-                    <img src="{{ public_path('Assets/logo-ciclo.png') }}" alt="Logo Ciclo" style="width: 80px;">
-                    @endif
-                </td>
-            </tr>
-        </table>
-        
-        <table class="info-table">
-               <tr>
-<td class="label" style="width: 10%;">MATERIA:</td>
-<td colspan="3">{{ $materia->nombre }}</td>
- </tr>
-            <tr>
-                <td class="label" style="width: 10%;">DOCENTE:</td>
-                <td style="width: 50%;">{{ $nombreMaestro ?? 'Marina Emilia Flad' }}</td>
-                <td class="label" style="width: 10%;">GRADO:</td>
-                <td style="width: 30%;">{{ $grupo->grado->nombre ?? 'PRIMERO' }} {{ $grupo->nombre_grupo ? '- '.$grupo->nombre_grupo : '' }}</td>
-            </tr>
+    <!-- Encabezado (solo en la primera página) -->
+    <table class="header-table">
+        <tr>
+            <td class="logo-izquierda" style="text-align: left; width: 170px;">
+                @if(file_exists(public_path('Assets/logo-princeton.png')))
+                <img src="{{ public_path('Assets/logo-princeton.png') }}" alt="Logo" style="width: 170px;">
+                @endif
+            </td>
+            <td class="titulo-centro">
+                <div class="principal">"FORMACIÓN INTEGRAL PARA EL DESARROLLO DE LÍDERES"</div>
+                <div class="subtitulo">SISTEMA BILINGÜE PRIMARIA CLAVE: 28PPR0307Y</div>
+                <div class="concentrado">CONCENTRADO DE CALIFICACIONES</div>
+            </td>
+            <td class="logo-derecha" style="text-align: right; width: 60px; vertical-align: bottom;">
+                <div style="font-weight: bold; font-size: 9px; margin-bottom: 2px;">{{ $periodo->cicloEscolar->nombre ?? '2024-2025' }}</div>
+                @if(file_exists(public_path('Assets/logo-ciclo.png')))
+                <img src="{{ public_path('Assets/logo-ciclo.png') }}" alt="Logo Ciclo" style="width: 60px;">
+                @endif
+            </td>
+        </tr>
+    </table>
 
-         
-        </table>
+    <!-- Tabla de DOCENTE/MATERIA/GRADO (solo en la primera página) -->
+    <table class="info-table">
+        <tr class="info-table-row">
+            <td class="label" style="width: 10%;">DOCENTE:</td>
+            <td style="width: 40%;">{{ $nombreMaestro ?? 'Sin asignar' }}</td>
+            <td class="label" style="width: 10%;">GRADO:</td>
+            <td style="width: 40%;">
+                {{ $grupo->grado->nombre ?? 'N/A' }}{{ $grupo->nombre_grupo ? ' - '.$grupo->nombre_grupo : '' }}
+            </td>
+        </tr>
+        <tr class="info-table-row">
+            <td class="label">MATERIA:</td>
+            <td colspan="3">{{ $materia->nombre }}</td>
+        </tr>
+    </table>
 
-        <table style="width: 100%; border-collapse: collapse; border-spacing: 0;">
-            <tr>
-                <td style="width: 97%; padding:0; border:none; vertical-align: top;">
-                    
-                    <table class="main-table">
-                        <thead>
-                            <tr>
-                                <th class="cell-num">#</th>
-                                <th class="cell-alumno">ALUMNO</th>
-                                @foreach($criterios as $criterio)
-                                    <th style="text-transform: uppercase;">{{ $criterio['nombre'] }}</th>
+    <!-- Dividir los alumnos en grupos de 25 -->
+    @php
+        $alumnosChunked = $alumnos->chunk(25); // Divide en grupos de 25
+    @endphp
 
-                                @endforeach
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($alumnos as $alumno)
-                            <tr>
-                                <td class="cell-num">{{ $loop->iteration }}</td>
-                                <td class="cell-alumno">{{ $alumno->apellido_paterno }} {{ $alumno->apellido_materno }} {{ $alumno->nombres }}</td>
-                                
-                                @foreach($criterios as $criterio)
-                                    <td>
-                                        @php
-                                            $calif = $calificaciones->get($alumno->alumno_id)
-                                                                    ?->get($criterio['id'])
-                                                                    ?->calificacion_obtenida;
-                                        @endphp
+    @foreach($alumnosChunked as $index => $chunk)
+        <div class="contenido-no-separar">
+
+            <!-- Tabla con barra lateral integrada -->
+            <table class="tabla-con-barra">
+                <tbody>
+                    <tr>
+                        <!-- Celda de la tabla principal (97%) -->
+                        <td style="width: 97%;">
+                            <table class="main-table">
+                                <thead>
+                                    <!-- Solo Headers de columnas en THEAD -->
+                                    <tr class="column-headers">
+                                        <th class="cell-num">#</th>
+                                        <th class="cell-alumno">ALUMNO</th>
+                                        @foreach($criterios as $criterio)
+                                            <th>{{ strtoupper($criterio['nombre']) }}</th>
+                                        @endforeach
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($chunk as $alumno)
+                                    <tr>
+                                        <td class="cell-num">{{ $loop->iteration + ($index * 25) }}</td> <!-- Número global -->
+                                        <td class="cell-alumno">{{ strtoupper($alumno->apellido_paterno) }} {{ strtoupper($alumno->apellido_materno) }} {{ strtoupper($alumno->nombres) }}</td>
                                         
-                                        @if(is_numeric($calif))
-                                            {{ number_format($calif, $criterio['es_promedio'] ? 2 : 1) }}
-                                        @else
-                                            NP
-                                        @endif
-                                    </td>
-                                @endforeach
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-
-                </td>
-                
-                <td class="cell-vertical-container">
-                    <div class="text-vertical">{{ strtoupper($periodo->nombre) }}</div>
-                </td>
-            </tr>
-        </table>
-
-        <!-- Resumen de Alumnos y Promedio -->
-        <table style="width: 100%; margin-top: 15px; margin-bottom: 10px; border-collapse: collapse;">
-            <tr>
-                <td style="width: 25%; text-align: right; padding-right: 10px;">
-                    <span style="font-weight: bold; font-size: 12px;">TOTAL ALUMNOS EVALUADOS</span>
-                </td>
-                <td style="width: 10%; text-align: center; padding: 0;">
-                    <table style="border: 2px solid #000; margin: 0 auto; border-collapse: collapse;">
-                        <tr>
-                            <td style="padding: 0px 16px; font-weight: bold; font-size: 12px; text-align: center; border: none;">
-                                {{ count($alumnos) }}
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-                <td style="width: 30%; text-align: center;"></td>
-                <td style="width: 10%; text-align: right; padding-right: 10px;">
-                    <span style="font-weight: bold; font-size: 12px;">PROMEDIO</span>
-                </td>
-                <td style="width: 10%; text-align: center; padding: 0;">
-                    <table style="border: 2px solid #000; margin: 0 auto; border-collapse: collapse; background-color: #C0EA81;">
-                        <tr>
-                            <td style="padding: 0px 16px; font-weight: bold; font-size: 12px; text-align: center; border: none;">
-                                {{ number_format($promedioGrupo ?? 0, 1) }}
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-                <td style="width: 15%;"></td>
-            </tr>
-        </table>
-
-        <div class="footer-firmas">
-            <table>
-                <tr>
-                    <td>
-                        <div class="firma-container">
-                            <hr>
-                            <div class="firma-texto">FIRMA DOCENTE</div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="firma-container">
-                            <hr>
-                            <div class="firma-texto">Vo.Bo. COORDINACIÓN ACADEMICA</div>
-                        </div>
-                    </td>
-                </tr>
+                                        @foreach($criterios as $criterio)
+                                            <td>
+                                                @php
+                                                    $calif = $calificaciones->get($alumno->alumno_id)
+                                                                            ?->get($criterio['id'])
+                                                                            ?->calificacion_obtenida;
+                                                @endphp
+                                                
+                                                @if(is_numeric($calif))
+                                                    {{ $criterio['es_promedio'] ? number_format($calif, 1) : number_format($calif, 1) }}
+                                                @else
+                                                    NP
+                                                @endif
+                                            </td>
+                                        @endforeach
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                                
+                            </table>
+                        </td>
+                        
+                        <!-- Celda de la barra lateral (3%) -->
+                        <td class="barra-lateral">
+                            <div class="text-vertical">{{ strtoupper($periodo->nombre ?? '1er. TRIMESTRE') }}</div>
+                        </td>
+                    </tr>
+                </tbody>
             </table>
+
+            <!-- Resumen de Alumnos y Promedio (solo en la última página) -->
+            @if($loop->last)
+                <table class="resumen-promedio">
+                    <tr>
+                        <td style="width: 30%; text-align: right;" class="label">TOTAL ALUMNOS EVALUADOS</td>
+                        <td style="width: 6%; text-align: center;" class="value-box">
+                            {{ count($alumnos) }}
+                        </td>
+                        <td style="width: 30%; text-align: center;"></td>
+                        <td style="width: 10%; text-align: right;" class="label">PROMEDIO</td>
+                        <td style="width: 6%; text-align: center;" class="promedio-box">
+                            {{ number_format($promedioGrupo ?? 0, 1) }}
+                        </td>
+                        <td style="width: 18%;"></td>
+                    </tr>
+                </table>
+
+                <!-- Firmas (solo en la última página) -->
+                <div class="footer-firmas">
+                    <table>
+                        <tr>
+                            <td>
+                                <div class="firma-container">
+                                    <hr>
+                                    <div class="firma-texto">FIRMA DOCENTE</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="firma-container">
+                                    <hr>
+                                    <div class="firma-texto">Vo.Bo. COORDINACION ACADEMICA</div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            @endif
+
         </div>
 
-    </div>
+        <!-- Salto de página entre chunks (excepto después del último) -->
+        @if(!$loop->last)
+            <div style="page-break-after: always;"></div>
+        @endif
+
+    @endforeach
 
 </body>
 </html>

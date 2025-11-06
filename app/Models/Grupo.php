@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Materia; 
-
+use App\Models\GrupoTitular;
+use App\Models\GrupoMateriaMaestro;
 class Grupo extends Model
 {
     use HasFactory;
@@ -45,7 +46,8 @@ class Grupo extends Model
     // --- Otras relaciones (sin cambios) ---
     public function materias()
     {
-        return $this->belongsToMany(Materia::class, 'grupo_materia_maestro', 'grupo_id', 'materia_id');
+        return $this->belongsToMany(Materia::class, 'grupo_materia_maestro', 'grupo_id', 'materia_id')
+                    ->withPivot('maestro_id'); // <-- AÑADE ESTA LÍNEA
     }
 
     public function alumnos(): BelongsToMany

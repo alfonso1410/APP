@@ -5,6 +5,7 @@ use App\Models\Grupo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+
 class GrupoMateriaMaestroController extends Controller
 {
     /**
@@ -12,18 +13,29 @@ class GrupoMateriaMaestroController extends Controller
      */
     public function create(Grupo $grupo)
     {
-        // 1. Obtenemos el "Pool" de maestros (los que están en 'grupo_titular')
-        $maestrosDelPool = $grupo->maestrosTitulares()->orderBy('name')->get();
+        // 1. Obtenemos las asignaciones (Español e Inglés) y cargamos los usuarios
+        $asignaciones = $grupo->asignacionesTitulares()
+                             ->with('titular', 'auxiliar') // Carga los modelos User
+                             ->get();
 
-        // 2. Obtenemos las MATERIAS de este grupo (según tu lógica de 'indexMaterias')
+        // 2. Creamos el "Pool" de maestros extrayendo los usuarios de las asignaciones
+        $maestrosDelPool = $asignaciones->flatMap(function ($asignacion) {
+            // flatMap crea una lista única
+            return [$asignacion->titular, $asignacion->auxiliar];
+        })
+        ->filter()       // Quita cualquier 'null' (si un puesto está vacío)
+        ->unique('id')   // Se asegura que cada maestro esté solo una vez
+        ->sortBy('name') // Ordena la lista por nombre
+        ->values();      // Re-indexa la colección
+
+        // 3. Obtenemos las MATERIAS de este grupo (según tu lógica de 'indexMaterias')
         if ($grupo->tipo_grupo === 'REGULAR') {
             $materiasDelGrupo = $grupo->grado->materias; // De la estructura
         } else {
             $materiasDelGrupo = $grupo->materias; // Asignadas directo al grupo
         }
 
-        // 3. Obtenemos las asignaciones ACTUALES [materia_id => maestro_id]
-        //    (Esto es para pre-seleccionar los dropdowns)
+        // 4. Obtenemos las asignaciones ACTUALES [materia_id => maestro_id]
         $asignacionesActuales = DB::table('grupo_materia_maestro')
             ->where('grupo_id', $grupo->grupo_id)
             ->pluck('maestro_id', 'materia_id'); // Clave: materia_id, Valor: maestro_id
