@@ -61,7 +61,7 @@ class User extends Authenticatable
         return $this->belongsToMany(
             Grupo::class,
             'grupo_titular',
-            'maestro_id', // <-- ¡CAMBIO AQUÍ! (en lugar de 'user_id')
+            'maestro_titular_id',
             'grupo_id'
         )->withPivot('idioma'); // <-- AÑADIDO
     }
