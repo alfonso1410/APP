@@ -242,10 +242,10 @@
                 <div class="concentrado">CONCENTRADO DE CALIFICACIONES</div>
             </td>
             <td class="logo-derecha" style="text-align: right; width: 60px; vertical-align: bottom;">
-                <div style="font-weight: bold; font-size: 9px; margin-bottom: 2px;">{{ $periodo->cicloEscolar->nombre ?? '2024-2025' }}</div>
-                @if(file_exists(public_path('Assets/logo-ciclo.png')))
-                <img src="{{ public_path('Assets/logo-ciclo.png') }}" alt="Logo Ciclo" style="width: 60px;">
+                @if(file_exists(public_path('Assets/logo-azul.png')))
+                <img src="{{ public_path('Assets/logo-azul.png') }}" alt="Logo Azul" style="width: 60px;">
                 @endif
+                <div style="font-weight: bold; font-size: 9px; margin-bottom: 2px;">{{ $periodo->cicloEscolar->nombre ?? '2024-2025' }}</div>
             </td>
         </tr>
     </table>
