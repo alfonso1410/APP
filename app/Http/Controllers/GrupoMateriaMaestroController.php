@@ -19,9 +19,9 @@ class GrupoMateriaMaestroController extends Controller
                              ->get();
 
         // 2. Creamos el "Pool" de maestros extrayendo los usuarios de las asignaciones
-        $maestrosDelPool = $asignaciones->flatMap(function ($asignacion) {
-            // flatMap crea una lista única
-            return [$asignacion->titular, $asignacion->auxiliar];
+        $maestrosDelPool = $asignaciones->map(function ($asignacion) {
+            // Map crea una lista única
+            return $asignacion->titular;
         })
         ->filter()       // Quita cualquier 'null' (si un puesto está vacío)
         ->unique('id')   // Se asegura que cada maestro esté solo una vez

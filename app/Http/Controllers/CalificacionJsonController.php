@@ -147,6 +147,36 @@ class CalificacionJsonController extends Controller
         if (!$grupo) {
             return response()->json(['error' => 'Grupo no encontrado'], 404);
         }
+        
+         $nombreMaestro = 'Sin asignar'; // Valor por defecto
+        $idiomaDeLaMateria = null;
+    $asignacion = DB::table('grupo_materia_maestro') // Tu nombre de tabla pivote
+                      ->where('grupo_id', $request->grupo_id)
+                      ->where('materia_id', $request->materia_id)
+                      ->first();
+
+    // Verifica si se encontró la asignación y si la columna 'maestro_id' existe y no es nula
+    if ($asignacion && isset($asignacion->maestro_id)) {
+        // Busca al usuario usando el ID de la tabla pivote (que es la PK 'id' de users)
+        $maestro = User::find($asignacion->maestro_id); // find() busca por la PK 'id' del modelo User
+
+        // Verifica si se encontró el usuario
+        if ($maestro) {
+            // Construye el nombre completo
+            $nombreMaestro = $maestro->name . ' ' . $maestro->apellido_paterno . ' ' . $maestro->apellido_materno;
+
+            try {
+                    $pivote = $maestro->gruposTitulares()->find($grupo->grupo_id);
+                    
+                    if ($pivote && isset($pivote->pivot->idioma)) {
+                         $idiomaDeLaMateria = $pivote->pivot->idioma; // ej: 'ingles' o 'español'
+                    }
+                } catch (\Exception $e) {
+                    // Manejar error si la relación no existe o falla
+                    \Log::error("Error al buscar idioma del maestro: " . $e->getMessage());
+                }
+        }
+    }
 
         $alumnos = $grupo->alumnosActuales() 
                          ->where('estado_alumno', 'ACTIVO') 
@@ -232,12 +262,15 @@ class CalificacionJsonController extends Controller
             // --- CORRECCIÓN 4: Calcular Faltas ---
             if ($criterioFaltasId) { // <-- CORRECCIÓN 4: Si existe el criterio "Faltas"
                 // Asumiendo que agregaste 'periodo_id' a 'registro_asistencia'
-                $totalFaltas = RegistroAsistencia::where('alumno_id', $alumno->id)
-                    // ->where('grupo_id', $grupo->grupo_id) // Opcional: Filtrar por grupo si es necesario
-                    ->where('periodo_id', $periodo->periodo_id) // <-- CORRECCIÓN 4: Filtrar por periodo_id
-                    ->where('tipo_asistencia', 'FALTA')
-                    // ->whereBetween('fecha', [$periodo->fecha_inicio, $periodo->fecha_fin]) // <-- No necesario si ya tienes periodo_id
-                    ->count();
+                $totalFaltas = 0;
+                  if ($idiomaDeLaMateria) { 
+                    
+                    $totalFaltas = RegistroAsistencia::where('alumno_id', $alumno->id)
+                        ->where('periodo_id', $periodo->periodo_id) 
+                        ->where('tipo_asistencia', 'FALTA')
+                        ->where('idioma', $idiomaDeLaMateria) // <-- ¡LA LÍNEA CLAVE!
+                        ->count();
+                }
                 $mapaCalificaciones[$alumno->id][$criterioFaltasId] = $totalFaltas;
 
                 // Si Faltas SÍ se incluye en el promedio, lo añadimos aquí
@@ -283,23 +316,7 @@ class CalificacionJsonController extends Controller
             $promedioGrupo = array_sum($promediosIndividuales) / count($promediosIndividuales);
         }
 
-        $nombreMaestro = 'Sin asignar'; // Valor por defecto
-    $asignacion = DB::table('grupo_materia_maestro') // Tu nombre de tabla pivote
-                      ->where('grupo_id', $request->grupo_id)
-                      ->where('materia_id', $request->materia_id)
-                      ->first();
-
-    // Verifica si se encontró la asignación y si la columna 'maestro_id' existe y no es nula
-    if ($asignacion && isset($asignacion->maestro_id)) {
-        // Busca al usuario usando el ID de la tabla pivote (que es la PK 'id' de users)
-        $maestro = User::find($asignacion->maestro_id); // find() busca por la PK 'id' del modelo User
-
-        // Verifica si se encontró el usuario
-        if ($maestro) {
-            // Construye el nombre completo
-            $nombreMaestro = $maestro->name . ' ' . $maestro->apellido_paterno . ' ' . $maestro->apellido_materno;
-        }
-    }
+       
 
     // 6. Añadir el nombre del maestro al JSON de respuesta
     return response()->json([
