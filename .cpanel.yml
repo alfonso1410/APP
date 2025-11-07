@@ -1,7 +1,23 @@
----
 deployment:
   tasks:
     - export DEPLOYDIR="$HOME/sistemaescolar.princeton.edu.mx/"
-    - /bin/cp -R * $DEPLOYDIR
+    # Copia solo los archivos necesarios (sin .git, node_modules, etc.)
+    - /bin/cp -R . $DEPLOYDIR
     - cd $DEPLOYDIR
+    # Instala dependencias de PHP
     - composer install --no-dev --optimize-autoloader
+    # Instala dependencias de frontend
+    - npm install
+    - npm run build
+    # Permisos necesarios
+    - chmod -R 755 storage
+    - chmod -R 755 bootstrap/cache
+    # Cachear configuración y vistas
+    - php artisan config:cache
+    - php artisan route:cache
+    - php artisan view:cache
+    # Limpiar en caso de problemas
+    - php artisan config:clear
+    - php artisan cache:clear
+    # Opcional: migrar si hay nuevas migraciones
+    # - php artisan migrate --force
