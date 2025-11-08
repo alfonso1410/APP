@@ -27,7 +27,7 @@
         </div>
         
         <a href="{{ route('admin.grupos.alumnos.create', $grupo) }}" 
-           class="px-5 py-2 bg-princeton text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition">
+           class="px-5 py-2 bg-princeton text-white font-semibold rounded-lg shadow-md hover:bg-slate-600 transition">
             Asignar / Desvincular Alumnos
         </a>
     </div>

@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        {{-- Lógica para construir la URL de regreso (copiada de tu ejemplo) --}}
+        {{-- Lógica para construir la URL de regreso --}}
         @php
             $backUrl = route('admin.grados.index'); // URL por defecto
             if ($grupo->tipo_grupo === 'EXTRA') {
@@ -24,7 +24,6 @@
                     <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                         Maestros Titulares en: <span class="text-indigo-600">{{ $grupo->grado->nombre }} - "{{ $grupo->nombre_grupo }}"</span>
                     </h2>
-                    {{-- Usamos la relación para mostrar el ciclo --}}
                     <p class="text-sm text-gray-500 mt-1">Ciclo Escolar: {{ $grupo->cicloEscolar->nombre ?? 'N/A' }}</p>
                 </div>
             </div>
@@ -47,69 +46,120 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Idioma</th>
+                                {{-- Los encabezados cambian ligeramente --}}
+                                @if ($grupo->tipo_grupo == 'REGULAR')
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Idioma</th>
+                                @else
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Puesto</th>
+                                @endif
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Maestro Titular</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Maestro Auxiliar</th>
                             </tr>
                         </thead>
                         
                         <tbody class="bg-white divide-y divide-gray-200">
-                            {{-- Pre-cargamos las variables para más limpieza --}}
-                            @php
-                                $asignacionEspanol = $asignaciones->get('ESPAÑOL');
-                                $asignacionIngles = $asignaciones->get('INGLES');
-                            @endphp
 
-                            {{-- Fila de ESPAÑOL --}}
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    ESPAÑOL
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                    @if($asignacionEspanol?->titular)
-                                        {{ $asignacionEspanol->titular->name }} {{ $asignacionEspanol->titular->apellido_paterno }} {{ $asignacionEspanol->titular->apellido_materno }}
-                                    @else
-                                        <span class="text-gray-400">Sin asignar</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                    @if($asignacionEspanol?->auxiliar)
-                                        {{ $asignacionEspanol->auxiliar->name }} {{ $asignacionEspanol->auxiliar->apellido_paterno }} {{ $asignacionEspanol->auxiliar->apellido_materno }}
-                                    @else
-                                        <span class="text-gray-400">Sin asignar</span>
-                                    @endif
-                                </td>
-                            </tr>
+                            {{-- =================================== --}}
+                            {{--  CASO 1: GRUPO REGULAR (Bilingüe)   --}}
+                            {{-- =================================== --}}
+                            @if ($grupo->tipo_grupo == 'REGULAR')
+                                
+                                @php
+                                    $asignacionEspanol = $asignaciones->get('ESPAÑOL');
+                                    $asignacionIngles = $asignaciones->get('INGLES');
+                                @endphp
 
-                            {{-- Fila de INGLÉS --}}
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    INGLÉS
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                    @if($asignacionIngles?->titular)
-                                        {{ $asignacionIngles->titular->name }} {{ $asignacionIngles->titular->apellido_paterno }} {{ $asignacionIngles->titular->apellido_materno }}
-                                    @else
-                                        <span class="text-gray-400">Sin asignar</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                    @if($asignacionIngles?->auxiliar)
-                                        {{ $asignacionIngles->auxiliar->name }} {{ $asignacionIngles->auxiliar->apellido_paterno }} {{ $asignacionIngles->auxiliar->apellido_materno }}
-                                    @else
-                                        <span class="text-gray-400">Sin asignar</span>
-                                    @endif
-                                </td>
-                            </tr>
+                                {{-- Fila de ESPAÑOL --}}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        ESPAÑOL
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                        @if($asignacionEspanol?->titular)
+                                            {{ $asignacionEspanol->titular->name }} {{ $asignacionEspanol->titular->apellido_paterno }} {{ $asignacionEspanol->titular->apellido_materno }}
+                                        @else
+                                            <span class="text-gray-400">Sin asignar</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                        @if($asignacionEspanol?->auxiliar)
+                                            {{ $asignacionEspanol->auxiliar->name }} {{ $asignacionEspanol->auxiliar->apellido_paterno }} {{ $asignacionEspanol->auxiliar->apellido_materno }}
+                                        @else
+                                            <span class="text-gray-400">Sin asignar</span>
+                                        @endif
+                                    </td>
+                                </tr>
 
-                            {{-- Estado vacío --}}
-                            @if(!$asignacionEspanol && !$asignacionIngles)
-                            <tr>
-                                <td colspan="3" class="px-6 py-12 text-center text-sm text-gray-500">
-                                    <p class="font-semibold">No se han asignado maestros a este grupo.</p>
-                                </td>
-                            </tr>
-                            @endif
+                                {{-- Fila de INGLÉS --}}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        INGLÉS
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                        @if($asignacionIngles?->titular)
+                                            {{ $asignacionIngles->titular->name }} {{ $asignacionIngles->titular->apellido_paterno }} {{ $asignacionIngles->titular->apellido_materno }}
+                                        @else
+                                            <span class="text-gray-400">Sin asignar</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                        @if($asignacionIngles?->auxiliar)
+                                            {{ $asignacionIngles->auxiliar->name }} {{ $asignacionIngles->auxiliar->apellido_paterno }} {{ $asignacionIngles->auxiliar->apellido_materno }}
+                                        @else
+                                            <span class="text-gray-400">Sin asignar</span>
+                                        @endif
+                                    </td>
+                                </tr>
+
+                                {{-- Estado vacío para REGULAR --}}
+                                @if(!$asignacionEspanol && !$asignacionIngles)
+                                    <tr>
+                                        <td colspan="3" class="px-6 py-12 text-center text-sm text-gray-500">
+                                            <p class="font-semibold">No se han asignado maestros a este grupo.</p>
+                                        </td>
+                                    </tr>
+                                @endif
+
+                            {{-- =================================== --}}
+                            {{--  CASO 2: GRUPO EXTRA (General)    --}}
+                            {{-- =================================== --}}
+                            @else
+
+                                @php
+                                    $asignacionGeneral = $asignaciones->get('GENERAL');
+                                @endphp
+
+                                {{-- Fila de MAESTRO PRINCIPAL --}}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        MAESTRO PRINCIPAL
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                        @if($asignacionGeneral?->titular)
+                                            {{ $asignacionGeneral->titular->name }} {{ $asignacionGeneral->titular->apellido_paterno }} {{ $asignacionGeneral->titular->apellido_materno }}
+                                        @else
+                                            <span class="text-gray-400">Sin asignar</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                        @if($asignacionGeneral?->auxiliar)
+                                            {{ $asignacionGeneral->auxiliar->name }} {{ $asignacionGeneral->auxiliar->apellido_paterno }} {{ $asignacionGeneral->auxiliar->apellido_materno }}
+                                        @else
+                                            <span class="text-gray-400">Sin asignar</span>
+                                        @endif
+                                    </td>
+                                </tr>
+
+                                {{-- Estado vacío para EXTRA --}}
+                                @if(!$asignacionGeneral)
+                                    <tr>
+                                        <td colspan="3" class="px-6 py-12 text-center text-sm text-gray-500">
+                                            <p class="font-semibold">No se han asignado maestros a este grupo.</p>
+                                        </td>
+                                    </tr>
+                                @endif
+
+                            @endif 
                             
                         </tbody>
                     </table>

@@ -14,16 +14,25 @@ class GrupoMaestroController extends Controller
     /**
      * Muestra la LISTA de maestros titulares y auxiliares YA ASIGNADOS.
      */
-    public function index(Grupo $grupo)
+   public function index(Grupo $grupo)
     {
-        // 1. Obtenemos las asignaciones (Español e Inglés)
-        // Usamos keyBy para acceder fácil en la vista: $asignaciones['ESPAÑOL']
-        $asignaciones = $grupo->asignacionesTitulares()
-            ->with('titular', 'auxiliar') // Carga los nombres
-            ->get()
-            ->keyBy('idioma');
+        // 1. Preparamos la consulta base
+        $query = $grupo->asignacionesTitulares()->with('titular', 'auxiliar');
 
-        // 2. Mandamos los datos a la vista de ÍNDICE
+        // 2. Filtramos según el tipo de grupo
+        if ($grupo->tipo_grupo == 'REGULAR') {
+            // Para REGULAR, solo buscamos ESPAÑOL e INGLES
+            $query->whereIn('idioma', ['ESPAÑOL', 'INGLES']);
+
+        } else {
+            // Para EXTRA, solo buscamos GENERAL
+            $query->where('idioma', 'GENERAL');
+        }
+
+        // 3. Obtenemos los resultados y los pasamos a la vista
+        $asignaciones = $query->get()->keyBy('idioma');
+
+        // 4. Mandamos los datos a la vista de ÍNDICE
         return view('grupos.maestros-index', compact('grupo', 'asignaciones'));
     }
 
@@ -32,80 +41,126 @@ class GrupoMaestroController extends Controller
      */
     public function create(Grupo $grupo)
     {
-        // 1. Obtenemos TODOS los maestros disponibles
-        $maestrosDisponibles = User::maestros()->orderBy('name')->get();
+       // 1. Obtenemos TODOS los maestros disponibles
+    $maestrosDisponibles = User::maestros()->orderBy('name')->get();
 
-        // 2. Obtenemos las asignaciones actuales (si existen)
-        $asignacionEspanol = GrupoTitular::where('grupo_id', $grupo->grupo_id)
-                                           ->where('idioma', 'ESPAÑOL')
-                                           ->first();
-        $asignacionIngles  = GrupoTitular::where('grupo_id', $grupo->grupo_id)
-                                           ->where('idioma', 'INGLES')
-                                           ->first();
+    // 2. Variables para las asignaciones
+    $asignacionEspanol = null;
+    $asignacionIngles = null;
+    $asignacionGeneral = null; // <-- Para 'EXTRA'
 
-        // 3. Mandamos los datos a la vista de FORMULARIO
-        return view('grupos.maestros', compact(
-            'grupo',
-            'maestrosDisponibles',
-            'asignacionEspanol', // Se manda el modelo completo (o null)
-            'asignacionIngles'   // Se manda el modelo completo (o null)
-        ));
+    // 3. Buscamos las asignaciones según el tipo de grupo
+    if ($grupo->tipo_grupo == 'REGULAR') {
+        
+        // Lógica actual para grupos bilingües
+        $asignaciones = $grupo->asignacionesTitulares()
+                            ->whereIn('idioma', ['ESPAÑOL', 'INGLES'])
+                            ->get()
+                            ->keyBy('idioma');
+        
+        $asignacionEspanol = $asignaciones->get('ESPAÑOL');
+        $asignacionIngles = $asignaciones->get('INGLES');
+
+    } else {
+        
+        // Lógica nueva para grupos 'EXTRA' (Yoga, etc.)
+        // Usaremos 'GENERAL' como clave de idioma
+        $asignacionGeneral = $grupo->asignacionesTitulares()
+                                ->where('idioma', 'GENERAL') // <-- Clave genérica
+                                ->first();
     }
 
+    // 4. Mandamos los datos a la vista
+    // La vista decidirá qué formulario mostrar
+    return view('grupos.maestros', compact(
+        'grupo',
+        'maestrosDisponibles',
+        'asignacionEspanol', // Será null si es 'EXTRA'
+        'asignacionIngles',  // Será null si es 'EXTRA'
+        'asignacionGeneral'  // Será null si es 'REGULAR'
+    ));
+}
     /**
      * Guarda la asignación del formulario (de los cuatro <select>).
      */
    public function store(Request $request, Grupo $grupo)
     {
         // 1. Validamos los 4 campos (esto está bien)
-        $request->validate([
-            'maestro_titular_espanol_id'   => 'nullable|exists:users,id',
-            'maestro_auxiliar_espanol_id'  => 'nullable|exists:users,id',
-            'maestro_titular_ingles_id'    => 'nullable|exists:users,id',
-            'maestro_auxiliar_ingles_id'   => 'nullable|exists:users,id',
-        ]);
+       DB::beginTransaction();
+    
+    try {
+        if ($grupo->tipo_grupo == 'REGULAR') {
+            
+            // --- Lógica para guardar GRUPO REGULAR (Bilingüe) ---
+            $request->validate([
+                'maestro_titular_espanol_id'  => 'nullable|exists:users,id',
+                'maestro_auxiliar_espanol_id' => 'nullable|exists:users,id',
+                'maestro_titular_ingles_id'   => 'nullable|exists:users,id',
+                'maestro_auxiliar_ingles_id'  => 'nullable|exists:users,id',
+            ]);
 
-        // =======================================================
-        // ===== INICIO DE LA SOLUCIÓN =====
-        //
-        // Usamos updateOrInsert (del Query Builder) que maneja llaves
-        // compuestas perfectamente.
-        // =======================================================
+            // Guardar ESPAÑOL
+            DB::table('grupo_titular')->updateOrInsert(
+                ['grupo_id' => $grupo->grupo_id, 'idioma' => 'ESPAÑOL'],
+                [
+                    'maestro_titular_id'  => $request->input('maestro_titular_espanol_id'),
+                    'maestro_auxiliar_id' => $request->input('maestro_auxiliar_espanol_id'),
+                    'created_at' => now(), 'updated_at' => now()
+                ]
+            );
 
-        // 2. Usamos updateOrInsert para ESPAÑOL
-        DB::table('grupo_titular')->updateOrInsert(
-            // Columnas para BUSCAR:
-            [
-                'grupo_id' => $grupo->grupo_id,
-                'idioma'   => 'ESPAÑOL'
-            ],
-            // Columnas para ACTUALIZAR o CREAR:
-            [
-                'maestro_titular_id'  => $request->input('maestro_titular_espanol_id'),
-                'maestro_auxiliar_id' => $request->input('maestro_auxiliar_espanol_id'),
-                'updated_at'          => now() // updateOrInsert no maneja timestamps
-            ]
-        );
+            // Guardar INGLÉS
+            DB::table('grupo_titular')->updateOrInsert(
+                ['grupo_id' => $grupo->grupo_id, 'idioma' => 'INGLES'],
+                [
+                    'maestro_titular_id'  => $request->input('maestro_titular_ingles_id'),
+                    'maestro_auxiliar_id' => $request->input('maestro_auxiliar_ingles_id'),
+                    'created_at' => now(), 'updated_at' => now()
+                ]
+            );
+            
+            // (Opcional) Limpiar registro 'GENERAL' si existiera
+            DB::table('grupo_titular')
+                ->where('grupo_id', $grupo->grupo_id)
+                ->where('idioma', 'GENERAL')
+                ->delete();
 
-        // 3. Usamos updateOrInsert para INGLÉS
-        DB::table('grupo_titular')->updateOrInsert(
-            // Columnas para BUSCAR:
-            [
-                'grupo_id' => $grupo->grupo_id,
-                'idioma'   => 'INGLES'
-            ],
-            // Columnas para ACTUALIZAR o CREAR:
-            [
-                'maestro_titular_id'  => $request->input('maestro_titular_ingles_id'),
-                'maestro_auxiliar_id' => $request->input('maestro_auxiliar_ingles_id'),
-                'updated_at'          => now()
-            ]
-        );
-        
-        // ===== FIN DE LA SOLUCIÓN =====
+        } else {
+            
+            // --- Lógica para guardar GRUPO EXTRA (Genérico) ---
+            $request->validate([
+                'maestro_titular_general_id'  => 'nullable|exists:users,id',
+                'maestro_auxiliar_general_id' => 'nullable|exists:users,id',
+            ]);
 
-        // 4. Redirigimos de vuelta a la LISTA
-        return redirect()->route('admin.grupos.maestros.index', $grupo)
-                         ->with('success', 'Maestros titulares y auxiliares actualizados.');
+            // Guardar GENERAL
+            DB::table('grupo_titular')->updateOrInsert(
+                ['grupo_id' => $grupo->grupo_id, 'idioma' => 'GENERAL'], // <-- Clave genérica
+                [
+                    'maestro_titular_id'  => $request->input('maestro_titular_general_id'),
+                    'maestro_auxiliar_id' => $request->input('maestro_auxiliar_general_id'),
+                    'created_at' => now(), 'updated_at' => now()
+                ]
+            );
+
+            // (Opcional) Limpiar registros 'ESPAÑOL' e 'INGLES' si existieran
+            DB::table('grupo_titular')
+                ->where('grupo_id', $grupo->grupo_id)
+                ->whereIn('idioma', ['ESPAÑOL', 'INGLES'])
+                ->delete();
+        }
+
+        DB::commit(); // Todo salió bien, guardar cambios
+
+    } catch (\Exception $e) {
+        DB::rollBack(); // Algo salió mal, deshacer cambios
+        // Opcional: Registrar el error
+        // \Log::error("Error guardando maestros: " . $e->getMessage());
+        return redirect()->back()->with('error', 'Ocurrió un error al guardar los maestros.');
     }
+
+    // 4. Redirigimos de vuelta a la LISTA
+    return redirect()->route('admin.grupos.maestros.index', $grupo)
+                     ->with('success', 'Maestros titulares y auxiliares actualizados.');
+}
 }

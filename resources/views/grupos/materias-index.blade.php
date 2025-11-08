@@ -39,13 +39,13 @@
 
                 {{-- Botón 1: Para agregar/quitar materias --}}
                 <a href="{{ route('admin.grupos.materias.create', $grupo) }}" 
-                   class="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition">
-                   Editar Materias del Grupo
+                   class="px-5 py-2 bg-princeton text-white font-semibold rounded-lg shadow-md hover:bg-slate-600 transition">
+                   Agregar Materias al Grupo
                 </a>
                 
                 {{-- Botón 2: Para asignar maestros a esas materias --}}
                 <a href="{{ route('admin.grupos.materias-maestros.create', $grupo) }}"
-                   class="px-5 py-2 bg-orange-500 text-white font-semibold rounded-lg shadow-md hover:bg-orange-600 transition">
+                   class="px-5 py-2 bg-yellow-600 text-white font-semibold rounded-lg shadow-md hover:bg-orange-600 transition">
                    Asignar Maestros a Materias
                 </a>
             @endif

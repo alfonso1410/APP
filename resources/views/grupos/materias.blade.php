@@ -43,8 +43,8 @@
                     @endif
 
                     <div class="mt-8 flex justify-end gap-4">
-                        <a href="{{ route('admin.grados.index') }}" class="px-4 py-2 bg-gray-200 text-sm font-semibold rounded-md hover:bg-gray-300">Cancelar</a>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700"
+                        <a href="{{ route('admin.grupos.materias.index', $grupo) }}" class="px-4 py-2 bg-gray-200 text-sm font-semibold rounded-md hover:bg-gray-300">Cancelar</a>
+                        <button type="submit" class="px-4 py-2 bg-princeton text-white text-sm font-semibold rounded-md hover:bg-slate-600"
                             @if($grupo->tipo_grupo === 'REGULAR') disabled @endif
                         >
                             Guardar Materias
