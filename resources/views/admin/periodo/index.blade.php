@@ -20,11 +20,10 @@
             <x-flash-messages />
 
             {{-- 1. Botón Flotante para Crear --}}
-            {{-- Solo se muestra si hay un ciclo activo --}}
             @if($cicloActivo)
                 <div class="fixed bottom-8 right-8 z-50">
                     <button
-                        x-data=""
+                        x-data
                         @click.prevent="$dispatch('open-modal', 'agregar-periodo')"
                         class="bg-princeton hover:bg-blue-700 text-white font-bold p-4 rounded-full shadow-lg transition-transform hover:scale-105"
                         title="Agregar Periodo al Ciclo Activo ({{ $cicloActivo->nombre }})"
@@ -33,9 +32,9 @@
                     </button>
                 </div>
             @else
-                 <div class="mb-4 p-4 bg-yellow-100 text-yellow-800 rounded-md border border-yellow-300">
-                    No hay un Ciclo Escolar ACTIVO. Debes activar uno para poder crear nuevos periodos.
-                 </div>
+                    <div class="mb-4 p-4 bg-yellow-100 text-yellow-800 rounded-md border border-yellow-300">
+                        No hay un Ciclo Escolar ACTIVO. Debes activar uno para poder crear nuevos periodos.
+                    </div>
             @endif
 
             {{-- 2. Tabla de Periodos --}}
@@ -60,20 +59,30 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ \Carbon\Carbon::parse($periodo->fecha_inicio)->format('d/m/Y') }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ \Carbon\Carbon::parse($periodo->fecha_fin)->format('d/m/Y') }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                                              :class="{
-                                                'bg-green-100 text-green-800': '{{ $periodo->estado }}' === 'ABIERTO',
-                                                'bg-red-100 text-red-800': '{{ $periodo->estado }}' !== 'ABIERTO'
-                                              }">
-                                            {{ $periodo->estado }}
-                                        </span>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                                 :class="{
+                                                    'bg-green-100 text-green-800': '{{ $periodo->estado }}' === 'ABIERTO',
+                                                    'bg-red-100 text-red-800': '{{ $periodo->estado }}' !== 'ABIERTO'
+                                                }">
+                                                {{ $periodo->estado }}
+                                            </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                      <div class="flex items-center justify-center gap-x-2">
+                                        <div class="flex items-center justify-center gap-x-2">
                                             {{-- Botón Editar (abre modal) --}}
                                             <button
-                                                x-data=""
-                                                x-on:click.prevent="$dispatch('open-modal', 'editar-periodo-{{ $periodo->periodo_id }}')"
+                                                x-data
+                                                {{-- 🚨 LÓGICA DE APERTURA Y LIMPIEZA DE ESTADO --}}
+                                                x-on:click.prevent="
+                                                    // Si hay errores de validación, forzamos la limpieza del old() data al hacer clic en otro registro
+                                                    @if ($errors->any())
+                                                        window.location.replace(window.location.pathname + window.location.search);
+                                                    @endif
+                                                    
+                                                    // Abrir el modal y establecer el hash de la URL
+                                                    $dispatch('open-modal', 'editar-periodo-{{ $periodo->periodo_id }}');
+                                                    window.location.hash = 'editar-periodo-{{ $periodo->periodo_id }}';
+                                                "
                                                 class="text-indigo-600 hover:text-indigo-900 mx-1 p-1 rounded-full hover:bg-indigo-100"
                                                 title="Editar Periodo"
                                             >
@@ -112,7 +121,18 @@
     @foreach ($periodos as $periodo)
         <x-modal
             :name="'editar-periodo-' . $periodo->periodo_id"
+            
+            {{-- Lógica base: Si hay error Y el ID coincide, reabrir --}}
             :show="$errors->any() && old('periodo_id') == $periodo->periodo_id"
+            
+            x-init="
+                // Abrir el modal si el hash de la URL coincide
+                if (window.location.hash === '#editar-periodo-{{ $periodo->periodo_id }}') {
+                    $dispatch('open-modal', 'editar-periodo-{{ $periodo->periodo_id }}');
+                }
+            "
+            {{-- 🚨 Limpiar el hash de la URL al cerrar el modal --}}
+            x-on:close="$event.detail.modal === 'editar-periodo-{{ $periodo->periodo_id }}' ? window.location.hash = '' : null"
             focusable
         >
             <div class="p-6">
@@ -124,7 +144,9 @@
                 <x-periodo.edit-form :periodo="$periodo" :isFiltered="$cicloFiltradoId" />
             </div>
         </x-modal>
-        @endforeach
+    @endforeach
+    {{-- FIN MODALES EDITAR --}}
+    
     {{-- 3. Modal para Crear Periodo (solo si hay ciclo activo) --}}
     @if($cicloActivo)
         <x-modal name="agregar-periodo" :show="$errors->hasAny() && old('form_type') === 'periodo'" focusable>

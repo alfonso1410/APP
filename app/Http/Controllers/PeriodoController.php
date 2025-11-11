@@ -8,14 +8,16 @@ use App\Models\CicloEscolar;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Validation\Rule; // Importar Rule
+// Importamos nuestros FormRequests para centralizar la validación
+use App\Http\Requests\StorePeriodoRequest;
+use App\Http\Requests\UpdatePeriodoRequest; 
 
 class PeriodoController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-   public function index(Request $request): View
+    public function index(Request $request): View
     {
         $query = Periodo::with('cicloEscolar') // Cargar la relación
                         ->orderBy('ciclo_escolar_id', 'desc') // Agrupar visualmente por ciclo
@@ -43,40 +45,33 @@ class PeriodoController extends Controller
      */
     public function create()
     {
-        //
+        // Generalmente redirige a un formulario. No necesita cambios.
     }
 
     /**
      * Store a newly created resource in storage.
+     * **CRÍTICO: Inyectamos StorePeriodoRequest**
      */
-   public function store(Request $request): RedirectResponse
+    public function store(StorePeriodoRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'ciclo_escolar_id' => 'required|integer|exists:ciclo_escolars,ciclo_escolar_id', // o ciclo_escolars
-            // Validar que el nombre sea único DENTRO de ese ciclo escolar
-            'nombre' => ['required','string','max:50', Rule::unique('periodos','nombre')->where('ciclo_escolar_id', $request->ciclo_escolar_id)],
-            'fecha_inicio' => 'required|date',
-            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
-            // 'estado' => ['required', Rule::in(['ABIERTO', 'CERRADO'])], // Si incluyes el select de estado
-        ]);
-
-        // Validar que las fechas del periodo estén dentro del ciclo escolar
-        $ciclo = CicloEscolar::find($validated['ciclo_escolar_id']);
-        if (!$ciclo || $validated['fecha_inicio'] < $ciclo->fecha_inicio || $validated['fecha_fin'] > $ciclo->fecha_fin) {
-             return back()->withErrors(['fecha_inicio' => 'Las fechas del periodo deben estar dentro del rango del ciclo escolar.'])->withInput();
-        }
+        // Si llegamos aquí, la validación (incluyendo unicidad, rango del ciclo y NO solapamiento) ha pasado.
+        $validated = $request->validated();
+        
+        // El estado se obtiene del request si se envía, o asumimos 'ABIERTO' si no se incluyó.
+        $estado = $validated['estado'] ?? 'ABIERTO'; 
 
         Periodo::create([
             'ciclo_escolar_id' => $validated['ciclo_escolar_id'],
             'nombre' => $validated['nombre'],
             'fecha_inicio' => $validated['fecha_inicio'],
             'fecha_fin' => $validated['fecha_fin'],
-            'estado' => 'ABIERTO', // Default o $validated['estado'] si usas el select
+            'estado' => $estado, 
         ]);
 
         return redirect()->route('admin.periodos.index')
                          ->with('success', 'Periodo creado exitosamente.');
     }
+    
     /**
      * Display the specified resource.
      */
@@ -95,27 +90,15 @@ class PeriodoController extends Controller
 
     /**
      * Update the specified resource in storage.
+     * **CRÍTICO: Inyectamos UpdatePeriodoRequest**
      */
-  public function update(Request $request, Periodo $periodo): RedirectResponse
+    public function update(UpdatePeriodoRequest $request, Periodo $periodo): RedirectResponse
     {
-        $validated = $request->validate([
-            // Validar unique ignorando el periodo actual DENTRO del mismo ciclo
-            'nombre' => ['required','string','max:50', Rule::unique('periodos','nombre')
-                            ->where('ciclo_escolar_id', $periodo->ciclo_escolar_id) // Solo dentro del mismo ciclo
-                            ->ignore($periodo->periodo_id, 'periodo_id')],
-            'fecha_inicio' => 'required|date',
-            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
-            'estado' => ['required', Rule::in(['ABIERTO', 'CERRADO'])],
-            // 'periodo_id' => 'required|integer', // Necesario si usas old() para reabrir modal
-        ]);
-
-        // Validar que las fechas del periodo estén dentro del ciclo escolar asociado
-        // No permitimos cambiar el ciclo_escolar_id al editar
-        $ciclo = $periodo->cicloEscolar; // Carga la relación
-        if (!$ciclo || $validated['fecha_inicio'] < $ciclo->fecha_inicio || $validated['fecha_fin'] > $ciclo->fecha_fin) {
-             return back()->withErrors(['fecha_inicio' => 'Las fechas del periodo deben estar dentro del rango del ciclo escolar.'])->withInput();
-        }
-
+        // Si llegamos a esta línea, la validación (solapamiento, rango, unicidad) ha pasado.
+        $validated = $request->validated();
+        
+        // **NOTA:** Eliminamos la validación manual de rango, ya que la regla la maneja.
+        
         $periodo->update($validated);
 
         // Redirigir de vuelta a la lista (posiblemente filtrada si venía de ahí)
@@ -124,19 +107,18 @@ class PeriodoController extends Controller
             : route('admin.periodos.index');
 
         return redirect($redirectRoute)
-                         ->with('success', 'Periodo actualizado exitosamente.');
+                      ->with('success', 'Periodo actualizado exitosamente.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-   public function destroy(Periodo $periodo): RedirectResponse
+    public function destroy(Periodo $periodo): RedirectResponse
     {
-        // 1. Verificar dependencias (Añade más relaciones si es necesario)
-        //    Asumimos que Periodo tiene relaciones 'calificaciones()' y 'asistencias()'
+        // 1. Verificar dependencias
         if ($periodo->calificaciones()->exists() || $periodo->asistencias()->exists()) {
             // Si tiene dependencias, NO eliminar. Redirigir con error.
-            return redirect()->back() // O a ->route('admin.periodos.index')
+            return redirect()->back()
                              ->with('error', 'No se puede eliminar el periodo "'.$periodo->nombre.'" porque tiene calificaciones o asistencias asociadas.');
         } else {
             // Si NO tiene dependencias, se puede eliminar.

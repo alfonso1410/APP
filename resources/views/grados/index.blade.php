@@ -98,12 +98,16 @@
                 {{-- Usamos un div con flex para alinear y espaciar los botones --}}
                 <div class="flex items-center justify-center gap-x-4">
                     @if($grado->tipo_grado === 'REGULAR')
-                                                    <a href="{{ route('admin.grados.estructura', $grado) }}" class="inline-flex items-center p-2 bg-teal-100 text-teal-800 rounded-full font-semibold text-xs hover:bg-teal-200" title="Asignar Materias al Grado">
-                                                       <svg class="size-4 ">
-            <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-add"></use>
-        </svg>
-                                                    </a>
-                                                @endif
+                        {{-- 🚨 MODIFICACIÓN: Texto dinámico del botón con el nombre del grado --}}
+                        <a href="{{ route('admin.grados.estructura', $grado) }}" 
+                        class="inline-flex items-center px-4 py-2 bg-teal-500 text-white rounded-md font-semibold text-xs uppercase tracking-widest hover:bg-teal-600 transition" 
+                        title="Asignar Materias a {{ $grado->nombre }}">
+                            <svg class="size-4 mr-1">
+                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-add"></use>
+                            </svg>
+                            Materias para {{ $grado->nombre }}
+                        </a>
+                    @endif
 
                     @if($grado->tipo_grado === 'EXTRA')
                                                     <a href="{{ route('admin.grados.mapeo', $grado) }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
