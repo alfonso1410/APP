@@ -64,7 +64,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     */
     Route::middleware(['role:DIRECTOR,COORDINADOR'])->prefix('admin')->name('admin.')->group(function () {
 
+
         Route::get('/dashboard', [DashboardController::class, 'adminDashboard'])->name('dashboard');
+        Route::get('/perfil', [ProfileController::class, 'edit'])->name('perfil');
 
         // Usuarios
         Route::resource('users', UserController::class);
