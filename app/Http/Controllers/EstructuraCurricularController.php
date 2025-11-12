@@ -124,7 +124,7 @@ class EstructuraCurricularController extends Controller
         }
         // --- FIN DE NUEVA VALIDACIÓN ---
 
-        
+
         // 7. Preparamos los datos para el método sync().
         $materiasSyncData = [];
         foreach ($datosAProcesar as $materiaId => $campoId) {
@@ -137,7 +137,14 @@ class EstructuraCurricularController extends Controller
             ];
             // --- FIN DE CORRECCIÓN ---
         }
-        
+                // Validar que todas las materias seleccionadas tengan un campo formativo
+foreach ($materiasSyncData as $materiaId => $data) {
+    if (empty($data['campo_id'])) {
+        return redirect()->back()
+            ->withErrors(['materias' => 'Debes seleccionar un campo formativo para cada materia marcada.'])
+            ->withInput();
+    }
+}
         // 8. Sincronizamos la relación.
         // El modelo Grado ya fue actualizado a 'withPivot('campo_id', 'ponderacion_materia')'
         $grado->materias()->sync($materiasSyncData);

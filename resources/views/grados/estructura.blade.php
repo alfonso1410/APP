@@ -10,6 +10,11 @@
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             
             <x-flash-messages />
+    @if ($errors->has('materias'))
+    <div class="p-4 mt-4 text-sm text-red-800 rounded-lg bg-red-100 border border-red-300" role="alert">
+        <span class="font-medium">⚠️ Error:</span> {{ $errors->first('materias') }}
+    </div>
+@endif
 
     {{-- 🚨 ADVERTENCIA SI NO HAY MATERIAS DISPONIBLES EN EL CATÁLOGO --}}
     @if ($materiasDisponibles->isEmpty())
