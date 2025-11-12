@@ -239,13 +239,12 @@
             <td class="titulo-centro">
                 <div class="principal">"FORMACIÓN INTEGRAL PARA EL DESARROLLO DE LÍDERES"</div>
                 <div class="subtitulo">SISTEMA BILINGÜE PRIMARIA CLAVE: 28PPR0307Y</div>
-                <div class="concentrado">CONCENTRADO DE CALIFICACIONES</div>
+                <div class="concentrado">CONCENTRADO DE CALIFICACIONES  {{ $periodo->cicloEscolar->nombre ?? '2024-2025' }}</div>
             </td>
             <td class="logo-derecha" style="text-align: right; width: 60px; vertical-align: bottom;">
                 @if(file_exists(public_path('Assets/logo-azul.png')))
                 <img src="{{ public_path('Assets/logo-azul.png') }}" alt="Logo Azul" style="width: 60px;">
                 @endif
-                <div style="font-weight: bold; font-size: 9px; margin-bottom: 2px;">{{ $periodo->cicloEscolar->nombre ?? '2024-2025' }}</div>
             </td>
         </tr>
     </table>
