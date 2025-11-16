@@ -61,7 +61,7 @@
                                             </button>
                                             
                                             {{-- INICIO: Botón Ver Periodos --}}
-        <a href="{{ route('admin.periodos.index', ['ciclo_escolar_id' => $ciclo->ciclo_escolar_id]) }}"
+        <a href="{{ route('admin.ciclo-escolar.periodos.index', ['ciclo_escolar' => $ciclo->ciclo_escolar_id]) }}"
            class="text-green-600 hover:text-green-900 mx-1 p-1 rounded-full hover:bg-green-100"
            title="Ver Periodos de este Ciclo">
             <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

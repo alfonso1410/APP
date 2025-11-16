@@ -16,27 +16,28 @@ class PeriodoController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * 🛑 Se espera el parámetro de la ruta anidada: {ciclo_escolar}
      */
-    public function index(Request $request): View
+    public function index(Request $request, $ciclo_escolar): View // 🛑 CORRECCIÓN: Inyectamos el ID del Ciclo Escolar
     {
-        $query = Periodo::with('cicloEscolar') // Cargar la relación
-                        ->orderBy('ciclo_escolar_id', 'desc') // Agrupar visualmente por ciclo
-                        ->orderBy('fecha_inicio', 'asc'); // Ordenar dentro del ciclo
+        $cicloEscolarId = $ciclo_escolar;
 
-        // Filtrar si se pasa un ciclo_escolar_id en la URL
-        if ($request->has('ciclo_escolar_id')) {
-            $query->where('ciclo_escolar_id', $request->ciclo_escolar_id);
-        }
+        $query = Periodo::with('cicloEscolar')
+                         ->where('ciclo_escolar_id', $cicloEscolarId) // 🛑 FILTRAMOS por el ID de la ruta
+                         ->orderBy('fecha_inicio', 'asc'); 
 
         $periodos = $query->get();
 
         // Obtener SOLO el ciclo activo para pasarlo al formulario de creación
         $cicloActivo = CicloEscolar::where('estado', 'ACTIVO')->first();
 
+        // El ID del ciclo que estamos viendo
+        $cicloFiltradoId = $cicloEscolarId; 
+
         return view('admin.periodo.index', [
             'periodos' => $periodos,
-            'cicloActivo' => $cicloActivo, // Para el modal de creación
-            'cicloFiltradoId' => $request->ciclo_escolar_id // Para saber si estamos filtrando
+            'cicloActivo' => $cicloActivo, 
+            'cicloFiltradoId' => $cicloFiltradoId 
         ]);
     }
 
@@ -45,21 +46,21 @@ class PeriodoController extends Controller
      */
     public function create()
     {
-        // Generalmente redirige a un formulario. No necesita cambios.
+        // No se usa en tu configuración actual con modal
     }
 
     /**
      * Store a newly created resource in storage.
-     * **CRÍTICO: Inyectamos StorePeriodoRequest**
+     * 🛑 Se espera el parámetro de la ruta anidada: {ciclo_escolar}
      */
-    public function store(StorePeriodoRequest $request): RedirectResponse
+    public function store(StorePeriodoRequest $request, $ciclo_escolar): RedirectResponse // 🛑 CORRECCIÓN: Inyectamos el ID
     {
         // Si llegamos aquí, la validación (incluyendo unicidad, rango del ciclo y NO solapamiento) ha pasado.
         $validated = $request->validated();
         
-        // El estado se obtiene del request si se envía, o asumimos 'ABIERTO' si no se incluyó.
         $estado = $validated['estado'] ?? 'ABIERTO'; 
 
+        // NOTA: El campo ciclo_escolar_id viene en el $validated del FormRequest
         Periodo::create([
             'ciclo_escolar_id' => $validated['ciclo_escolar_id'],
             'nombre' => $validated['nombre'],
@@ -68,7 +69,8 @@ class PeriodoController extends Controller
             'estado' => $estado, 
         ]);
 
-        return redirect()->route('admin.periodos.index')
+        // 🛑 CORRECCIÓN: Redireccionamos a la nueva ruta anidada, pasando el ID del ciclo escolar.
+        return redirect()->route('admin.ciclo-escolar.periodos.index', ['ciclo_escolar' => $ciclo_escolar])
                          ->with('success', 'Periodo creado exitosamente.');
     }
     
@@ -90,30 +92,27 @@ class PeriodoController extends Controller
 
     /**
      * Update the specified resource in storage.
-     * **CRÍTICO: Inyectamos UpdatePeriodoRequest**
+     * 🛑 Se espera el parámetro de la ruta anidada: {ciclo_escolar}
+     * NOTA: Laravel inyectará el Periodo automáticamente.
      */
-    public function update(UpdatePeriodoRequest $request, Periodo $periodo): RedirectResponse
+    public function update(UpdatePeriodoRequest $request, $ciclo_escolar, Periodo $periodo): RedirectResponse // 🛑 CORRECCIÓN: Inyectamos el ID
     {
         // Si llegamos a esta línea, la validación (solapamiento, rango, unicidad) ha pasado.
         $validated = $request->validated();
         
-        // **NOTA:** Eliminamos la validación manual de rango, ya que la regla la maneja.
-        
         $periodo->update($validated);
 
-        // Redirigir de vuelta a la lista (posiblemente filtrada si venía de ahí)
-        $redirectRoute = $request->input('redirect_back_filter')
-            ? route('admin.periodos.index', ['ciclo_escolar_id' => $periodo->ciclo_escolar_id])
-            : route('admin.periodos.index');
+        // 🛑 CORRECCIÓN: Redirigimos a la nueva ruta anidada.
+        $redirectRoute = route('admin.ciclo-escolar.periodos.index', ['ciclo_escolar' => $ciclo_escolar]);
 
-        return redirect($redirectRoute)
-                      ->with('success', 'Periodo actualizado exitosamente.');
+        return redirect($redirectRoute)->with('success', 'Periodo actualizado exitosamente.');
     }
 
     /**
      * Remove the specified resource from storage.
+     * 🛑 Se espera el parámetro de la ruta anidada: {ciclo_escolar}
      */
-    public function destroy(Periodo $periodo): RedirectResponse
+    public function destroy($ciclo_escolar, Periodo $periodo): RedirectResponse // 🛑 CORRECCIÓN: Inyectamos el ID
     {
         // 1. Verificar dependencias
         if ($periodo->calificaciones()->exists() || $periodo->asistencias()->exists()) {
@@ -123,7 +122,8 @@ class PeriodoController extends Controller
         } else {
             // Si NO tiene dependencias, se puede eliminar.
             $periodo->delete();
-            return redirect()->route('admin.periodos.index')
+            // 🛑 CORRECCIÓN: Redirigimos a la nueva ruta anidada.
+            return redirect()->route('admin.ciclo-escolar.periodos.index', ['ciclo_escolar' => $ciclo_escolar])
                              ->with('success', 'Periodo eliminado permanentemente.');
         }
     }

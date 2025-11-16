@@ -90,7 +90,9 @@
                                             </button>
 
                                             {{-- Botón Eliminar (usa formulario con confirmación) --}}
-                                            <form action="{{ route('admin.periodos.destroy', $periodo) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar el periodo \'{{ $periodo->nombre }}\'? Esta acción no se puede deshacer y fallará si tiene datos asociados.')">
+                                            <form action="{{ route('admin.ciclo-escolar.periodos.destroy', ['ciclo_escolar' => $cicloFiltradoId, 'periodo' => $periodo->periodo_id]) }}"
+                                            method="POST"
+                                            onsubmit="return confirm('¿Estás seguro de eliminar el periodo \'{{ $periodo->nombre }}\'? Esta acción no se puede deshacer y fallará si tiene datos asociados.')">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit"

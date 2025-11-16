@@ -25,19 +25,20 @@ class StorePeriodoRequest extends FormRequest
     {
         // Parámetros necesarios para la regla de solapamiento y rango:
         $cicloEscolarId = $this->input('ciclo_escolar_id');
-        $fechaInicio = $this->input('fecha_inicio');
+        // 🛑 CAMBIO CRÍTICO: Obtenemos el valor de la fecha de inicio como string
+        $fechaInicioInput = $this->input('fecha_inicio'); 
 
         return [
             'ciclo_escolar_id' => [
                 'required',
                 'integer',
-                // **CORRECCIÓN:** Usamos la tabla 'ciclo_escolars' y clave 'ciclo_escolar_id'
+                // Usamos la tabla 'ciclo_escolars' y clave 'ciclo_escolar_id'
                 'exists:ciclo_escolars,ciclo_escolar_id' 
             ],
-            'nombre' => [ // **CORRECCIÓN:** Usamos 'nombre' para coincidir con tu fillable
+            'nombre' => [
                 'required',
                 'string',
-                'max:100', // Mantenemos 100 del original (tu modelo decía 50)
+                'max:100', 
                 // El nombre debe ser único DENTRO de su ciclo escolar
                 Rule::unique('periodos','nombre')->where(function ($query) use ($cicloEscolarId) {
                     return $query->where('ciclo_escolar_id', $cicloEscolarId);
@@ -46,14 +47,15 @@ class StorePeriodoRequest extends FormRequest
             'fecha_inicio' => [
                 'required',
                 'date',
-                'before:fecha_fin',
+                // La regla 'before' evita que pasemos fechas inválidas a Carbon en la regla personalizada
+                'before:fecha_fin', 
             ],
             'fecha_fin' => [
                 'required',
                 'date',
                 'after:fecha_inicio',
-                // Aplicamos la regla para NO solapamiento y contención en el ciclo.
-                new NoSobreponerFechasPeriodoRule($cicloEscolarId, $fechaInicio)
+                // 🛑 APLICACIÓN DE LA REGLA: Usamos $fechaInicioInput (el string)
+                new NoSobreponerFechasPeriodoRule($cicloEscolarId, $fechaInicioInput)
             ],
             'estado' => ['required', Rule::in(['ABIERTO', 'CERRADO'])],
         ];
@@ -62,7 +64,6 @@ class StorePeriodoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            // **CORRECCIÓN:** Mensaje adaptado al campo 'nombre'
             'nombre.unique' => 'Ya existe un periodo con este nombre en el ciclo escolar seleccionado.', 
             'fecha_inicio.before'   => 'La fecha de inicio debe ser anterior a la fecha de fin.',
             'fecha_fin.after'       => 'La fecha de fin debe ser posterior a la fecha de inicio.',

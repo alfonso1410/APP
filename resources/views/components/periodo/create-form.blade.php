@@ -1,7 +1,7 @@
 {{-- resources/views/components/periodo/create-form.blade.php --}}
 @props(['cicloActivo'])
 
-<form method="POST" action="{{ route('admin.periodos.store') }}">
+<form method="POST" action="{{ route('admin.ciclo-escolar.periodos.store', $cicloActivo->ciclo_escolar_id) }}">
     @csrf
 
     {{-- Campo oculto para identificar el formulario --}}
@@ -33,14 +33,14 @@
     </div>
 
     {{-- Estado (Generalmente 'ABIERTO' por defecto al crear) --}}
-    {{-- <div class="mt-4">
-        <x-input-label for="estado_periodo" value="Estado Inicial" />
-        <select id="estado_periodo" name="estado" class="border-gray-300 rounded-md shadow-sm block mt-1 w-full" required>
-            <option value="ABIERTO" @selected(old('estado', 'ABIERTO') == 'ABIERTO')>ABIERTO</option>
-            <option value="CERRADO" @selected(old('estado') == 'CERRADO')>CERRADO</option>
-        </select>
-        <x-input-error :messages="$errors->get('estado')" class="mt-2" />
-    </div> --}}
+<div class="mt-4">
+    <x-input-label for="estado_periodo" value="Estado Inicial" />
+    <select id="estado_periodo" name="estado" class="border-gray-300 rounded-md shadow-sm block mt-1 w-full" required>
+        <option value="ABIERTO" @selected(old('estado', 'ABIERTO') == 'ABIERTO')>ABIERTO</option>
+        <option value="CERRADO" @selected(old('estado') == 'CERRADO')>CERRADO</option>
+    </select>
+    <x-input-error :messages="$errors->get('estado')" class="mt-2" />
+</div>
 
 
     {{-- Botones de Acción --}}

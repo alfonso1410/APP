@@ -1,7 +1,7 @@
 {{-- resources/views/components/periodo/edit-form.blade.php --}}
 @props(['periodo', 'isFiltered' => false])
 
-<form method="POST" action="{{ route('admin.periodos.update', $periodo) }}">
+<form method="POST" action="{{ route('admin.ciclo-escolar.periodos.update', ['ciclo_escolar' => $periodo->ciclo_escolar_id, 'periodo' => $periodo]) }}">
     @csrf
     @method('PUT')
 

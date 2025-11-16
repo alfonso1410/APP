@@ -117,7 +117,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Administración Escolar (Ciclos y Periodos)
         Route::resource('ciclo-escolar', CicloEscolarController::class);
-        Route::resource('periodos', PeriodoController::class);
+        
+        // 🛑 CAMBIO CLAVE: ANIDACIÓN DE PERIODOS BAJO CICLO-ESCOLAR
+        Route::resource('ciclo-escolar.periodos', PeriodoController::class)->except(['show', 'edit']); // La ruta nombrada ahora es admin.ciclo-escolar.periodos.*
 
         Route::get('/ponderaciones', [PonderacionController::class, 'index'])
              ->name('ponderaciones.index');
@@ -129,7 +131,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/boletas', [BoletaController::class, 'index'])->name('boletas.index');
         
         // 2. Ruta que genera el PDF de la boleta final
-        // (Se movió aquí desde el grupo 'compartido')
         Route::get('/reportes/boleta-alumno/{grupo}/{alumno}', [BoletaController::class, 'generarBoletaAlumno'])
             ->name('reportes.boleta.alumno');
 
@@ -147,9 +148,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     | vistas/datos diferentes según el rol.
     */
     Route::middleware(['role:DIRECTOR,COORDINADOR,MAESTRO'])
-         ->prefix('admin') // Mantenemos el prefijo /admin/ para que las URLs de Alpine no se rompan
-         ->name('admin.')  // Mantenemos el nombre 'admin.' por la misma razón
-         ->group(function () {
+          ->prefix('admin') // Mantenemos el prefijo /admin/ para que las URLs de Alpine no se rompan
+          ->name('admin.')  // Mantenemos el nombre 'admin.' por la misma razón
+          ->group(function () {
     
         // ==========================================================
         // == INICIO: RUTAS DE CALIFICACIONES (COMPARTIDAS)        ==
@@ -166,7 +167,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/json/grados-extracurriculares', [CalificacionJsonController::class, 'getGradosExtracurriculares'])->name('json.grados.extra');
     
         // ==========================================================
-        // == FIN: RUTAS DE CALIFICACIONES                         ==
+        // == FIN: RUTAS DE CALIFICACIONES                       ==
         // ==========================================================
         Route::get('/reportes/concentrado-periodo/{grupo}/{periodo}/{materia}', [ReporteController::class, 'generarConcentradoPeriodo'])
             ->name('reportes.concentrado.periodo');

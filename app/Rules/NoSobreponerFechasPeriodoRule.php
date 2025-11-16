@@ -10,62 +10,69 @@ use Illuminate\Support\Carbon;
 class NoSobreponerFechasPeriodoRule implements InvokableRule
 {
     protected $cicloEscolarId;
-    protected $fechaInicio;
+    protected $fechaInicioInput; // Almacena el string de la fecha de inicio
     protected $ignoreId;
 
     /**
      * @param int $cicloEscolarId El ID del ciclo escolar al que pertenece el periodo.
-     * @param string $fechaInicioInput La fecha de inicio del periodo que se está validando.
+     * @param string $fechaInicioInput La fecha de inicio del periodo que se está validando (como string).
      * @param int|null $ignoreId El ID del periodo actual (para edición).
      */
     public function __construct($cicloEscolarId, $fechaInicioInput, $ignoreId = null)
     {
         $this->cicloEscolarId = $cicloEscolarId;
-        // Parsear inmediatamente para trabajar con objetos Carbon
-        $this->fechaInicio = Carbon::parse($fechaInicioInput); 
+        $this->fechaInicioInput = $fechaInicioInput; 
         $this->ignoreId = $ignoreId;
     }
 
     /**
+     * Lógica principal de la validación.
+     *
      * @param string $attribute (Será 'fecha_fin')
      * @param mixed $value (El valor de fecha_fin)
      */
     public function __invoke($attribute, $value, $fail)
     {
+        // 🛑 CORRECCIÓN DE SEGURIDAD: Prevenir fallo si la fecha de inicio es null/vacía (aunque 'required' debe atraparlo)
+        if (empty($this->fechaInicioInput)) {
+            return; 
+        }
+        
+        // 1. Parseo de fechas (Aquí ya son strings válidos gracias a las reglas 'date' y 'before' previas)
+        $fechaInicio = Carbon::parse($this->fechaInicioInput);
         $fechaFin = Carbon::parse($value);
 
-        // --- 1. VALIDACIÓN CONTRA EL CICLO ESCOLAR PADRE (Contención) ---
+        // --- 2. VALIDACIÓN CONTRA EL CICLO ESCOLAR PADRE (Contención) ---
         
-        // Asumiendo que CicloEscolar usa 'id' como primary key, o que CicloEscolar::find() funciona con 'ciclo_escolar_id'.
-        // Si tu modelo CicloEscolar también usa primaryKey = 'ciclo_escolar_id', debes usar:
-        // $cicloEscolar = CicloEscolar::where('ciclo_escolar_id', $this->cicloEscolarId)->first();
-        // **Usaremos find() asumiendo que el ID pasado es la clave correcta para find.**
-        $cicloEscolar = CicloEscolar::find($this->cicloEscolarId);
+        // 🛑 MEJORA: Usamos where() en lugar de find() para asegurar la búsqueda por la clave personalizada 'ciclo_escolar_id'
+        $cicloEscolar = CicloEscolar::where('ciclo_escolar_id', $this->cicloEscolarId)->first();
 
         if (!$cicloEscolar) {
-            return $fail('El ciclo escolar especificado no existe.');
+            return $fail('El ciclo escolar especificado no existe o no se pudo encontrar.');
         }
 
         $cicloInicio = Carbon::parse($cicloEscolar->fecha_inicio);
         $cicloFin = Carbon::parse($cicloEscolar->fecha_fin);
 
-        // Verificar si el periodo está completamente contenido dentro del ciclo escolar.
-        if ($this->fechaInicio->lt($cicloInicio) || $fechaFin->gt($cicloFin)) {
+        // La fecha de inicio del periodo debe ser >= a la fecha de inicio del ciclo.
+        // La fecha de fin del periodo debe ser <= a la fecha de fin del ciclo.
+        if ($fechaInicio->lt($cicloInicio) || $fechaFin->gt($cicloFin)) {
             $fail('Las fechas del periodo deben estar completamente dentro del rango del ciclo escolar (' . $cicloInicio->format('d/m/Y') . ' - ' . $cicloFin->format('d/m/Y') . ').');
-            return; // Detener la ejecución si no está dentro del ciclo.
+            return; 
         }
 
-        // --- 2. VALIDACIÓN DE SOLAPAMIENTO ENTRE PERIODOS DEL MISMO CICLO ---
+        // --- 3. VALIDACIÓN DE SOLAPAMIENTO ENTRE PERIODOS DEL MISMO CICLO ---
 
-        // Lógica de solapamiento: (InicioA <= FinB) AND (FinA >= InicioB)
+        // Lógica de Solapamiento: Busca periodos existentes (P) tal que:
+        // (P.fecha_inicio <= Nuevo.fecha_fin) AND (P.fecha_fin >= Nuevo.fecha_inicio)
         $query = Periodo::query()
-            ->where('ciclo_escolar_id', $this->cicloEscolarId) // Solo periodos del mismo ciclo
-            ->where('fecha_inicio', '<=', $fechaFin) // El inicio de un periodo existente es ANTES/IGUAL al FIN del nuevo
-            ->where('fecha_fin', '>=', $this->fechaInicio); // El fin de un periodo existente es DESPUÉS/IGUAL al INICIO del nuevo
+            ->where('ciclo_escolar_id', $this->cicloEscolarId) 
+            ->where('fecha_inicio', '<=', $fechaFin) 
+            ->where('fecha_fin', '>=', $fechaInicio); 
 
-        // **CORRECCIÓN CRÍTICA:** Usamos 'periodo_id' para ignorar el registro,
-        // ya que tu modelo Periodo tiene protected $primaryKey = 'periodo_id';
+        // Ignoramos el periodo que se está editando (solo para Update)
         if ($this->ignoreId) {
+            // Se usa 'periodo_id' ya que es la clave primaria del modelo Periodo
             $query->where('periodo_id', '!=', $this->ignoreId); 
         }
 
