@@ -67,22 +67,37 @@
             height: 16px; 
         }
         
-        /* Encabezado de Periodos (1ER, 2DO, 3ER) */
+        /* Encabezado de Periodos (1ER, 2DO, 3ER) - USADO EN BLOQUES DE CRITERIOS */
         .boleta-v2 thead .header-row-periodos th {
             background-color: #E0E0E0;
             font-weight: bold;
             font-size: 7px; /* Aún más pequeño */
             padding: 3px;
         }
-        /* Encabezado del Bloque (ej. LENGUAJES) */
+        
+        /* Encabezado del Bloque (ej. LENGUAJES) - AHORA AZUL */
         .boleta-v2 thead .header-row-titulo th {
-            background-color: #D9EAD3; /* Verde claro */
+            background-color: #DDEBF7; /* ¡¡AZUL!! */
             font-weight: bold;
             font-size: 9px;
             text-align: left;
             padding-left: 5px;
         }
         
+        /* Filas de cabecera de periodos (ahora GRIS) */
+        .boleta-v2 thead .header-row-gray th {
+            background-color: #E0E0E0; /* ¡¡GRIS!! */
+            font-weight: bold;
+            font-size: 8px;
+            padding: 3px;
+            text-align: center; /* Asegurar centrado */
+        }
+         .boleta-v2 thead .header-row-gray .header-materia {
+            text-align: left;
+            padding-left: 5px;
+            font-size: 9px; /* Un poco más grande */
+         }
+
         /* Estilos de Celdas de Materias/Criterios */
         .boleta-v2 .materia-sep {
             background-color: #F5F5F5;
@@ -96,13 +111,11 @@
             padding-left: 5px;
         }
         
-        /* Filas de Promedio */
-        .boleta-v2 .promedio-campo-sep {
-            background-color: #D9EAD3; /* Verde claro */
-            text-align: left;
-            font-weight: bold;
-            padding-left: 5px;
+        /* Fila de Campo Formativo (AHORA INVISIBLE) */
+        .boleta-v2 .campo-sep-row { 
+            display: none; /* Esta fila ya no se usa */
         }
+
         .boleta-v2 .promedio-bloque-pas {
             background-color: #F3F3F3;
             font-weight: bold;
@@ -118,8 +131,18 @@
 
         /* Celdas de Calificaciones */
         .boleta-v2 .cal-pas { font-weight: normal; }
-        .boleta-v2 .cal-sep { background-color: #F5F5F5; font-weight: bold; }
-        .boleta-v2 .cal-prom-sep { background-color: #E6E6FA; font-weight: bold; }
+        
+        .boleta-v2 .cal-sep { 
+            background-color: #E6E6FA; /* Color unificado (Lavanda) */
+            font-weight: bold;
+            vertical-align: middle; /* Centrar con rowspan */
+        }
+        .boleta-v2 .cal-prom-sep { 
+            background-color: #E6E6FA; /* Color unificado (Lavanda) */
+            font-weight: bold;
+            vertical-align: middle; /* Para centrar con rowspan */
+        }
+        
         .boleta-v2 .cal-prom-pas { background-color: #F3F3F3; font-weight: bold; }
 
         .empty-cell { background-color: #ffffff; border: 1px solid #000; }
@@ -153,7 +176,7 @@
         .footer-container {
             width: 100%;
             overflow: auto; /* Clearfix */
-            margin-top: 20px; /* Espacio después de las tablas de calif. */
+            margin-top: 20px; /* Este contenedor ya no se usa para el layout */
             page-break-inside: avoid;
         }
         .footer-left {
@@ -173,11 +196,12 @@
             border-collapse: collapse;
             font-size: 8px;
             text-align: center;
+            margin-top: 20px; /* AJUSTE: Añadido para bajar la tabla */
         }
         .tutor-table th, .tutor-table td {
             border: 1px solid #000;
             padding: 3px;
-            height: 25px; /* Más alto para firmas */
+            height: 35px; /* AJUSTE: Aumentado para más espacio */
         }
         .tutor-table th {
             background-color: #E0E0E0;
@@ -186,7 +210,7 @@
         .signature-block {
             text-align: center;
             font-size: 9px;
-            margin-top: 35px; /* Espacio entre firmas */
+            margin-top: 50px; /* AJUSTE: Aumentado para más espacio */
         }
         .signature-line {
             border-top: 1px solid #000;
@@ -242,19 +266,23 @@
             <div class="main-left-column">
 
                 @foreach($dataCamposSEP as $campo)
+                    @php
+                        $rowCountForSEP = (isset($campo['materias']) && is_array($campo['materias'])) ? count($campo['materias']) : 0; 
+                    @endphp
                     <table class="boleta-v2">
                         <thead>
                             <tr class="header-row-titulo">
                                 <th colspan="{{ 3 + (count($periodos) * 2) }}">{{ isset($campo['nombre']) ? $campo['nombre'] : 'Campo Formativo' }}</th>
                             </tr>
-                            <tr class="header-row-periodos">
-                                <th style="width: 30%;">CAMPOS FORMATIVOS / MATERIAS</th>
+                            
+                            <tr class="header-row-gray">
+                                <th style="width: 30%;" class="header-materia">MATERIAS</th>
                                 @foreach($periodos as $periodo)
                                     <th colspan="2">{{ isset($periodo->nombre) ? $periodo->nombre : '' }}</th>
                                 @endforeach
                                 <th colspan="2">PROMEDIO</th>
                             </tr>
-                            <tr class="header-row-periodos">
+                            <tr class="header-row-gray">
                                 <th></th>
                                 @foreach($periodos as $periodo)
                                     <th>PAS</th>
@@ -265,39 +293,43 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr class="promedio-campo-sep">
-                                <td>{{ isset($campo['nombre']) ? $campo['nombre'] : '' }}</td>
-                                @foreach($periodos as $periodo)
-                                    <td class="empty-cell-light"></td>
-                                    <td class="cal-sep">
-                                        {{ isset($campo['calificaciones_sep'][$periodo->periodo_id]) ? $campo['calificaciones_sep'][$periodo->periodo_id] : '' }}
-                                    </td>
+                            @if(isset($campo['materias']) && is_array($campo['materias']))
+                                @foreach($campo['materias'] as $materia)
+                                    <tr>
+                                        <td class="materia-sep">{{ isset($materia['nombre']) ? $materia['nombre'] : '' }}</td>
+                                        
+                                        @if ($loop->first)
+                                            @foreach($periodos as $periodo)
+                                                <td class="cal-pas">
+                                                    {{ isset($materia['calificaciones_pas'][$periodo->periodo_id]) ? $materia['calificaciones_pas'][$periodo->periodo_id] : '' }}
+                                                </td>
+                                                <td class="cal-sep" rowspan="{{ $rowCountForSEP }}">
+                                                    {{ isset($campo['calificaciones_sep'][$periodo->periodo_id]) ? $campo['calificaciones_sep'][$periodo->periodo_id] : '' }}
+                                                </td>
+                                            @endforeach
+                                            <td class="cal-pas">
+                                                {{ isset($materia['promedio_pas']) ? $materia['promedio_pas'] : '' }}
+                                            </td>
+                                            <td class="cal-prom-sep" rowspan="{{ $rowCountForSEP }}">
+                                                {{ isset($campo['promedio_final_sep']) ? $campo['promedio_final_sep'] : '' }}
+                                            </td>
+                                        @else
+                                            @foreach($periodos as $periodo)
+                                                <td class="cal-pas">
+                                                    {{ isset($materia['calificaciones_pas'][$periodo->periodo_id]) ? $materia['calificaciones_pas'][$periodo->periodo_id] : '' }}
+                                                </td>
+                                                @endforeach
+                                            <td class="cal-pas">
+                                                {{ isset($materia['promedio_pas']) ? $materia['promedio_pas'] : '' }}
+                                            </td>
+                                            @endif
+                                    </tr>
                                 @endforeach
-                                <td class="cal-prom-sep">
-                                    {{ isset($campo['promedio_final_pas']) ? $campo['promedio_final_pas'] : '' }}
-                                </td>
-                                <td class="cal-prom-sep cal-sep">
-                                    {{ isset($campo['promedio_final_sep']) ? $campo['promedio_final_sep'] : '' }}
-                                </td>
-                            </tr>
-                            @foreach($campo['materias'] as $materia)
-                                <tr>
-                                    <td class="materia-sep">{{ isset($materia['nombre']) ? $materia['nombre'] : '' }}</td>
-                                    @foreach($periodos as $periodo)
-                                        <td class="cal-pas">
-                                            {{ isset($materia['calificaciones_pas'][$periodo->periodo_id]) ? $materia['calificaciones_pas'][$periodo->periodo_id] : '' }}
-                                        </td>
-                                        <td class="empty-cell-light"></td>
-                                    @endforeach
-                                    <td class="cal-pas">
-                                        {{ isset($materia['promedio_pas']) ? $materia['promedio_pas'] : '' }}
-                                    </td>
-                                    <td class="empty-cell-light"></td>
-                                </tr>
-                            @endforeach
+                            @endif
                         </tbody>
                     </table>
                 @endforeach
+
 
                 @if(!empty($datosBloques['PROGRAMA ACADEMICO']))
                     @php 
@@ -403,7 +435,95 @@
                     </table>
                 @endif
 
-            </div><div class="main-right-column">
+                @if(!empty($datosAsistencias))
+                    <table class="boleta-v2 asistencias-table">
+                        <thead>
+                            <tr class="header-row-titulo">
+                                <th colspan="{{ 2 + count($periodos) + 1 }}">CONTROL DE ASISTENCIAS // ATTENDANCE CONTROL</th>
+                            </tr>
+                            <tr class="header-row-periodos">
+                                <th style="width: 25%;">TRIMESTRE ---></th>
+                                <th style="width: 10%;"></th> @foreach($periodos as $periodo)
+                                    <th>{{ isset($periodo->nombre) ? $periodo->nombre : '' }}</th>
+                                @endforeach
+                                <th>TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td rowspan="3" class="label" style="font-weight: bold;">ASISTENCIAS / ATTENDANCES</td>
+                                <td class="label">ESP</td>
+                                @foreach($periodos as $periodo)
+                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['ESP_asistencias']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_asistencias'] : '0' }}</td>
+                                @endforeach
+                                <td>{{ isset($datosAsistencias['totales']['ESP_asistencias']) ? $datosAsistencias['totales']['ESP_asistencias'] : '0' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">ENG</td>
+                                @foreach($periodos as $periodo)
+                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['ENG_asistencias']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_asistencias'] : '0' }}</td>
+                                @endforeach
+                                <td>{{ isset($datosAsistencias['totales']['ENG_asistencias']) ? $datosAsistencias['totales']['ENG_asistencias'] : '0' }}</td>
+                            </tr>
+                            <tr style="font-weight: bold;">
+                                <td class="label">Total</td>
+                                @foreach($periodos as $periodo)
+                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['TOTAL_asistencias']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['TOTAL_asistencias'] : '0' }}</td>
+                                @endforeach
+                                <td>{{ isset($datosAsistencias['totales']['TOTAL_asistencias']) ? $datosAsistencias['totales']['TOTAL_asistencias'] : '0' }}</td>
+                            </tr>
+                            
+                            <tr>
+                                <td rowspan="3" class="label" style="font-weight: bold;">INASISTENCIAS / ABSENCES</td>
+                                <td class="label">ESP</td>
+                                @foreach($periodos as $periodo)
+                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['ESP_inasistencias']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_inasistencias'] : '0' }}</td>
+                                @endforeach
+                                <td>{{ isset($datosAsistencias['totales']['ESP_inasistencias']) ? $datosAsistencias['totales']['ESP_inasistencias'] : '0' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">ENG</td>
+                                @foreach($periodos as $periodo)
+                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['ENG_inasistencias']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_inasistencias'] : '0' }}</td>
+                                @endforeach
+                                <td>{{ isset($datosAsistencias['totales']['ENG_inasistencias']) ? $datosAsistencias['totales']['ENG_inasistencias'] : '0' }}</td>
+                            </tr>
+                            <tr style="font-weight: bold;">
+                                <td class="label">Total</td>
+                                @foreach($periodos as $periodo)
+                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['TOTAL_inasistencias']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['TOTAL_inasistencias'] : '0' }}</td>
+                                @endforeach
+                                <td>{{ isset($datosAsistencias['totales']['TOTAL_inasistencias']) ? $datosAsistencias['totales']['TOTAL_inasistencias'] : '0' }}</td>
+                            </tr>
+
+                            <tr>
+                                <td rowspan="3" class="label" style="font-weight: bold;">RETARDOS / DELAYS</td>
+                                <td class="label">ESP</td>
+                                @foreach($periodos as $periodo)
+                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['ESP_retardos']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_retardos'] : '0' }}</td>
+                                @endforeach
+                                <td>{{ isset($datosAsistencias['totales']['ESP_retardos']) ? $datosAsistencias['totales']['ESP_retardos'] : '0' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">ENG</td>
+                                @foreach($periodos as $periodo)
+                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['ENG_retardos']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_retardos'] : '0' }}</td>
+                                @endforeach
+                                <td>{{ isset($datosAsistencias['totales']['ENG_retardos']) ? $datosAsistencias['totales']['ENG_retardos'] : '0' }}</td>
+                            </tr>
+                            <tr style="font-weight: bold;">
+                                <td class="label">Total</td>
+                                @foreach($periodos as $periodo)
+                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['TOTAL_retardos']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['TOTAL_retardos'] : '0' }}</td>
+                                @endforeach
+                                <td>{{ isset($datosAsistencias['totales']['TOTAL_retardos']) ? $datosAsistencias['totales']['TOTAL_retardos'] : '0' }}</td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                @endif
+
+            </div> <div class="main-right-column">
 
                 @if(!empty($datosBloques['HÁBITOS']))
                     @php 
@@ -494,15 +614,14 @@
                         </tbody>
                     </table>
                 @endif
-                <div class="header-habits">HABITS</div>
 
                 @if(!empty($datosBloques['READING PROGRAM']))
-                     @php 
-                        $bloque = $datosBloques['READING PROGRAM'];
-                        $colFinal = 'TOTAL';
-                        $headerColor = '#FFF2CC';
-                        $showAverageRow = false; // <-- Sin fila de promedio
-                    @endphp
+                         @php 
+                            $bloque = $datosBloques['READING PROGRAM'];
+                            $colFinal = 'TOTAL';
+                            $headerColor = '#FFF2CC';
+                            $showAverageRow = false; // <-- Sin fila de promedio
+                        @endphp
                     <table class="boleta-v2">
                         <thead>
                             <tr class="header-row-titulo" style="background-color: {{ $headerColor }};">
@@ -599,155 +718,63 @@
                         </tbody>
                     </table>
                 @endif
-                
 
-                @if(!empty($datosAsistencias))
-                    <table class="boleta-v2 asistencias-table">
+                <div class="footer-left">
+                    <table class="tutor-table">
                         <thead>
-                            <tr class="header-row-titulo">
-                                <th colspan="{{ 2 + count($periodos) + 1 }}">CONTROL DE ASISTENCIAS // ATTENDANCE CONTROL</th>
+                            <tr>
+                                <th colspan="4">FIRMA DEL PADRE O TUTOR</th>
                             </tr>
-                            <tr class="header-row-periodos">
-                                <th style="width: 25%;">TRIMESTRE ---></th>
-                                <th style="width: 10%;"></th> @foreach($periodos as $periodo)
-                                    <th>{{ isset($periodo->nombre) ? $periodo->nombre : '' }}</th>
-                                @endforeach
-                                <th>TOTAL</th>
+                            <tr>
+                                <th>PERIODO</th>
+                                <th>NOMBRE</th>
+                                <th>FIRMA</th>
+                                <th>FECHA</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td rowspan="3" class="label" style="font-weight: bold;">ASISTENCIAS / ATTENDANCES</td>
-                                <td class="label">ESP</td>
-                                @foreach($periodos as $periodo)
-                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['ESP_asistencias']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_asistencias'] : '0' }}</td>
-                                @endforeach
-                                <td>{{ isset($datosAsistencias['totales']['ESP_asistencias']) ? $datosAsistencias['totales']['ESP_asistencias'] : '0' }}</td>
+                                <td>1ER</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
                             </tr>
                             <tr>
-                                <td class="label">ENG</td>
-                                @foreach($periodos as $periodo)
-                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['ENG_asistencias']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_asistencias'] : '0' }}</td>
-                                @endforeach
-                                <td>{{ isset($datosAsistencias['totales']['ENG_asistencias']) ? $datosAsistencias['totales']['ENG_asistencias'] : '0' }}</td>
-                            </tr>
-                            <tr style="font-weight: bold;">
-                                <td class="label">Total</td>
-                                @foreach($periodos as $periodo)
-                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['TOTAL_asistencias']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['TOTAL_asistencias'] : '0' }}</td>
-                                @endforeach
-                                <td>{{ isset($datosAsistencias['totales']['TOTAL_asistencias']) ? $datosAsistencias['totales']['TOTAL_asistencias'] : '0' }}</td>
-                            </tr>
-                            
-                            <tr>
-                                <td rowspan="3" class="label" style="font-weight: bold;">INASISTENCIAS / ABSENCES</td>
-                                <td class="label">ESP</td>
-                                @foreach($periodos as $periodo)
-                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['ESP_inasistencias']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_inasistencias'] : '0' }}</td>
-                                @endforeach
-                                <td>{{ isset($datosAsistencias['totales']['ESP_inasistencias']) ? $datosAsistencias['totales']['ESP_inasistencias'] : '0' }}</td>
+                                <td>2DO</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
                             </tr>
                             <tr>
-                                <td class="label">ENG</td>
-                                @foreach($periodos as $periodo)
-                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['ENG_inasistencias']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_inasistencias'] : '0' }}</td>
-                                @endforeach
-                                <td>{{ isset($datosAsistencias['totales']['ENG_inasistencias']) ? $datosAsistencias['totales']['ENG_inasistencias'] : '0' }}</td>
+                                <td>3RO</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
                             </tr>
-                            <tr style="font-weight: bold;">
-                                <td class="label">Total</td>
-                                @foreach($periodos as $periodo)
-                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['TOTAL_inasistencias']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['TOTAL_inasistencias'] : '0' }}</td>
-                                @endforeach
-                                <td>{{ isset($datosAsistencias['totales']['TOTAL_inasistencias']) ? $datosAsistencias['totales']['TOTAL_inasistencias'] : '0' }}</td>
-                            </tr>
-
-                            <tr>
-                                <td rowspan="3" class="label" style="font-weight: bold;">RETARDOS / DELAYS</td>
-                                <td class="label">ESP</td>
-                                @foreach($periodos as $periodo)
-                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['ESP_retardos']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_retardos'] : '0' }}</td>
-                                @endforeach
-                                <td>{{ isset($datosAsistencias['totales']['ESP_retardos']) ? $datosAsistencias['totales']['ESP_retardos'] : '0' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="label">ENG</td>
-                                @foreach($periodos as $periodo)
-                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['ENG_retardos']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_retardos'] : '0' }}</td>
-                                @endforeach
-                                <td>{{ isset($datosAsistencias['totales']['ENG_retardos']) ? $datosAsistencias['totales']['ENG_retardos'] : '0' }}</td>
-                            </tr>
-                            <tr style="font-weight: bold;">
-                                <td class="label">Total</td>
-                                @foreach($periodos as $periodo)
-                                    <td>{{ isset($datosAsistencias['periodos'][$periodo->periodo_id]['TOTAL_retardos']) ? $datosAsistencias['periodos'][$periodo->periodo_id]['TOTAL_retardos'] : '0' }}</td>
-                                @endforeach
-                                <td>{{ isset($datosAsistencias['totales']['TOTAL_retardos']) ? $datosAsistencias['totales']['TOTAL_retardos'] : '0' }}</td>
-                            </tr>
-
                         </tbody>
                     </table>
-                @endif
-
-
-            </div></div> <div class="footer-container">
-            
-            <div class="footer-left">
-                <table class="tutor-table">
-                    <thead>
-                        <tr>
-                            <th colspan="4">FIRMA DEL PADRE O TUTOR</th>
-                        </tr>
-                        <tr>
-                            <th>PERIODO</th>
-                            <th>NOMBRE</th>
-                            <th>FIRMA</th>
-                            <th>FECHA</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>1ER</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td>2DO</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td>3RO</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="footer-right">
-                
-                <div class="signature-block" style="margin-top: 10px;"> <div class="signature-line"></div>
-                    <div class="signature-name">LIC. JULIETA YEE GONZALEZ M.ED</div>
-                    <div class="signature-title">DIRECTORA</div>
                 </div>
 
-                <div class="signature-block">
-                    <div class="signature-line"></div>
-                    <div class="signature-name">{{ isset($maestroEspanol) ? $maestroEspanol : 'LIC. [MAESTRO ESPAÑOL]' }}</div>
-                    <div class="signature-title">NOMBRE Y FIRMA DEL MAESTRO</div>
+                <div class="footer-right">
+                    
+                    <div class="signature-block"> 
+                        <div class="signature-line"></div>
+                        <div class="signature-name">LIC. JULIETA YEE GONZALEZ M.ED</div>
+                        <div class="signature-title">DIRECTORA</div>
+                    </div>
+
+                    <div class="signature-block">
+                        <div class="signature-line"></div>
+                        <div class="signature-name">{{ isset($maestroEspanol) ? $maestroEspanol : 'LIC. [MAESTRO ESPAÑOL]' }}</div>
+                        <div class="signature-title">NOMBRE Y FIRMA DEL MAESTRO</div>
+                    </div>
+
+                    <div class="signature-block">
+                        <div class="signature-line"></div>
+                        <div class="signature-name">{{ isset($maestroIngles) ? $maestroIngles : 'LIC. [TEACHER\'S NAME]' }}</div>
+                        <div class="signature-title">TEACHER'S NAME AND SIGNATURE</div>
+                    </div>
+
                 </div>
-
-                <div class="signature-block">
-                    <div class="signature-line"></div>
-                    <div class="signature-name">{{ isset($maestroIngles) ? $maestroIngles : 'LIC. [TEACHER\'S NAME]' }}</div>
-                    <div class="signature-title">TEACHER'S NAME AND SIGNATURE</div>
-                </div>
-
-            </div>
-
-        </div> </div> </body>
+                </div> </div> </div> </body>
 </html>

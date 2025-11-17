@@ -311,10 +311,10 @@ class BoletaController extends Controller
 
         // --- MODO DEPURACIÓN HTML ---
         // Renderiza la vista como una página web normal
-        //return view('reportes.boleta-FINAL-PORFAVOR', $data);
+        return view('reportes.boleta-FINAL-PORFAVOR', $data);
 
 
-        //dd($data); // justo antes de la línea 319
+        /*
         // --- MODO PDF (COMENTADO) ---
         $pdf = PDF::loadView('reportes.boleta-FINAL-PORFAVOR', $data, [], [
             'format' => 'Legal',
@@ -322,11 +322,15 @@ class BoletaController extends Controller
         ]);
 
         return $pdf->stream('boleta-' . $alumno->apellido_paterno . '-' . $alumno->nombres . '.pdf');
-        
+        */
     }
 
     /**
      * Procesa los campos formativos estándar (lógica PAS/SEP).
+     */
+    /**
+     * Procesa los campos formativos estándar (lógica PAS/SEP).
+     * (Corregido el typo $periodo_id)
      */
     private function procesarCamposSEP($camposFormativos, $periodos, $mapaCalificacionesPAS, $ponderacionesCampos)
     {
