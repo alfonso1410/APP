@@ -32,22 +32,25 @@
         .info-alumno-table td { border: 1px solid #000; padding: 3px 6px; }
         .info-alumno-table .label { background-color: #eee; font-weight: bold; width: 15%; }
         
-        /* --- NUEVO LAYOUT HORIZONTAL (2 COLUMNAS) --- */
+        /* --- CÓDIGO CRÍTICO MODIFICADO: ELIMINANDO FLOAT Y FORZANDO STACK VERTICAL --- */
         .main-container {
             width: 100%;
             overflow: auto; /* Clearfix */
             page-break-inside: avoid;
         }
         .main-left-column {
-            width: 54%; /* Ancho Columna Izquierda */
-            float: left;
-            padding-right: 8px;
+            width: 100%; /* Ahora ocupa el 100% */
+            float: none; /* ELIMINADO EL FLOAT TÓXICO */
+            display: block; 
+            padding-right: 0; /* Eliminado el padding de separación */
             box-sizing: border-box;
         }
         .main-right-column {
-            width: 46%; /* Ancho Columna Derecha */
-            float: right;
-            padding-left: 8px;
+            width: 100%; /* Ahora ocupa el 100% */
+            float: none; /* ELIMINADO EL FLOAT TÓXICO */
+            display: block; 
+            padding-left: 0; /* Eliminado el padding de separación */
+            margin-top: 15px; /* Separación entre el contenido izquierdo y derecho apilado */
             box-sizing: border-box;
         }
 
@@ -173,21 +176,26 @@
         .asistencias-table .header-row-periodos th { background-color: #F3F3F3; }
 
         /* --- NUEVOS ESTILOS PARA FIRMAS --- */
+        /* Eliminamos float interno y usamos inline-block */
         .footer-container {
             width: 100%;
             overflow: auto; /* Clearfix */
-            margin-top: 20px; /* Este contenedor ya no se usa para el layout */
+            margin-top: 20px; 
             page-break-inside: avoid;
         }
         .footer-left {
             width: 54%;
-            float: left;
+            float: none; 
+            display: inline-block;
+            vertical-align: top;
             padding-right: 8px;
             box-sizing: border-box;
         }
         .footer-right {
             width: 46%;
-            float: right;
+            float: none; 
+            display: inline-block;
+            vertical-align: top;
             padding-left: 8px;
             box-sizing: border-box;
         }
@@ -224,7 +232,6 @@
             font-size: 8px;
         }
         /* --- FIN NUEVOS ESTILOS --- */
-
     </style>
 </head>
 <body>
@@ -261,6 +268,7 @@
             </tr>
         </table>
         
+
         <div class="main-container">
 
             <div class="main-left-column">
@@ -530,7 +538,7 @@
                         $bloque = $datosBloques['HÁBITOS'];
                         $colFinal = 'TOTAL';
                         $headerColor = '#FCE4D6';
-                        $showAverageRow = false; // <-- Sin fila de promedio
+                        $showAverageRow = false; 
                     @endphp
                     <table class="boleta-v2">
                         <thead>
@@ -569,9 +577,6 @@
                         </tbody>
                     </table>
                 @endif
-                
-
-                <div class="header-english">ENGLISH</div>
                 
                 @if(!empty($datosBloques['ENGLISH']))
                     @php
@@ -615,13 +620,14 @@
                     </table>
                 @endif
 
+
                 @if(!empty($datosBloques['READING PROGRAM']))
-                         @php 
-                            $bloque = $datosBloques['READING PROGRAM'];
-                            $colFinal = 'TOTAL';
-                            $headerColor = '#FFF2CC';
-                            $showAverageRow = false; // <-- Sin fila de promedio
-                        @endphp
+                    @php 
+                        $bloque = $datosBloques['READING PROGRAM'];
+                        $colFinal = 'TOTAL';
+                        $headerColor = '#FFF2CC';
+                        $showAverageRow = false; 
+                    @endphp
                     <table class="boleta-v2">
                         <thead>
                             <tr class="header-row-titulo" style="background-color: {{ $headerColor }};">
@@ -705,6 +711,7 @@
                     </table>
                 @endif
 
+
                 @if(!empty($promediosCombinadosHabits))
                     <table class="boleta-v2">
                         <tbody>
@@ -776,5 +783,6 @@
                     </div>
 
                 </div>
-                </div> </div> </div> </body>
+
+            </div> </div> </div> </body>
 </html>

@@ -285,7 +285,11 @@ class BoletaController extends Controller
         }
         // --- FIN OBTENER NOMBRES ---
 
-
+        /*dd(
+            $boletaDataSEP, 
+            $datosBloquesCriterios, 
+            $promediosCombinadosAcademico
+        );*/
         // 8. ENSAMBLAR DATOS PARA LA VISTA
         $data = [
             'alumno' => $alumno,
@@ -311,18 +315,17 @@ class BoletaController extends Controller
 
         // --- MODO DEPURACIÓN HTML ---
         // Renderiza la vista como una página web normal
-        return view('reportes.boleta-FINAL-PORFAVOR', $data);
+        //return view('reportes.boleta-FINAL-PORFAVOR', $data);
 
 
-        /*
-        // --- MODO PDF (COMENTADO) ---
-        $pdf = PDF::loadView('reportes.boleta-FINAL-PORFAVOR', $data, [], [
-            'format' => 'Legal',
+        
+        // --- MODO PDF ---
+        $pdf = PDF::loadView('reportes.boleta-FINAL-PORFAVOR', $data, [
+            'format' => 'Legal-L', // <--- Legal Size, Landscape Orientation
             'orientation' => 'L'
         ]);
 
         return $pdf->stream('boleta-' . $alumno->apellido_paterno . '-' . $alumno->nombres . '.pdf');
-        */
     }
 
     /**
