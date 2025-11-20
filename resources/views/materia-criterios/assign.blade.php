@@ -5,6 +5,10 @@
             Asignar Criterios a: <span class="font-bold">{{ $materia->nombre }}</span>
         </h2>
     </x-slot>
+
+    @php
+        $esAutomatica = in_array($materia->nombre,  ['Hábitos', 'Habitos', 'Habits', 'HABITS', 'Reading Program', 'READING PROGRAM', 'Programa Academico', 'Programa Académico', 'PROGRAMA ACADÉMICO']);
+    @endphp
     
     {{-- Inicializamos la variable de estado para edición --}}
     <div class="py-12" x-data="{ currentCriterio: {} }">
@@ -15,6 +19,9 @@
                 
                 <h3 class="text-lg font-semibold border-b pb-2 mb-4">
                     Criterios configurados para la materia
+                    @if($esAutomatica)
+                        <span class="ml-2 text-xs bg-blue-100 text-blue-800 py-1 px-2 rounded-full">Automática</span>
+                    @endif
                 </h3>
                 
                 <p class="text-gray-500 mb-6">
@@ -39,7 +46,7 @@
                                 @foreach ($criteriosAsignados as $criterio)
                                 <tr>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ $criterio->catalogoCriterio->nombre }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">{{ $criterio->ponderacion }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ (float)$criterio->ponderacion }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span 
                                             class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $criterio->incluido_en_promedio ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
@@ -188,7 +195,18 @@
                     <x-input-label for="ponderacion_edit" value="Ponderación (0.00-1.00)" />
                     <input type="number" name="ponderacion" id="ponderacion_edit" min="0.01" max="1.00" step="0.01" 
                            x-bind:value="currentCriterio.ponderacion" 
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" 
+                           @if($esAutomatica) 
+                               readonly 
+                               style="background-color: #f3f4f6; cursor: not-allowed;" 
+                               title="Este valor se calcula automáticamente"
+                           @else
+                               required
+                           @endif
+                           >
+                @if($esAutomatica)
+                        <p class="text-xs text-blue-600 mt-1">Este valor es automático y no se puede editar manualmente.</p>
+                    @endif
                     @error('ponderacion') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
                 

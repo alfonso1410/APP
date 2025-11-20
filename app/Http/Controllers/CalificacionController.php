@@ -117,6 +117,16 @@ class CalificacionController extends Controller
             'calificaciones' => 'required|array',
             'calificaciones.*.*' => 'nullable|numeric|min:0|max:10', // <-- CAMBIADO DE 100 A 10
         ]);
+            // --- INICIO DE LA MODIFICACIÓN ---
+        // Buscamos la materia que se intenta guardar
+        $materia = Materia::find($request->materia_id);
+
+        // Si es la materia "meta", bloqueamos el guardado.
+        if ($materia && $materia->nombre === 'Lengua Extranjera') {
+            return back()->withErrors('Error: Las calificaciones de "Lengua Extranjera" se calculan automáticamente y no pueden guardarse manualmente.')
+                         ->withInput();
+        }
+        // --- FIN DE LA MODIFICACIÓN --
         
         $user = Auth::user();
         $periodoId = $request->periodo_id;

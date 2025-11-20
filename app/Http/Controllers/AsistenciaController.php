@@ -16,28 +16,39 @@ class AsistenciaController extends Controller
     /**
      * Muestra la lista de grupos (Sin cambios)
      */
-public function gruposIndex(): View
+    public function gruposIndex(): View
     {
         $maestro = Auth::user();
-        // --- INICIO MODIFICACIÓN ---
-        // 1. Buscar el ciclo activo
         $cicloActivo = CicloEscolar::where('estado', 'ACTIVO')->first();
 
-        // 2. Cargar grupos del maestro SÓLO del ciclo activo
-        $grupos = collect(); // Colección vacía por defecto
+        $grupos = collect(); 
+
         if ($cicloActivo) {
-            $grupos = $maestro->gruposTitulares()
-                              ->where('grupos.ciclo_escolar_id', $cicloActivo->ciclo_escolar_id) // Filtro clave
-                              ->with('grado')
-                              ->withCount('alumnos')
-                              ->get();
+            // 1. Obtener grupos donde es TITULAR
+            $gruposTitulares = $maestro->gruposTitulares()
+                ->where('grupos.ciclo_escolar_id', $cicloActivo->ciclo_escolar_id)
+                ->with('grado')
+                ->withCount('alumnos')
+                ->get();
+
+            // 2. Obtener grupos donde es COMPLEMENTARIO (Necesitas definir esta relación en User.php si no la tienes)
+            // Si no tienes la relación en el modelo User, usamos la del Grupo inversa:
+            $gruposComplementarios = Grupo::where('ciclo_escolar_id', $cicloActivo->ciclo_escolar_id)
+                ->whereHas('maestrosComplementarios', function($q) use ($maestro) {
+                    $q->where('users.id', $maestro->id);
+                })
+                ->with('grado')
+                ->withCount('alumnos')
+                ->get();
+
+            // 3. Unir ambas listas y quitar duplicados
+            $grupos = $gruposTitulares->merge($gruposComplementarios)->unique('grupo_id');
         }
-        // --- FIN MODIFICACIÓN ---
 
         return view('maestro.asistencias.index', [
             'maestro' => $maestro,
             'gruposAsignados' => $grupos,
-            'cicloActivo' => $cicloActivo // Pasar el ciclo por si lo necesitas
+            'cicloActivo' => $cicloActivo
         ]);
     }
 
@@ -50,15 +61,12 @@ public function gruposIndex(): View
         // 1. OBTENER EL IDIOMA DEL MAESTRO LOGUEADO PARA ESTE GRUPO
         $maestroLogueado = Auth::user();
         // Buscamos la relación pivote específica para este grupo
-        $pivote = $maestroLogueado->gruposTitulares()->find($grupo->grupo_id);
+        $idiomaDelMaestro = $this->obtenerIdiomaDelMaestro($maestroLogueado, $grupo);
 
         // Si no está asignado, no debería estar aquí
-        if (!$pivote) {
-            abort(403, 'No estás asignado como titular a este grupo.');
-        }
-        
-        // ¡Automáticamente sabemos el idioma! (Gracias al withPivot() del Modelo)
-        $idiomaDelMaestro = $pivote->pivot->idioma; 
+       if (!$idiomaDelMaestro) {
+            abort(403, 'No estás asignado a este grupo ni como titular ni como complementario.');
+        } 
 
   // 2. Cargar alumnos (sin cambios)
         $alumnos = $grupo->alumnosActuales() // Usar alumnosActuales es mejor
@@ -151,12 +159,11 @@ public function gruposIndex(): View
 
         // 1. OBTENER EL IDIOMA (igual que en el método 'tomar')
         $maestroLogueado = Auth::user();
-        $pivote = $maestroLogueado->gruposTitulares()->find($grupo->grupo_id);
+        $idiomaDelMaestro = $this->obtenerIdiomaDelMaestro($maestroLogueado, $grupo);
 
-        if (!$pivote) {
+        if (!$idiomaDelMaestro) {
             abort(403, 'No puedes guardar asistencia para un grupo al que no perteneces.');
         }
-        $idiomaDelMaestro = $pivote->pivot->idioma;
 
        // --- INICIO MODIFICACIÓN ---
         // 2. Cargar los periodos del ciclo para buscar rápido
@@ -241,5 +248,31 @@ public function gruposIndex(): View
             $lunesActual->addWeek();
         }
         return $semanas;
+    }
+
+    private function obtenerIdiomaDelMaestro($maestro, $grupo)
+    {
+        // 1. Verificar si es TITULAR (Español / Inglés / General)
+        // Esta relación busca en la tabla 'grupo_titular'
+        $pivoteTitular = $maestro->gruposTitulares()->find($grupo->grupo_id);
+
+        if ($pivoteTitular) {
+            // Si es titular, respetamos su idioma original (INGLES o ESPAÑOL)
+            return $pivoteTitular->pivot->idioma;
+        }
+
+        // 2. Verificar si es COMPLEMENTARIO
+        // Verificamos si existe en la relación 'maestrosComplementarios' del grupo
+        $esComplementario = $grupo->maestrosComplementarios()
+                                  ->where('users.id', $maestro->id)
+                                  ->exists();
+
+        if ($esComplementario) {
+            // AQUÍ ESTÁ LA CLAVE: Si es complementario, lo forzamos a ESPAÑOL
+            return 'ESPAÑOL';
+        }
+
+        // Si no es nada, retornamos null
+        return null;
     }
 }

@@ -42,7 +42,7 @@
                                             {{-- Pre-seleccionamos el maestro guardado --}}
                                             @selected($asignacionesActuales->get($materia->materia_id) == $maestro->id)
                                         >
-                                            {{ $maestro->name }}
+                                            {{ $maestro->name }} {{ $maestro->apellido_paterno }} {{ $maestro->apellido_materno }}
                                         </option>
                                     @endforeach
                                 </select>

@@ -160,6 +160,30 @@
                                 @endif
 
                             @endif 
+                            @if($grupo->tipo_grupo == 'REGULAR' && isset($complementarios) && $complementarios->isNotEmpty())
+                                
+                                {{-- Separador visual --}}
+                                <tr class="bg-gray-100 border-t border-gray-200">
+                                    <td colspan="3" class="px-6 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        Maestros Complementarios    
+                                    </td>
+                                </tr>
+
+                                @foreach($complementarios as $maestro)
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ">
+                                            COMPLEMENTARIO
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                            {{ $maestro->name }} {{ $maestro->apellido_paterno }} {{ $maestro->apellido_materno }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                                            -
+                                        </td>
+                                    </tr>
+                                @endforeach
+
+                            @endif
                             
                         </tbody>
                     </table>

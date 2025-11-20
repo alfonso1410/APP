@@ -60,6 +60,47 @@ class MateriaCriterioController extends Controller
         return redirect()->route('admin.materia-criterios.index')->with('success', 'Criterio base creado exitosamente.');
     }
 
+   private function recalcularPonderacionesEquitativas($materiaId)
+    {
+        // 1. Definir materias automáticas (Asegúrate que coincida con el store)
+        $materia = Materia::find($materiaId);
+        $materiasAutomaticas =  ['Hábitos', 'Habitos', 'Habits', 'HABITS', 'Reading Program', 'READING PROGRAM', 'Programa Academico', 'Programa Académico', 'PROGRAMA ACADÉMICO']; 
+
+        if (!$materia || !in_array($materia->nombre, $materiasAutomaticas)) {
+            return;
+        }
+
+        // 2. Obtener criterios
+        $criterios = MateriaCriterio::where('materia_id', $materiaId)
+            ->where('incluido_en_promedio', true) 
+            ->get();
+
+        $cantidad = $criterios->count();
+
+        if ($cantidad > 0) {
+            // 3. CÁLCULO CON 4 DECIMALES (Alta Precisión)
+            // Multiplicamos por 10000 para trabajar con enteros grandes
+            
+            // Valor Base: floor((1 / 7) * 10000) / 10000 = 0.1428
+            $valorBase = floor((1.00 / $cantidad) * 10000) / 10000; 
+            
+            // Residuo: 1.00 - (0.1428 * 7) = 0.0004
+            // Convertimos a entero: 0.0004 * 10000 = 4
+            $residuo = round((1.00 - ($valorBase * $cantidad)) * 10000); 
+
+            // 4. Actualizar
+            foreach ($criterios as $index => $criterio) {
+                // Sumamos 0.0001 a los primeros
+                $extra = ($index < $residuo) ? 0.0001 : 0;
+                
+                $nuevoValor = $valorBase + $extra;
+
+                // Guardamos con 4 decimales
+                $criterio->ponderacion = $nuevoValor;
+                $criterio->save();
+            }
+        }
+    }
     /**
      * Lógica para guardar la asignación de un criterio a una materia.
      */
@@ -67,6 +108,9 @@ class MateriaCriterioController extends Controller
     {
         // 1. Pre-validación
         $includesAverage = $request->input('incluido_en_promedio') == '1';
+        $materia = Materia::find($request->materia_id);
+        $esAutomatica = in_array($materia->nombre, ['Hábitos', 'Habitos', 'Habits', 'HABITS', 'Reading Program', 'READING PROGRAM', 'Programa Academico', 'Programa Académico', 'PROGRAMA ACADÉMICO']);
+        
         $rules = [
             'materia_id' => 'required|exists:materias,materia_id',
             'catalogo_criterio_id' => [
@@ -74,7 +118,8 @@ class MateriaCriterioController extends Controller
                 'exists:catalogo_criterios,catalogo_criterio_id',
                 Rule::unique('materia_criterios')->where(fn ($query) => $query->where('materia_id', $request->materia_id)),
             ],
-            'ponderacion' => [$includesAverage ? 'required' : 'nullable', 'numeric', 'min:0.01', 'max:1.00'],
+           // Si es automática, la ponderación es nullable porque la calcularemos nosotros
+            'ponderacion' => [($includesAverage && !$esAutomatica) ? 'required' : 'nullable', 'numeric', 'min:0.00', 'max:1.00'], 
             'incluido_en_promedio' => 'required|in:1,0',
         ];
         $messages = [
@@ -86,7 +131,7 @@ class MateriaCriterioController extends Controller
         $validator = Validator::make($request->all(), $rules, $messages);
 
         // 2. Regla de negocio suma <= 1.00
-        if ($includesAverage) {
+       if ($includesAverage && !$esAutomatica) { 
             $currentTotalPonderacion = MateriaCriterio::where('materia_id', $request->materia_id)->sum('ponderacion');
             $validator->after(function ($validator) use ($request, $currentTotalPonderacion) {
                 if ($validator->errors()->has('ponderacion')) return;
@@ -94,18 +139,21 @@ class MateriaCriterioController extends Controller
                 $sumAfterAddition = $currentTotalPonderacion + $newPonderacion;
                 if ($sumAfterAddition > 1.00) {
                     $remaining = max(0, 1.00 - $currentTotalPonderacion);
-                    $validator->errors()->add('ponderacion', "La ponderación total ({$sumAfterAddition}) excede el 1.00. Solo puedes agregar {$remaining}.");
+                    $validator->errors()->add('ponderacion', "La ponderación total excede el 1.00. Solo puedes agregar {$remaining}.");
                 }
             });
         }
         $validated = $validator->validate();
 
         // 3. Manejo de valor final
-        $finalPonderacion = $includesAverage ? $validated['ponderacion'] : 0.00;
+        $finalPonderacion = ($includesAverage && !$esAutomatica) ? $validated['ponderacion'] : 0.00;
         $validated['incluido_en_promedio'] = (bool)($validated['incluido_en_promedio'] ?? 0);
         $validated['ponderacion'] = $finalPonderacion;
 
         MateriaCriterio::create($validated);
+        if ($esAutomatica) {
+            $this->recalcularPonderacionesEquitativas($request->materia_id);
+        }
         return redirect()->route('admin.materia-criterios.index', ['materia' => $request->materia_id])->with('success', 'Criterio asignado correctamente.');
     }
 
@@ -190,9 +238,18 @@ class MateriaCriterioController extends Controller
         $materiaCriterio = MateriaCriterio::find($id);
         if ($materiaCriterio) {
             $materiaId = $materiaCriterio->materia_id; // Guardar para redirección
+            $materia = Materia::find($materiaId);
+            $esAutomatica = in_array($materia->nombre, ['Hábitos', 'Habitos', 'Habits', 'HABITS', 'Reading Program', 'READING PROGRAM', 'Programa Academico', 'Programa Académico', 'PROGRAMA ACADÉMICO']);
+            // ----------------------------------
             try {
                 $materiaCriterio->delete();
                 // Redirige a la PÁGINA DE ASIGNACIÓN
+                // --- LLAMADA AL HELPER ---
+                // Después de borrar, recalculamos el 100% entre los sobrevivientes
+                if ($esAutomatica) {
+                    $this->recalcularPonderacionesEquitativas($materiaId);
+                }
+                // -------------------------
                 return redirect()->route('admin.materia-criterios.index', ['materia' => $materiaId])
                                  ->with('success', 'Asignación de criterio eliminada correctamente.');
             } catch (\Illuminate\Database\QueryException $e) { // Captura si hay calificaciones (por restricción BD)

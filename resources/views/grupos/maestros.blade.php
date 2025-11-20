@@ -105,6 +105,50 @@
                                     </div>
                                 </div>
 
+                                <div class="mt-8 pt-6 border-t border-gray-200">
+                        <h3 class="font-semibold text-lg text-gray-800 mb-2">MAESTROS COMPLEMENTARIOS</h3>
+                        <p class="text-sm text-gray-500 mb-4">
+                            Asigna maestros de materias especiales (Computación, Fe, Educación Física, etc.). 
+                            Estos maestros aparecerán disponibles para asignarles materias específicas después.
+                        </p>
+
+                        <div class="p-4 border border-indigo-100 bg-indigo-50 rounded-lg">
+                            <label for="maestros_complementarios" class="block font-medium text-sm text-gray-700 mb-2">
+                                Selecciona uno o varios maestros:
+                            </label>
+
+                            {{-- 
+                                IMPORTANTE: 
+                                1. el name debe tener [] al final: name="maestros_complementarios[]"
+                                2. el atributo 'multiple' es obligatorio.
+                            --}}
+                            <select name="maestros_complementarios[]" 
+                                    id="maestros_complementarios" 
+                                    multiple 
+                                    class="block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm h-48"
+                                    >
+                                @foreach ($maestrosDisponibles as $maestro)
+                                    <option value="{{ $maestro->id }}" 
+                                        {{-- 
+                                            Lógica de selección:
+                                            Verificamos si el ID del maestro está en el array $idsComplementarios (que viene de la BD)
+                                            O si está en el old() (si falló la validación y se recargó la página)
+                                        --}}
+                                        @selected(in_array($maestro->id, old('maestros_complementarios', $idsComplementarios ?? [])))
+                                    >
+                                        {{ $maestro->name }} {{ $maestro->apellido_paterno }} {{ $maestro->apellido_materno}}
+                                    </option>
+                                @endforeach
+                            </select>
+                            
+                            <p class="text-xs text-gray-500 mt-2">
+                                💡 <strong>Tip:</strong> Para seleccionar varios, mantén presionada la tecla <strong>Ctrl</strong> (en Windows) o <strong>Cmd</strong> (en Mac) mientras haces clic.
+                            </p>
+                            
+                            <x-input-error :messages="$errors->get('maestros_complementarios')" class="mt-2" />
+                        </div>
+                    </div>
+
                             @else
                                 <div class="text-center p-4 border rounded-lg text-gray-500">
                                     No hay usuarios con el rol "maestro" en el sistema.

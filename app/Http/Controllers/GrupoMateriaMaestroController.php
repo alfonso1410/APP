@@ -11,34 +11,38 @@ class GrupoMateriaMaestroController extends Controller
     /**
      * Muestra el formulario para asignar maestros (del pool) a materias (del grupo).
      */
-    public function create(Grupo $grupo)
+public function create(Grupo $grupo)
     {
-        // 1. Obtenemos las asignaciones (Español e Inglés) y cargamos los usuarios
-        $asignaciones = $grupo->asignacionesTitulares()
-                             ->with('titular', 'auxiliar') // Carga los modelos User
-                             ->get();
+        // 1. Obtenemos los TITULARES
+      $soloTitulares = $grupo->asignacionesTitulares()
+            ->with('titular') // Solo cargamos al titular
+            ->get()
+            ->map(function ($asignacion) {
+                return $asignacion->titular; // <--- AQUÍ EL CAMBIO: Solo retornamos al titular
+            })
+            ->filter(); // Elimina nulos por seguridad
+        // 2. Obtenemos los COMPLEMENTARIOS (Computación, Fe, etc.)
+        // Esta relación la creamos en los pasos anteriores en el modelo Grupo
+        $complementarios = $grupo->maestrosComplementarios; 
 
-        // 2. Creamos el "Pool" de maestros extrayendo los usuarios de las asignaciones
-        $maestrosDelPool = $asignaciones->map(function ($asignacion) {
-            // Map crea una lista única
-            return $asignacion->titular;
-        })
-        ->filter()       // Quita cualquier 'null' (si un puesto está vacío)
-        ->unique('id')   // Se asegura que cada maestro esté solo una vez
-        ->sortBy('name') // Ordena la lista por nombre
-        ->values();      // Re-indexa la colección
+        // 3. UNIMOS ambas listas para crear el "Pool Completo"
+        $maestrosDelPool = $soloTitulares
+            ->merge($complementarios) // Unimos las dos colecciones
+            ->unique('id')            // Evitamos duplicados (por si un titular también se marcó como complementario)
+            ->sortBy('name')          // Ordenamos alfabéticamente
+            ->values();               // Re-indexamos para que la vista lo lea bien
 
-        // 3. Obtenemos las MATERIAS de este grupo (según tu lógica de 'indexMaterias')
+        // 4. Obtenemos las MATERIAS de este grupo
         if ($grupo->tipo_grupo === 'REGULAR') {
-            $materiasDelGrupo = $grupo->grado->materias; // De la estructura
+            $materiasDelGrupo = $grupo->grado->materias; 
         } else {
-            $materiasDelGrupo = $grupo->materias; // Asignadas directo al grupo
+            $materiasDelGrupo = $grupo->materias; 
         }
 
-        // 4. Obtenemos las asignaciones ACTUALES [materia_id => maestro_id]
+        // 5. Obtenemos las asignaciones ACTUALES [materia_id => maestro_id]
         $asignacionesActuales = DB::table('grupo_materia_maestro')
             ->where('grupo_id', $grupo->grupo_id)
-            ->pluck('maestro_id', 'materia_id'); // Clave: materia_id, Valor: maestro_id
+            ->pluck('maestro_id', 'materia_id');
 
         return view('grupos.materias-maestros-form', compact(
             'grupo',
@@ -47,7 +51,6 @@ class GrupoMateriaMaestroController extends Controller
             'asignacionesActuales'
         ));
     }
-
     /**
      * Guarda las asignaciones en la tabla 'grupo_materia_maestro'.
      */

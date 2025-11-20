@@ -32,22 +32,29 @@ class GrupoMaestroController extends Controller
         // 3. Obtenemos los resultados y los pasamos a la vista
         $asignaciones = $query->get()->keyBy('idioma');
 
-        // 4. Mandamos los datos a la vista de ÍNDICE
-        return view('grupos.maestros-index', compact('grupo', 'asignaciones'));
-    }
+      $complementarios = $grupo->maestrosComplementarios; 
 
+        return view('grupos.maestros-index', compact('grupo', 'asignaciones', 'complementarios'));
+    }
     /**
      * Muestra el FORMULARIO para asignar/editar maestros.
      */
     public function create(Grupo $grupo)
     {
+
+        
+
        // 1. Obtenemos TODOS los maestros disponibles
     $maestrosDisponibles = User::maestros()->orderBy('name')->get();
+
+   
 
     // 2. Variables para las asignaciones
     $asignacionEspanol = null;
     $asignacionIngles = null;
     $asignacionGeneral = null; // <-- Para 'EXTRA'
+
+  
 
     // 3. Buscamos las asignaciones según el tipo de grupo
     if ($grupo->tipo_grupo == 'REGULAR') {
@@ -70,16 +77,19 @@ class GrupoMaestroController extends Controller
                                 ->first();
     }
 
-    // 4. Mandamos los datos a la vista
-    // La vista decidirá qué formulario mostrar
-    return view('grupos.maestros', compact(
-        'grupo',
-        'maestrosDisponibles',
-        'asignacionEspanol', // Será null si es 'EXTRA'
-        'asignacionIngles',  // Será null si es 'EXTRA'
-        'asignacionGeneral'  // Será null si es 'REGULAR'
-    ));
-}
+ // 3. NUEVO: Obtener IDs de los complementarios ya asignados para pre-llenar el select
+        // pluck('id') nos da un array simple: [5, 10, 45]
+        $idsComplementarios = $grupo->maestrosComplementarios()->pluck('users.id')->toArray();
+
+        return view('grupos.maestros', compact(
+            'grupo',
+            'maestrosDisponibles',
+            'asignacionEspanol',
+            'asignacionIngles',
+            'asignacionGeneral',
+            'idsComplementarios' // <-- Pasamos esto a la vista
+        ));
+    }
     /**
      * Guarda la asignación del formulario (de los cuatro <select>).
      */
@@ -97,6 +107,8 @@ class GrupoMaestroController extends Controller
                 'maestro_auxiliar_espanol_id' => 'nullable|exists:users,id',
                 'maestro_titular_ingles_id'   => 'nullable|exists:users,id',
                 'maestro_auxiliar_ingles_id'  => 'nullable|exists:users,id',
+                'maestros_complementarios'    => 'nullable|array',
+                'maestros_complementarios.*'  => 'exists:users,id',
             ]);
 
             // Guardar ESPAÑOL
@@ -131,6 +143,7 @@ class GrupoMaestroController extends Controller
             $request->validate([
                 'maestro_titular_general_id'  => 'nullable|exists:users,id',
                 'maestro_auxiliar_general_id' => 'nullable|exists:users,id',
+                'maestros_complementarios'    => 'nullable|array',
             ]);
 
             // Guardar GENERAL
@@ -149,6 +162,17 @@ class GrupoMaestroController extends Controller
                 ->whereIn('idioma', ['ESPAÑOL', 'INGLES'])
                 ->delete();
         }
+
+        // --- B. NUEVA LÓGICA: MAESTROS COMPLEMENTARIOS ---
+            
+            // Obtenemos el array del select múltiple (o array vacío si no enviaron nada)
+            $complementarios = $request->input('maestros_complementarios', []);
+
+            // El método sync hace la magia:
+            // 1. Agrega los nuevos IDs.
+            // 2. Elimina los que ya no estén en el array.
+            // 3. Mantiene los que siguen igual.
+            $grupo->maestrosComplementarios()->sync($complementarios);
 
         DB::commit(); // Todo salió bien, guardar cambios
 

@@ -132,6 +132,13 @@
                     Maestro asignado: <strong x-text="tabla.nombreMaestro"></strong>
                 </div>
 
+                <div x-show="tabla.setup_warning" 
+                     class="my-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800"
+                     role="alert">
+                    <p class="font-bold">Advertencia de Configuración</p>
+                    <p x-text="tabla.setup_warning"></p>
+                </div>
+
                 {{-- Inicio de la Tabla --}}
                 <div x-show="tabla.alumnos.length > 0" class="mt-6">
                     <form action="{{ route('admin.calificaciones.store') }}" method="POST">
@@ -173,7 +180,7 @@
                                                            :value="tabla.calificaciones[alumno.id] && tabla.calificaciones[alumno.id][criterio.id] ? tabla.calificaciones[alumno.id][criterio.id] : ''"
                                                            class="w-24 rounded-md border-gray-300 ... text-center"
                                                            
-                                                           :disabled="criterio.es_promedio || criterio.es_faltas"
+                                                           :disabled="criterio.es_promedio || criterio.es_faltas || criterio.es_calculado"
                                                            :class="{ 'bg-gray-100 font-bold': criterio.es_promedio, 'bg-gray-100': criterio.es_faltas }"
                                                     >
                                                 </td>
@@ -262,7 +269,8 @@
                     calificaciones: {},
                     promedioGrupo: 0,
                     nombreMaestro: '',
-                    intentado: false 
+                    intentado: false,
+                    setup_warning: '' 
                 },
 
                 // Indicadores de carga
@@ -458,7 +466,9 @@
                             this.tabla.calificaciones = data.calificaciones;
                             this.tabla.promedioGrupo = data.promedioGrupo;
                             this.tabla.nombreMaestro = data.nombreMaestro;
+                            this.tabla.setup_warning = data.setup_warning || '';
                             this.loading.tabla = false;
+                            
                         })
                         .catch(err => {
                             console.error('Error al cargar la TABLA:', err);
@@ -476,6 +486,7 @@
                     this.tabla.promedioGrupo = 0;
                     this.tabla.nombreMaestro = '';
                     this.tabla.intentado = false;
+                    this.tabla.setup_warning = '';
                 }
             }
         }

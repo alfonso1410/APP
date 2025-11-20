@@ -78,4 +78,10 @@ return $this->hasMany(GrupoTitular::class, 'grupo_id', 'grupo_id');
     {
         return $this->belongsTo(CicloEscolar::class, 'ciclo_escolar_id', 'ciclo_escolar_id');
     }
+    
+    public function maestrosComplementarios()
+{
+    // Relación muchos a muchos con la tabla que creamos
+    return $this->belongsToMany(User::class, 'grupo_maestro_complementario', 'grupo_id', 'user_id');
+}
 }
