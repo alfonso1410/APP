@@ -11,7 +11,7 @@ use App\Models\MateriaCriterio;
 use App\Models\PonderacionCampo;
 use App\Models\CicloEscolar;
 use App\Models\Nivel;
-use App\Models\CatalogoCriterio; // Asegúrate de que este modelo exista o se importe correctamente
+use App\Models\CatalogoCriterio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -37,10 +37,10 @@ class BoletaController extends Controller
         'De lo Humano a lo Comunitario',
         'Programa Académico',
         'Programa Princeton',
-        'Hábitos', // <--- Este es el de Español
+        'Hábitos',
         'English',
         'Reading Program',
-        'Habits' // <--- Este es el de Inglés
+        'Habits'
     ];
 
     /*
@@ -322,7 +322,8 @@ class BoletaController extends Controller
         // --- MODO PDF ---
         $pdf = PDF::loadView('reportes.boleta-FINAL-PORFAVOR', $data, [
             'format' => 'Legal-L', // <--- Legal Size, Landscape Orientation
-            'orientation' => 'L'
+            'orientation' => 'L',
+            'mode' => 'utf-8'
         ]);
 
         return $pdf->stream('boleta-' . $alumno->apellido_paterno . '-' . $alumno->nombres . '.pdf');
