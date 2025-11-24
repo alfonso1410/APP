@@ -15,7 +15,6 @@
         .container {
             width: 100%;
             margin: 0 auto;
-            /* CAMBIO 1: Quitamos el padding de abajo (20px 20px 0 20px) para evitar la hoja extra */
             padding: 20px 20px 0 20px; 
         }
         
@@ -37,23 +36,18 @@
         .main-container {
             width: 100%;
         }
-        
         .main-columns-table {
             width: 100%;
             border-collapse: collapse;
             border: none;
             page-break-inside: avoid;
         }
-
-        /* Columna Izquierda (60%) */
         .main-left-td {
             width: 60%; 
             padding-right: 10px;
             vertical-align: top;
             border: none;
         }
-
-        /* Columna Derecha (40%) */
         .main-right-td {
             width: 40%;
             padding-left: 10px;
@@ -61,7 +55,7 @@
             border: none;
         }
 
-        /* --- ESTILOS DE TABLAS DE CALIFICACIONES --- */
+        /* --- ESTILOS DE TABLAS --- */
         .boleta-v2 {
             width: 100%;
             border-collapse: collapse;
@@ -70,8 +64,7 @@
             margin-bottom: 8px;
             page-break-inside: avoid;
         }
-        .boleta-v2 th,
-        .boleta-v2 td {
+        .boleta-v2 th, .boleta-v2 td {
             border: 1px solid #000;
             padding: 2px;
             height: 16px; 
@@ -159,14 +152,11 @@
             font-size: 8px;
         }
 
-        /* --- ESTILOS NUEVOS PARA FIRMAS ABAJO --- */
         .signatures-bottom-container {
             width: 100%;
-            /* CAMBIO 2: Reduje de 40px a 20px para ganar espacio y no saltar de hoja */
             margin-top: 20px; 
             page-break-inside: avoid;
         }
-        
         .sig-col-table {
             width: 90%; 
             margin: 0 auto;
@@ -227,6 +217,7 @@
                 <tr>
                     <td class="main-left-td">
 
+                        {{-- 1. CAMPOS FORMATIVOS SEP --}}
                         @foreach($dataCamposSEP as $campo)
                             @php
                                 $rowCountForSEP = (isset($campo['materias']) && is_array($campo['materias'])) ? count($campo['materias']) : 0; 
@@ -263,26 +254,26 @@
                                                 @if ($loop->first)
                                                     @foreach($periodos as $periodo)
                                                         <td class="cal-pas">
-                                                            {{ isset($materia['calificaciones_pas'][$periodo->periodo_id]) ? $materia['calificaciones_pas'][$periodo->periodo_id] : '' }}
+                                                            {{ isset($materia['calificaciones_pas'][$periodo->periodo_id]) && is_numeric($materia['calificaciones_pas'][$periodo->periodo_id]) ? round($materia['calificaciones_pas'][$periodo->periodo_id], 1) + 0 : '' }}
                                                         </td>
                                                         <td class="cal-sep" rowspan="{{ $rowCountForSEP }}">
-                                                            {{ isset($campo['calificaciones_sep'][$periodo->periodo_id]) ? $campo['calificaciones_sep'][$periodo->periodo_id] : '' }}
+                                                            {{ isset($campo['calificaciones_sep'][$periodo->periodo_id]) && is_numeric($campo['calificaciones_sep'][$periodo->periodo_id]) ? round($campo['calificaciones_sep'][$periodo->periodo_id], 1) + 0 : '' }}
                                                         </td>
                                                     @endforeach
                                                     <td class="cal-pas">
-                                                        {{ isset($materia['promedio_pas']) ? $materia['promedio_pas'] : '' }}
+                                                        {{ isset($materia['promedio_pas']) && is_numeric($materia['promedio_pas']) ? round($materia['promedio_pas'], 1) + 0 : '' }}
                                                     </td>
                                                     <td class="cal-prom-sep" rowspan="{{ $rowCountForSEP }}">
-                                                        {{ isset($campo['promedio_final_sep']) ? $campo['promedio_final_sep'] : '' }}
+                                                        {{ isset($campo['promedio_final_sep']) && is_numeric($campo['promedio_final_sep']) ? round($campo['promedio_final_sep'], 1) + 0 : '' }}
                                                     </td>
                                                 @else
                                                     @foreach($periodos as $periodo)
                                                         <td class="cal-pas">
-                                                            {{ isset($materia['calificaciones_pas'][$periodo->periodo_id]) ? $materia['calificaciones_pas'][$periodo->periodo_id] : '' }}
+                                                            {{ isset($materia['calificaciones_pas'][$periodo->periodo_id]) && is_numeric($materia['calificaciones_pas'][$periodo->periodo_id]) ? round($materia['calificaciones_pas'][$periodo->periodo_id], 1) + 0 : '' }}
                                                         </td>
                                                     @endforeach
                                                     <td class="cal-pas">
-                                                        {{ isset($materia['promedio_pas']) ? $materia['promedio_pas'] : '' }}
+                                                        {{ isset($materia['promedio_pas']) && is_numeric($materia['promedio_pas']) ? round($materia['promedio_pas'], 1) + 0 : '' }}
                                                     </td>
                                                 @endif
                                             </tr>
@@ -292,7 +283,29 @@
                             </table>
                         @endforeach
 
+                        {{-- NUEVO: PROMEDIO GENERAL DE LOS CAMPOS SEP (Columna SEP) --}}
+                        @if(!empty($promediosGeneralesSEP))
+                            <table class="boleta-v2">
+                                <tbody>
+                                    <tr style="background-color: #E0E0E0; font-weight: bold; border-top: 2px solid #000;">
+                                        <td style="width: 30%; text-align: center;">PROMEDIO GENERAL</td>
+                                        @foreach($periodos as $periodo)
+                                            <td class="cal-pas"></td> {{-- Columna PAS vacía --}}
+                                            <td class="cal-prom-sep">
+                                                {{ isset($promediosGeneralesSEP[$periodo->periodo_id]) ? $promediosGeneralesSEP[$periodo->periodo_id] + 0 : '' }}
+                                            </td>
+                                        @endforeach
+                                        <td class="cal-pas"></td> {{-- Promedio Final PAS vacío --}}
+                                        <td class="cal-prom-sep">
+                                            {{ isset($promediosGeneralesSEP['final']) ? $promediosGeneralesSEP['final'] + 0 : '' }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        @endif
 
+
+                        {{-- 2. PROGRAMA ACADEMICO (Bloque Criterios) --}}
                         @if(!empty($datosBloques['PROGRAMA ACADEMICO']))
                             @php 
                                 $bloque = $datosBloques['PROGRAMA ACADEMICO'];
@@ -319,9 +332,13 @@
                                             <tr>
                                                 <td class="criterio-pas">{{ isset($criterio['nombre']) ? $criterio['nombre'] : '' }}</td>
                                                 @foreach($periodos as $periodo)
-                                                    <td class="cal-pas">{{ isset($criterio['calificaciones'][$periodo->periodo_id]) ? $criterio['calificaciones'][$periodo->periodo_id] : '' }}</td>
+                                                    <td class="cal-pas">
+                                                        {{ isset($criterio['calificaciones'][$periodo->periodo_id]) && is_numeric($criterio['calificaciones'][$periodo->periodo_id]) ? round($criterio['calificaciones'][$periodo->periodo_id], 1) + 0 : '' }}
+                                                    </td>
                                                 @endforeach
-                                                <td class="cal-prom-pas">{{ isset($criterio['promedio']) ? $criterio['promedio'] : '' }}</td>
+                                                <td class="cal-prom-pas">
+                                                    {{ isset($criterio['promedio']) && is_numeric($criterio['promedio']) ? round($criterio['promedio'], 1) + 0 : '' }}
+                                                </td>
                                             </tr>
                                         @endforeach
                                     @endif
@@ -329,74 +346,110 @@
                                         <tr class="promedio-bloque-pas">
                                             <td>PROMEDIO</td>
                                             @foreach($periodos as $periodo)
-                                                <td>{{ isset($bloque['promedios_bloque'][$periodo->periodo_id]) ? $bloque['promedios_bloque'][$periodo->periodo_id] : '' }}</td>
+                                                <td>
+                                                    {{ isset($bloque['promedios_bloque'][$periodo->periodo_id]) && is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? round($bloque['promedios_bloque'][$periodo->periodo_id], 1) + 0 : '' }}
+                                                </td>
                                             @endforeach
-                                            <td>{{ isset($bloque['promedios_bloque']['promedio']) ? $bloque['promedios_bloque']['promedio'] : '' }}</td>
+                                            <td>
+                                                {{ isset($bloque['promedios_bloque']['promedio']) && is_numeric($bloque['promedios_bloque']['promedio']) ? round($bloque['promedios_bloque']['promedio'], 1) + 0 : '' }}
+                                            </td>
                                         </tr>
                                     @endif
                                 </tbody>
                             </table>
                         @endif
 
-                        @if(!empty($datosBloques['PROGRAMA PRINCETON']))
-                            @php 
-                                $bloque = $datosBloques['PROGRAMA PRINCETON'];
-                                $colFinal = 'PROMEDIO';
-                                $headerColor = '#DDEBF7';
-                                $showAverageRow = true;
-                            @endphp
-                            <table class="boleta-v2">
-                                <thead>
-                                    <tr class="header-row-titulo" style="background-color: {{ $headerColor }};">
-                                        <th colspan="{{ 1 + count($periodos) + 1 }}">{{ isset($bloque['titulo']) ? $bloque['titulo'] : '' }}</th>
-                                    </tr>
-                                    <tr class="header-row-periodos">
-                                        <th style="width: 35%;"></th>
-                                        @foreach($periodos as $periodo)
-                                            <th>{{ isset($periodo->nombre) ? $periodo->nombre : '' }}</th>
-                                        @endforeach
-                                        <th>{{ $colFinal }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if (isset($bloque['criterios']) && is_array($bloque['criterios']))
-                                        @foreach($bloque['criterios'] as $criterio)
-                                            <tr>
-                                                <td class="criterio-pas">{{ isset($criterio['nombre']) ? $criterio['nombre'] : '' }}</td>
-                                                @foreach($periodos as $periodo)
-                                                    <td class="cal-pas">{{ isset($criterio['calificaciones'][$periodo->periodo_id]) ? $criterio['calificaciones'][$periodo->periodo_id] : '' }}</td>
-                                                @endforeach
-                                                <td class="cal-prom-pas">{{ isset($criterio['promedio']) ? $criterio['promedio'] : '' }}</td>
-                                            </tr>
-                                        @endforeach
-                                    @endif
-                                    @if ($showAverageRow)
+                        {{-- 3. PROGRAMA PRINCETON (CORREGIDO Y FORMATEADO) --}}
+                        @if(!empty($dataPrinceton))
+                            @foreach($dataPrinceton as $campo)
+                                @php
+                                    $headerColor = '#DDEBF7'; 
+                                    $colFinal = 'PROMEDIO';
+                                @endphp
+                                <table class="boleta-v2">
+                                    <thead>
+                                        <tr class="header-row-titulo" style="background-color: {{ $headerColor }};">
+                                            <th colspan="{{ 1 + count($periodos) + 1 }}">{{ isset($campo['nombre']) ? $campo['nombre'] : 'Programa Princeton' }}</th>
+                                        </tr>
+                                        <tr class="header-row-periodos">
+                                            <th style="width: 35%;"></th>
+                                            @foreach($periodos as $periodo)
+                                                <th>{{ isset($periodo->nombre) ? $periodo->nombre : '' }}</th>
+                                            @endforeach
+                                            <th>{{ $colFinal }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if(isset($campo['materias']) && is_array($campo['materias']))
+                                            @foreach($campo['materias'] as $materia)
+                                                <tr>
+                                                    <td class="criterio-pas" style="font-weight: bold;">{{ isset($materia['nombre']) ? $materia['nombre'] : '' }}</td>
+                                                    @foreach($periodos as $periodo)
+                                                        @php
+                                                            $calif = $materia['calificaciones_pas'][$periodo->periodo_id] ?? null;
+                                                            $califMostrada = is_numeric($calif) ? round($calif, 1) + 0 : ''; 
+                                                        @endphp
+                                                        <td class="cal-pas">{{ $califMostrada }}</td>
+                                                    @endforeach
+                                                    @php
+                                                        $promMateria = $materia['promedio_pas'] ?? null;
+                                                        $promMateriaMostrado = is_numeric($promMateria) ? round($promMateria, 1) + 0 : '';
+                                                    @endphp
+                                                    <td class="cal-prom-pas">{{ $promMateriaMostrado }}</td>
+                                                </tr>
+                                            @endforeach
+                                        @endif
+
                                         <tr class="promedio-bloque-pas">
                                             <td>PROMEDIO</td>
                                             @foreach($periodos as $periodo)
-                                                <td>{{ isset($bloque['promedios_bloque'][$periodo->periodo_id]) ? $bloque['promedios_bloque'][$periodo->periodo_id] : '' }}</td>
+                                                @php
+                                                    $sumaVertical = 0;
+                                                    $countVertical = 0;
+                                                    if(isset($campo['materias']) && is_array($campo['materias'])) {
+                                                        foreach($campo['materias'] as $mat) {
+                                                            $val = $mat['calificaciones_pas'][$periodo->periodo_id] ?? null;
+                                                            if(is_numeric($val)) {
+                                                                $sumaVertical += $val;
+                                                                $countVertical++;
+                                                            }
+                                                        }
+                                                    }
+                                                    $promVertical = ($countVertical > 0) ? round($sumaVertical / $countVertical, 1) + 0 : '';
+                                                @endphp
+                                                <td>{{ $promVertical }}</td>
                                             @endforeach
-                                            <td>{{ isset($bloque['promedios_bloque']['promedio']) ? $bloque['promedios_bloque']['promedio'] : '' }}</td>
+                                            @php
+                                                $promFinalTotal = $campo['promedio_final_pas'] ?? null;
+                                                $promFinalTotalMostrado = is_numeric($promFinalTotal) ? round($promFinalTotal, 1) + 0 : '';
+                                            @endphp
+                                            <td>{{ $promFinalTotalMostrado }}</td>
                                         </tr>
-                                    @endif
-                                </tbody>
-                            </table>
+                                    </tbody>
+                                </table>
+                            @endforeach
                         @endif
 
+                        {{-- 4. PROMEDIO FINAL COMBINADO --}}
                         @if(!empty($promediosCombinadosAcademico))
                             <table class="boleta-v2">
                                 <tbody>
                                     <tr class="promedio-final-combinado">
                                         <td style="width: 35%; text-align: left; padding-left: 5px; font-size: 9px;">PROMEDIO FINAL</td>
                                         @foreach($periodos as $periodo)
-                                            <td>{{ isset($promediosCombinadosAcademico[$periodo->periodo_id]) ? $promediosCombinadosAcademico[$periodo->periodo_id] : '' }}</td>
+                                            <td>
+                                                {{ isset($promediosCombinadosAcademico[$periodo->periodo_id]) && is_numeric($promediosCombinadosAcademico[$periodo->periodo_id]) ? round($promediosCombinadosAcademico[$periodo->periodo_id], 1) + 0 : '' }}
+                                            </td>
                                         @endforeach
-                                        <td>{{ isset($promediosCombinadosAcademico['promedio']) ? $promediosCombinadosAcademico['promedio'] : '' }}</td>
+                                        <td>
+                                            {{ isset($promediosCombinadosAcademico['promedio']) && is_numeric($promediosCombinadosAcademico['promedio']) ? round($promediosCombinadosAcademico['promedio'], 1) + 0 : '' }}
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
                         @endif
 
+                        {{-- 5. ASISTENCIAS --}}
                         @if(!empty($datosAsistencias))
                             <table class="boleta-v2 asistencias-table">
                                 <thead>
@@ -514,9 +567,13 @@
                                             <tr>
                                                 <td class="criterio-pas">{{ isset($criterio['nombre']) ? $criterio['nombre'] : '' }}</td>
                                                 @foreach($periodos as $periodo)
-                                                    <td class="cal-pas">{{ isset($criterio['calificaciones'][$periodo->periodo_id]) ? $criterio['calificaciones'][$periodo->periodo_id] : '' }}</td>
+                                                    <td class="cal-pas">
+                                                        {{ isset($criterio['calificaciones'][$periodo->periodo_id]) && is_numeric($criterio['calificaciones'][$periodo->periodo_id]) ? round($criterio['calificaciones'][$periodo->periodo_id], 1) + 0 : '' }}
+                                                    </td>
                                                 @endforeach
-                                                <td class="cal-prom-pas">{{ isset($criterio['promedio']) ? $criterio['promedio'] : '' }}</td>
+                                                <td class="cal-prom-pas">
+                                                    {{ isset($criterio['promedio']) && is_numeric($criterio['promedio']) ? round($criterio['promedio'], 1) + 0 : '' }}
+                                                </td>
                                             </tr>
                                         @endforeach
                                     @endif
@@ -549,18 +606,26 @@
                                             <tr>
                                                 <td class="criterio-pas">{{ isset($criterio['nombre']) ? $criterio['nombre'] : '' }}</td>
                                                 @foreach($periodos as $periodo)
-                                                    <td class="cal-pas">{{ isset($criterio['calificaciones'][$periodo->periodo_id]) ? $criterio['calificaciones'][$periodo->periodo_id] : '' }}</td>
+                                                    <td class="cal-pas">
+                                                        {{ isset($criterio['calificaciones'][$periodo->periodo_id]) && is_numeric($criterio['calificaciones'][$periodo->periodo_id]) ? round($criterio['calificaciones'][$periodo->periodo_id], 1) + 0 : '' }}
+                                                    </td>
                                                 @endforeach
-                                                <td class="cal-prom-pas">{{ isset($criterio['promedio']) ? $criterio['promedio'] : '' }}</td>
+                                                <td class="cal-prom-pas">
+                                                    {{ isset($criterio['promedio']) && is_numeric($criterio['promedio']) ? round($criterio['promedio'], 1) + 0 : '' }}
+                                                </td>
                                             </tr>
                                         @endforeach
                                     @endif
                                     <tr class="promedio-bloque-pas" style="background-color: #E2F0D9;"> 
                                         <td>SEP AVERAGE</td> 
                                         @foreach($periodos as $periodo)
-                                            <td>{{ isset($bloque['promedios_bloque'][$periodo->periodo_id]) ? $bloque['promedios_bloque'][$periodo->periodo_id] : '' }}</td>
+                                            <td>
+                                                {{ isset($bloque['promedios_bloque'][$periodo->periodo_id]) && is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? round($bloque['promedios_bloque'][$periodo->periodo_id], 1) + 0 : '' }}
+                                            </td>
                                         @endforeach
-                                        <td>{{ isset($bloque['promedios_bloque']['promedio']) ? $bloque['promedios_bloque']['promedio'] : '' }}</td>
+                                        <td>
+                                            {{ isset($bloque['promedios_bloque']['promedio']) && is_numeric($bloque['promedios_bloque']['promedio']) ? round($bloque['promedios_bloque']['promedio'], 1) + 0 : '' }}
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -592,9 +657,13 @@
                                             <tr>
                                                 <td class="criterio-pas">{{ isset($criterio['nombre']) ? $criterio['nombre'] : '' }}</td>
                                                 @foreach($periodos as $periodo)
-                                                    <td class="cal-pas">{{ isset($criterio['calificaciones'][$periodo->periodo_id]) ? $criterio['calificaciones'][$periodo->periodo_id] : '' }}</td>
+                                                    <td class="cal-pas">
+                                                        {{ isset($criterio['calificaciones'][$periodo->periodo_id]) && is_numeric($criterio['calificaciones'][$periodo->periodo_id]) ? round($criterio['calificaciones'][$periodo->periodo_id], 1) + 0 : '' }}
+                                                    </td>
                                                 @endforeach
-                                                <td class="cal-prom-pas">{{ isset($criterio['promedio']) ? $criterio['promedio'] : '' }}</td>
+                                                <td class="cal-prom-pas">
+                                                    {{ isset($criterio['promedio']) && is_numeric($criterio['promedio']) ? round($criterio['promedio'], 1) + 0 : '' }}
+                                                </td>
                                             </tr>
                                         @endforeach
                                     @endif
@@ -627,9 +696,13 @@
                                             <tr>
                                                 <td class="criterio-pas">{{ isset($criterio['nombre']) ? $criterio['nombre'] : '' }}</td>
                                                 @foreach($periodos as $periodo)
-                                                    <td class="cal-pas">{{ isset($criterio['calificaciones'][$periodo->periodo_id]) ? $criterio['calificaciones'][$periodo->periodo_id] : '' }}</td>
+                                                    <td class="cal-pas">
+                                                        {{ isset($criterio['calificaciones'][$periodo->periodo_id]) && is_numeric($criterio['calificaciones'][$periodo->periodo_id]) ? round($criterio['calificaciones'][$periodo->periodo_id], 1) + 0 : '' }}
+                                                    </td>
                                                 @endforeach
-                                                <td class="cal-prom-pas">{{ isset($criterio['promedio']) ? $criterio['promedio'] : '' }}</td>
+                                                <td class="cal-prom-pas">
+                                                    {{ isset($criterio['promedio']) && is_numeric($criterio['promedio']) ? round($criterio['promedio'], 1) + 0 : '' }}
+                                                </td>
                                             </tr>
                                         @endforeach
                                     @endif
@@ -644,9 +717,13 @@
                                     <tr class="promedio-bloque-pas" style="background-color: #F3F3F3;">
                                         <td style="width: 35%; text-align: left; padding-left: 5px;">AVERAGE</td>
                                         @foreach($periodos as $periodo)
-                                            <td>{{ isset($promediosCombinadosHabits[$periodo->periodo_id]) ? $promediosCombinadosHabits[$periodo->periodo_id] : '' }}</td>
+                                            <td>
+                                                {{ isset($promediosCombinadosHabits[$periodo->periodo_id]) && is_numeric($promediosCombinadosHabits[$periodo->periodo_id]) ? round($promediosCombinadosHabits[$periodo->periodo_id], 1) + 0 : '' }}
+                                            </td>
                                         @endforeach
-                                        <td>{{ isset($promediosCombinadosHabits['promedio']) ? $promediosCombinadosHabits['promedio'] : '' }}</td>
+                                        <td>
+                                            {{ isset($promediosCombinadosHabits['promedio']) && is_numeric($promediosCombinadosHabits['promedio']) ? round($promediosCombinadosHabits['promedio'], 1) + 0 : '' }}
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
