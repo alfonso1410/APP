@@ -69,7 +69,7 @@
         .tutor-table th, .tutor-table td { border: 1px solid #000; padding: 2px; height: 25px; }
         .tutor-table th { background-color: #E0E0E0; font-size: 8px; }
 
-        .signatures-bottom-container { width: 100%; margin-top: 20px; page-break-inside: avoid; }
+        .signatures-bottom-container { width: 100%; margin-top: 60px; page-break-inside: avoid; }
         .sig-col-table { width: 90%; margin: 0 auto; border-collapse: collapse; text-align: center; }
         .sig-line-cell { border-bottom: 1px solid #000; height: 1px; width: 100%; }
         .sig-name { font-weight: bold; font-size: 8px; padding-top: 3px; }
@@ -216,43 +216,25 @@
                                 @endforeach
                             @endif
 
-                            @if(!empty($datosAsistencias))
-                                <table class="boleta-v2 asistencias-table">
-                                    <thead>
-                                        <tr class="header-row-titulo">
-                                            <th colspan="{{ 2 + count($periodos) + 1 }}">CONTROL DE ASISTENCIAS // ATTENDANCE CONTROL</th>
-                                        </tr>
-                                        <tr class="header-row-periodos">
-                                            <th style="width: 25%;">MOMENTO ----></th>
-                                            <th style="width: 10%;">ESP/ENG</th> 
-                                            @foreach($periodos as $periodo) <th>ESP/ENG</th> @endforeach
-                                            <th>TOTAL</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td rowspan="1" class="label" style="font-weight: bold;">ASISTENCIAS / ATTENDANCES</td>
-                                            <td></td>
-                                            @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_asistencias'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_asistencias'] ?? 0 }}</td> @endforeach
-                                            <td>{{ $datosAsistencias['totales']['TOTAL_asistencias'] ?? 0 }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td rowspan="1" class="label" style="font-weight: bold;">RETARDOS / DELAYS</td>
-                                            <td></td>
-                                            @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_retardos'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_retardos'] ?? 0 }}</td> @endforeach
-                                            <td>{{ $datosAsistencias['totales']['TOTAL_retardos'] ?? 0 }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td rowspan="1" class="label" style="font-weight: bold;">INASISTENCIAS / ABSENCES</td>
-                                            <td></td>
-                                            @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_inasistencias'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_inasistencias'] ?? 0 }}</td> @endforeach
-                                            <td>{{ $datosAsistencias['totales']['TOTAL_inasistencias'] ?? 0 }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            @endif
+                            {{-- PREESCOLAR: TABLA DE FIRMAS (MOVIDA AQUI DESDE LA DERECHA) --}}
+                            <table class="tutor-table">
+                                <thead>
+                                    <tr><th colspan="4">FIRMA DEL PADRE O TUTOR</th></tr>
+                                    <tr>
+                                        <th style="width: 10%;">PERIODO</th> {{-- Periodo más corto --}}
+                                        <th style="width: 50%;">NOMBRE</th>  {{-- Nombre más largo --}}
+                                        <th style="width: 20%;">FIRMA</th>
+                                        <th style="width: 20%;">FECHA</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>1ER</td><td></td><td></td><td></td></tr>
+                                    <tr><td>2DO</td><td></td><td></td><td></td></tr>
+                                    <tr><td>3RO</td><td></td><td></td><td></td></tr>
+                                </tbody>
+                            </table>
 
-                            {{-- PREESCOLAR: EQUIVALENCIAS EN COLUMNA IZQUIERDA --}}
+                            {{-- PREESCOLAR: EQUIVALENCIAS (SE MANTIENE AQUI) --}}
                             <table class="equivalencias-table" style="margin-top: 10px;">
                                 <tr><td class="head">EQUIVALENCIAS</td></tr>
                                 <tr><td>E- EXCELENTE (10)</td></tr>
@@ -380,6 +362,17 @@
                                                 <td class="cal-prom-pas">{{ is_numeric($materia['promedio_pas']) ? round($materia['promedio_pas'], 1)+0 : '' }}</td>
                                             </tr>
                                         @endforeach
+
+                                        {{-- NUEVA FILA DE PROMEDIO PRINCETON --}}
+                                        <tr class="promedio-bloque-pas">
+                                            <td>PROMEDIO</td>
+                                            @foreach($periodos as $periodo) 
+                                                <td>{{ isset($promediosPrinceton[$periodo->periodo_id]) ? $promediosPrinceton[$periodo->periodo_id] : '' }}</td> 
+                                            @endforeach
+                                            <td>{{ isset($promediosPrinceton['promedio']) ? $promediosPrinceton['promedio'] : '' }}</td>
+                                        </tr>
+                                        {{-- FIN NUEVA FILA --}}
+
                                     </tbody>
                                 </table>
                                 @endforeach
@@ -397,51 +390,23 @@
                                 </table>
                             @endif
 
-                            @if(!empty($datosAsistencias))
-                                <table class="boleta-v2 asistencias-table">
-                                    <thead>
-                                        <tr class="header-row-titulo">
-                                            <th colspan="{{ 2 + count($periodos) + 1 }}">CONTROL DE ASISTENCIAS // ATTENDANCE CONTROL</th>
-                                        </tr>
-                                        <tr class="header-row-periodos">
-                                            <th style="width: 25%;">TRIMESTRE ---></th>
-                                            <th style="width: 10%;"></th> @foreach($periodos as $periodo) <th>{{ $periodo->nombre }}</th> @endforeach <th>TOTAL</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td rowspan="3" class="label" style="font-weight: bold;">ASISTENCIAS / ATTENDANCES</td>
-                                            <td class="label">ESP</td> @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_asistencias'] }}</td> @endforeach <td>{{ $datosAsistencias['totales']['ESP_asistencias'] }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="label">ENG</td> @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_asistencias'] }}</td> @endforeach <td>{{ $datosAsistencias['totales']['ENG_asistencias'] }}</td>
-                                        </tr>
-                                        <tr style="font-weight: bold;">
-                                            <td class="label">Total</td> @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['TOTAL_asistencias'] }}</td> @endforeach <td>{{ $datosAsistencias['totales']['TOTAL_asistencias'] }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td rowspan="3" class="label" style="font-weight: bold;">INASISTENCIAS / ABSENCES</td>
-                                            <td class="label">ESP</td> @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_inasistencias'] }}</td> @endforeach <td>{{ $datosAsistencias['totales']['ESP_inasistencias'] }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="label">ENG</td> @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_inasistencias'] }}</td> @endforeach <td>{{ $datosAsistencias['totales']['ENG_inasistencias'] }}</td>
-                                        </tr>
-                                        <tr style="font-weight: bold;">
-                                            <td class="label">Total</td> @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['TOTAL_inasistencias'] }}</td> @endforeach <td>{{ $datosAsistencias['totales']['TOTAL_inasistencias'] }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td rowspan="3" class="label" style="font-weight: bold;">RETARDOS / DELAYS</td>
-                                            <td class="label">ESP</td> @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_retardos'] }}</td> @endforeach <td>{{ $datosAsistencias['totales']['ESP_retardos'] }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="label">ENG</td> @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_retardos'] }}</td> @endforeach <td>{{ $datosAsistencias['totales']['ENG_retardos'] }}</td>
-                                        </tr>
-                                        <tr style="font-weight: bold;">
-                                            <td class="label">Total</td> @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['TOTAL_retardos'] }}</td> @endforeach <td>{{ $datosAsistencias['totales']['TOTAL_retardos'] }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            @endif
+                            {{-- PRIMARIA: TABLA DE FIRMAS (MOVIDA AQUI DESDE LA DERECHA) --}}
+                            <table class="tutor-table">
+                                <thead>
+                                    <tr><th colspan="4">FIRMA DEL PADRE O TUTOR</th></tr>
+                                    <tr>
+                                        <th style="width: 10%;">PERIODO</th> {{-- Periodo más corto --}}
+                                        <th style="width: 50%;">NOMBRE</th>  {{-- Nombre más largo --}}
+                                        <th style="width: 20%;">FIRMA</th>
+                                        <th style="width: 20%;">FECHA</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>1ER</td><td></td><td></td><td></td></tr>
+                                    <tr><td>2DO</td><td></td><td></td><td></td></tr>
+                                    <tr><td>3RO</td><td></td><td></td><td></td></tr>
+                                </tbody>
+                            </table>
 
                         @endif
 
@@ -541,6 +506,49 @@
                                     </tbody>
                                 </table>
                             @endif
+                            
+                            {{-- PREESCOLAR: TABLA DE ASISTENCIAS (MOVIDA AQUI DESDE LA IZQUIERDA Y SIN LA 2DA COLUMNA) --}}
+                            @if(!empty($datosAsistencias))
+                                <table class="boleta-v2 asistencias-table" style="margin-top: 15px;">
+                                    <thead>
+                                        <tr class="header-row-titulo">
+                                            {{-- Colspan ajustado: 1(label) + Periodos + 1(Total) --}}
+                                            <th colspan="{{ 1 + count($periodos) + 1 }}">CONTROL DE ASISTENCIAS // ATTENDANCE CONTROL</th>
+                                        </tr>
+                                        <tr class="header-row-periodos">
+                                            <th style="width: 35%;">MOMENTO ----></th>
+                                            @foreach($periodos as $periodo) <th>ESP/ENG</th> @endforeach
+                                            <th>TOTAL</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td rowspan="1" class="label" style="font-weight: bold;">ASISTENCIAS / ATTENDANCES</td>
+                                            @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_asistencias'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_asistencias'] ?? 0 }}</td> @endforeach
+                                            <td>{{ $datosAsistencias['totales']['TOTAL_asistencias'] ?? 0 }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td rowspan="1" class="label" style="font-weight: bold;">RETARDOS / DELAYS</td>
+                                            @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_retardos'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_retardos'] ?? 0 }}</td> @endforeach
+                                            <td>{{ $datosAsistencias['totales']['TOTAL_retardos'] ?? 0 }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td rowspan="1" class="label" style="font-weight: bold;">INASISTENCIAS / ABSENCES</td>
+                                            @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_inasistencias'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_inasistencias'] ?? 0 }}</td> @endforeach
+                                            <td>{{ $datosAsistencias['totales']['TOTAL_inasistencias'] ?? 0 }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            @endif
+                            {{-- FIRMA DEL ALUMNO (Debajo de asistencias) --}}
+                            <table style="width: 60%; margin: 40px auto 10px auto; border-collapse: collapse; text-align: center; page-break-inside: avoid;">
+                                <tr>
+                                    <td style="border-bottom: 1px solid #000; height: 1px;"></td>
+                                </tr>
+                                <tr>
+                                    <td style="font-size: 7px; font-weight: bold; padding-top: 2px;">FIRMA DEL ALUMNO</td>
+                                </tr>
+                            </table>
 
                         @else
                             {{-- ==================== PRIMARIA DERECHA ==================== --}}
@@ -646,20 +654,51 @@
                                     </tbody>
                                 </table>
                             @endif
-                        @endif
 
-                        {{-- TABLA FIRMAS (IGUAL PARA AMBOS) --}}
-                        <table class="tutor-table">
-                            <thead>
-                                <tr><th colspan="4">FIRMA DEL PADRE O TUTOR</th></tr>
-                                <tr><th>PERIODO</th><th>NOMBRE</th><th>FIRMA</th><th>FECHA</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr><td>1ER</td><td></td><td></td><td></td></tr>
-                                <tr><td>2DO</td><td></td><td></td><td></td></tr>
-                                <tr><td>3RO</td><td></td><td></td><td></td></tr>
-                            </tbody>
-                        </table>
+                            {{-- PRIMARIA: TABLA DE ASISTENCIAS (MOVIDA AQUI DESDE LA IZQUIERDA Y ACTUALIZADA EXACTAMENTE IGUAL A PREESCOLAR) --}}
+                            @if(!empty($datosAsistencias))
+                                <table class="boleta-v2 asistencias-table" style="margin-top: 15px;">
+                                    <thead>
+                                        <tr class="header-row-titulo">
+                                            {{-- Colspan ajustado: 1(label) + Periodos + 1(Total) --}}
+                                            <th colspan="{{ 1 + count($periodos) + 1 }}">CONTROL DE ASISTENCIAS // ATTENDANCE CONTROL</th>
+                                        </tr>
+                                        <tr class="header-row-periodos">
+                                            <th style="width: 35%;">MOMENTO ----></th>
+                                            @foreach($periodos as $periodo) <th>ESP/ENG</th> @endforeach
+                                            <th>TOTAL</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td rowspan="1" class="label" style="font-weight: bold;">ASISTENCIAS / ATTENDANCES</td>
+                                            @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_asistencias'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_asistencias'] ?? 0 }}</td> @endforeach
+                                            <td>{{ $datosAsistencias['totales']['TOTAL_asistencias'] ?? 0 }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td rowspan="1" class="label" style="font-weight: bold;">RETARDOS / DELAYS</td>
+                                            @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_retardos'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_retardos'] ?? 0 }}</td> @endforeach
+                                            <td>{{ $datosAsistencias['totales']['TOTAL_retardos'] ?? 0 }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td rowspan="1" class="label" style="font-weight: bold;">INASISTENCIAS / ABSENCES</td>
+                                            @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_inasistencias'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_inasistencias'] ?? 0 }}</td> @endforeach
+                                            <td>{{ $datosAsistencias['totales']['TOTAL_inasistencias'] ?? 0 }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            @endif
+                            
+                            <table style="width: 60%; margin: 40px auto 10px auto; border-collapse: collapse; text-align: center; page-break-inside: avoid;">
+                                <tr>
+                                    <td style="border-bottom: 1px solid #000; height: 1px;"></td>
+                                </tr>
+                                <tr>
+                                    <td style="font-size: 7px; font-weight: bold; padding-top: 2px;">FIRMA DEL ALUMNO</td>
+                                </tr>
+                            </table>
+
+                        @endif
 
                     </td>
                 </tr>
