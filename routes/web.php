@@ -27,6 +27,8 @@ use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\PonderacionController;
 use App\Http\Controllers\BoletaController;
 use App\Models\CatalogoCriterio;
+// --- IMPORTACIÓN NUEVA ---
+use App\Http\Controllers\PdaController; 
 
 
 /*
@@ -102,8 +104,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Niveles
         Route::resource('niveles', NivelController::class)->parameters([
-    'niveles' => 'nivel'
-]);
+            'niveles' => 'nivel'
+        ]);
 
 
         // Campos Formativos
@@ -169,6 +171,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // ==========================================================
         // == FIN: RUTAS DE CALIFICACIONES                       ==
         // ==========================================================
+
+        // ==========================================================
+        // == INICIO: RUTAS PDA (PREESCOLAR)                       ==
+        // ==========================================================
+        
+        // Estas rutas heredan el prefijo 'admin.', por lo que se llaman:
+        // admin.pda.index, admin.pda.store, admin.json.pda.data
+        Route::get('/pda', [PdaController::class, 'index'])->name('pda.index');
+        Route::post('/pda/guardar', [PdaController::class, 'store'])->name('pda.store');
+        Route::get('/json/pda/data', [PdaController::class, 'getData'])->name('json.pda.data');
+
+        // ==========================================================
+        // == FIN: RUTAS PDA                                     ==
+        // ==========================================================
+
         Route::get('/reportes/concentrado-periodo/{grupo}/{periodo}/{materia}', [ReporteController::class, 'generarConcentradoPeriodo'])
             ->name('reportes.concentrado.periodo');
 

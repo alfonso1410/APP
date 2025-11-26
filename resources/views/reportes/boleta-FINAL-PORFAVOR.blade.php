@@ -197,7 +197,7 @@
                                         <thead>
                                             <tr class="header-row-titulo">
                                                 <th colspan="{{ 1 + count($periodos) + 1 }}" style="background-color: #BDD7EE; text-align: center;">
-                                                    {{ isset($campo['nombre']) ? $campo['nombre'] : 'Programa Princeton' }}
+                                                    {{ isset($campo['nombre']) ? $campo['nombre'] : 'PROGRAMA PRINCETON' }}
                                                 </th>
                                             </tr>
                                         </thead>
