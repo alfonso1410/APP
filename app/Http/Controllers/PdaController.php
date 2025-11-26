@@ -12,54 +12,71 @@ use Illuminate\Support\Facades\DB;
 
 class PdaController extends Controller
 {
+    /**
+     * Vista principal.
+     */
     public function index()
     {
-        // 1. Obtenemos niveles de Preescolar usando su PK correcta 'nivel_id'
+        // 1. Niveles de Preescolar
         $niveles = Nivel::where('nombre', 'LIKE', '%Preescolar%')->get();
 
-        // 2. Buscamos el Ciclo Activo usando la columna 'estado' (CORREGIDO)
-        $cicloActivo = CicloEscolar::where('estado', 'ACTIVO')->first();
-        
-        // Obtenemos periodos si hay ciclo activo
+        // 2. Todos los ciclos para el filtro
+        $ciclos = CicloEscolar::orderBy('ciclo_escolar_id', 'desc')->get();
+
+        // 3. Ciclo activo
+        $cicloActivo = $ciclos->where('estado', 'ACTIVO')->first();
+
+        // 4. Periodos del ciclo activo
         $periodos = $cicloActivo ? $cicloActivo->periodos : collect([]);
 
-        return view('admin.pda.index', compact('niveles', 'periodos'));
+        return view('admin.pda.index', compact('niveles', 'ciclos', 'cicloActivo', 'periodos'));
     }
 
-    // Retorna alumnos, materias y evaluaciones guardadas (JSON)
+    /**
+     * Obtener periodos por ciclo (AJAX).
+     */
+    public function getPeriodos($ciclo_id)
+    {
+        $ciclo = CicloEscolar::with('periodos')->findOrFail($ciclo_id);
+        return response()->json($ciclo->periodos);
+    }
+
+    /**
+     * Retorna alumnos activos, campos, materias y evaluaciones guardadas.
+     */
     public function getData(Request $request)
     {
         $grupo_id = $request->grupo_id;
         $periodo_id = $request->periodo_id;
 
-        // Cargar el Grupo con sus alumnos y su grado asociado
-        // Usamos 'grupo_id' implícitamente al buscar con findOrFail
-        $grupo = Grupo::with(['alumnos', 'grado'])->findOrFail($grupo_id);
-        
-        // 1. Obtener Campos Formativos (General)
-        // Asumimos que quieres todos los campos disponibles
+        // Cargamos el grupo y solo alumnos con es_actual = 1
+        $grupo = Grupo::with([
+            'grado',
+            'alumnos' => function ($q) {
+                $q->where('es_actual', 1); // ← FILTRO APLICADO AQUÍ
+            }
+        ])->findOrFail($grupo_id);
+
+        // 1. Campos formativos (general)
         $campos = CampoFormativo::all();
 
-        // 2. Obtener Materias Específicas (Inglés, Artes, Ed Física)
-        // Accedemos a las materias a través del Grado del grupo (Relación corregida según tus modelos)
+        // 2. Materias específicas del grado
         $materias = $grupo->grado->materias()
-                    ->where(function($q) {
-                        $q->Where('nombre', 'LIKE', '%Artes%')
-                          ->orWhere('nombre', 'LIKE', '%Educación Física%')
-                          ->orWhere('nombre', 'LIKE', '%Lengua Extranjera%');
-                    })
-                    ->get();
+            ->where(function ($q) {
+                $q->where('nombre', 'LIKE', '%Artes%')
+                  ->orWhere('nombre', 'LIKE', '%Educación Física%')
+                  ->orWhere('nombre', 'LIKE', '%Lengua Extranjera%');
+            })
+            ->get();
 
-        // 3. Obtener Evaluaciones ya guardadas
-        // Filtramos por periodo_id y los alumnos de este grupo
-        $alumnoIds = $grupo->alumnos->pluck('alumno_id'); // Usamos la PK correcta del alumno
+        // 3. Evaluaciones guardadas
+        $alumnoIds = $grupo->alumnos->pluck('alumno_id');
 
         $evaluaciones = PdaEvaluacion::where('periodo_id', $periodo_id)
-                        ->whereIn('alumno_id', $alumnoIds)
-                        ->get();
+            ->whereIn('alumno_id', $alumnoIds)
+            ->get();
 
         return response()->json([
-            // Ordenamos alumnos por apellido
             'alumnos' => $grupo->alumnos->sortBy('apellido_paterno')->values(),
             'campos' => $campos,
             'materias' => $materias,
@@ -67,21 +84,21 @@ class PdaController extends Controller
         ]);
     }
 
+    /**
+     * Guardar o actualizar evaluaciones.
+     */
     public function store(Request $request)
     {
-        $datos = $request->input('evaluaciones'); // Array desde el frontend
+        $datos = $request->input('evaluaciones');
         $periodo_id = $request->input('periodo_id');
 
         DB::beginTransaction();
         try {
             foreach ($datos as $item) {
-                // Solo guardamos si hay texto o si queremos borrar (podríamos agregar lógica para borrar si viene vacío)
-                // Usamos updateOrCreate buscando por las llaves foráneas correctas
                 PdaEvaluacion::updateOrCreate(
                     [
                         'alumno_id' => $item['alumno_id'],
                         'periodo_id' => $periodo_id,
-                        // Usamos null coalescing (?? null) por si no viene el dato
                         'campo_formativo_id' => $item['campo_formativo_id'] ?? null,
                         'materia_id' => $item['materia_id'] ?? null,
                     ],
@@ -90,6 +107,7 @@ class PdaController extends Controller
                     ]
                 );
             }
+
             DB::commit();
             return response()->json(['message' => 'Guardado correctamente']);
 

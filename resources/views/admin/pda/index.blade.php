@@ -4,9 +4,21 @@
         <h2 class="text-2xl font-bold mb-4 text-gray-800">Evaluación PDA (Preescolar)</h2>
 
         {{-- SELECTORES --}}
-        <div class="bg-white p-4 rounded-lg shadow mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+        {{-- Cambiamos a grid-cols-5 para acomodar el nuevo campo --}}
+        <div class="bg-white p-4 rounded-lg shadow mb-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             
-            {{-- 1. NIVEL --}}
+            {{-- 1. CICLO ESCOLAR (NUEVO) --}}
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Ciclo Escolar</label>
+                <select x-model="selectedCiclo" @change="cambioCiclo()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="">Seleccione Ciclo</option>
+                    @foreach($ciclos as $ciclo)
+                        <option value="{{ $ciclo->id }}">{{ $ciclo->nombre }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- 2. NIVEL --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700">Nivel</label>
                 <select x-model="selectedNivel" @change="loadGrados()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
@@ -17,7 +29,7 @@
                 </select>
             </div>
 
-            {{-- 2. GRADO --}}
+            {{-- 3. GRADO --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700">Grado</label>
                 <select x-model="selectedGrado" @change="loadGrupos()" :disabled="!selectedNivel" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
@@ -28,7 +40,7 @@
                 </select>
             </div>
 
-            {{-- 3. GRUPO --}}
+            {{-- 4. GRUPO --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700">Grupo</label>
                 <select x-model="selectedGrupo" @change="resetData()" :disabled="!selectedGrado" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
@@ -39,14 +51,15 @@
                 </select>
             </div>
 
-            {{-- 4. PERIODO --}}
+            {{-- 5. PERIODO (Modificado para usar Alpine x-for) --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700">Periodo</label>
                 <select x-model="selectedPeriodo" @change="cargarDatos()" :disabled="!selectedGrupo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                     <option value="">Seleccione Periodo</option>
-                    @foreach($periodos as $periodo)
-                        <option value="{{ $periodo->id ?? $periodo->periodo_id }}">{{ $periodo->nombre }}</option>
-                    @endforeach
+                    {{-- Usamos template porque los periodos cambian según el ciclo --}}
+                    <template x-for="periodo in periodos" :key="periodo.id || periodo.periodo_id">
+                        <option :value="periodo.id || periodo.periodo_id" x-text="periodo.nombre"></option>
+                    </template>
                 </select>
             </div>
         </div>
@@ -141,12 +154,18 @@
     <script>
     function pdaManager() {
         return {
+            // Inicialización con variables de Blade (Ciclo Activo)
+            selectedCiclo: '{{ $cicloActivo->id ?? "" }}',
             selectedNivel: '',
             selectedGrado: '',
             selectedGrupo: '',
             selectedPeriodo: '',
+            
+            // Periodos iniciales (del ciclo activo)
+            periodos: @json($cicloActivo->periodos ?? []),
             grados: [],
             grupos: [],
+            
             loaded: false,
             editing: false, 
             saving: false,
@@ -158,7 +177,6 @@
                 valores: {} 
             },
 
-            // Lista estricta de campos que quieres mostrar
             camposPermitidos: [
                 "Lenguajes",
                 "Saberes y Pensamiento Científico",
@@ -166,8 +184,35 @@
                 "De lo Humano a lo Comunitario"
             ],
 
+            // NUEVA FUNCIÓN: Cambio de Ciclo
+            cambioCiclo() {
+                // Reset de cascada hacia abajo
+                this.selectedGrupo = '';
+                this.selectedPeriodo = '';
+                this.grupos = [];
+                this.loaded = false;
+
+                if(!this.selectedCiclo) {
+                    this.periodos = [];
+                    return;
+                }
+
+                // Obtener periodos del nuevo ciclo
+                // NOTA: Asegúrate de tener la ruta en web.php: Route::get('/json/ciclos/{ciclo}/periodos', ...)
+                fetch(`{{ url('/admin/json/ciclos') }}/${this.selectedCiclo}/periodos`)
+                    .then(res => res.json())
+                    .then(data => {
+                        this.periodos = data;
+                    })
+                    .catch(err => console.error("Error cargando periodos:", err));
+
+                // Si ya hay grado seleccionado, recargar grupos porque dependen del ciclo
+                if(this.selectedGrado) {
+                    this.loadGrupos();
+                }
+            },
+
             loadGrados() {
-                // Limpiar todo al cambiar nivel para evitar mezclar datos
                 this.selectedGrado = '';
                 this.selectedGrupo = '';
                 this.grados = [];
@@ -187,34 +232,32 @@
             },
 
             loadGrupos() {
-                // Limpiar grupo seleccionado y tabla al cambiar grado
                 this.selectedGrupo = '';
                 this.grupos = [];
                 this.loaded = false;
 
                 if(!this.selectedGrado) return;
 
-                let url = `{{ url('/admin/json/grados') }}/${this.selectedGrado}/grupos`;
+                // MODIFICADO: Añadimos ?ciclo_id=... para filtrar grupos del año correcto
+                let url = `{{ url('/admin/json/grados') }}/${this.selectedGrado}/grupos?ciclo_id=${this.selectedCiclo}`;
 
                 fetch(url)
                     .then(res => res.json())
                     .then(data => {
                         this.grupos = data;
-                        console.log("Grupos cargados:", data); // Para depuración
                     })
                     .catch(err => console.error("Error cargando grupos:", err));
             },
 
             resetData() {
-                // Al cambiar grupo, ocultamos la tabla hasta que seleccione periodo
                 this.loaded = false;
             },
 
             cargarDatos() {
                 if(!this.selectedGrupo || !this.selectedPeriodo) return;
                 
-                this.loaded = false; // Ocultar mientras carga
-                this.data.alumnos = []; // Limpiar alumnos viejos
+                this.loaded = false; 
+                this.data.alumnos = []; 
 
                 const params = new URLSearchParams({
                     grupo_id: this.selectedGrupo,
@@ -227,19 +270,15 @@
                         return res.json();
                     })
                     .then(resp => {
-                        // 1. Asignar alumnos
                         this.data.alumnos = resp.alumnos;
 
-                        // 2. Filtrar campos formativos SOLO los permitidos
-                        // Normalizamos strings para evitar problemas de espacios o acentos sutiles
                         this.data.campos = resp.campos.filter(c => {
                             return this.camposPermitidos.some(permitido => 
                                 c.nombre.trim().toLowerCase() === permitido.toLowerCase() ||
-                                c.nombre.includes(permitido) // Fallback por si hay variaciones
+                                c.nombre.includes(permitido)
                             );
                         });
                         
-                        // Eliminar duplicados si el servidor trae el mismo campo varias veces
                         const uniqueCampos = [];
                         const mapCampos = new Map();
                         for (const item of this.data.campos) {
@@ -253,7 +292,6 @@
                         this.data.materias = resp.materias;
                         this.data.valores = {}; 
 
-                        // 3. Mapear Evaluaciones
                         resp.evaluaciones.forEach(ev => {
                             let key = '';
                             if(ev.campo_formativo_id) {
@@ -265,7 +303,6 @@
                             if(key) {
                                 this.data.valores[key] = { 
                                     texto: ev.observacion,
-                                    // Guardamos IDs para actualizaciones
                                     id: ev.id 
                                 };
                             }
@@ -275,7 +312,7 @@
                     })
                     .catch(err => {
                         console.error("Error cargando tabla:", err);
-                        alert("Error al cargar los datos. Verifique la conexión.");
+                        alert("Error al cargar los datos.");
                     });
             },
 
@@ -307,7 +344,7 @@
                     },
                     body: JSON.stringify({
                         periodo_id: this.selectedPeriodo,
-                        grupo_id: this.selectedGrupo, // Enviamos el grupo por seguridad
+                        grupo_id: this.selectedGrupo,
                         evaluaciones: payload
                     })
                 })

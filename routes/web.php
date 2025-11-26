@@ -182,6 +182,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/pda/guardar', [PdaController::class, 'store'])->name('pda.store');
         Route::get('/json/pda/data', [PdaController::class, 'getData'])->name('json.pda.data');
 
+        // NUEVA RUTA PARA OBTENER PERIODOS DINÁMICAMENTE
+        Route::get('/json/ciclos/{ciclo}/periodos', [PdaController::class, 'getPeriodos'])->name('json.ciclos.periodos');
+
         // ==========================================================
         // == FIN: RUTAS PDA                                     ==
         // ==========================================================
