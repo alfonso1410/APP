@@ -13,9 +13,10 @@
             padding: 0;
         }
         .container {
+            /* Ajuste para Oficio Vertical */
             width: 100%;
             margin: 0 auto;
-            padding: 20px 20px 0 20px; 
+            padding: 20px; 
         }
         
         /* --- ENCABEZADO Y DATOS ALUMNO --- */
@@ -34,13 +35,22 @@
         
         /* --- MAQUETACIÓN DE COLUMNAS --- */
         .main-container { width: 100%; }
-        .main-columns-table { width: 100%; border-collapse: collapse; border: none; page-break-inside: avoid; }
-        .main-left-td { width: 60%; padding-right: 10px; vertical-align: top; border: none; }
-        .main-right-td { width: 40%; padding-left: 10px; vertical-align: top; border: none; }
+        .main-columns-table { width: 100%; border-collapse: collapse; border: none; page-break-inside: auto; }
+        
+        /* Ajuste de anchos para formato vertical: 55% y 45% (antes 60/40) */
+        .main-left-td { width: 55%; padding-right: 5px; vertical-align: top; border: none; } 
+        .main-right-td { width: 45%; padding-left: 5px; vertical-align: top; border: none; }
 
         /* --- ESTILOS DE TABLAS --- */
         .boleta-v2 { width: 100%; border-collapse: collapse; font-size: 8px; text-align: center; margin-bottom: 8px; page-break-inside: avoid; }
         .boleta-v2 th, .boleta-v2 td { border: 1px solid #000; padding: 2px; height: 16px; }
+        
+        /* APLICAR MAYÚSCULAS A TODOS LOS ENCABEZADOS DE TABLA */
+        .boleta-v2 th,
+        .asistencias-table th,
+        .tutor-table th {
+            text-transform: uppercase;
+        }
         
         .boleta-v2 thead .header-row-periodos th { background-color: #E0E0E0; font-weight: bold; font-size: 7px; padding: 3px; }
         .boleta-v2 thead .header-row-titulo th { font-weight: bold; font-size: 9px; text-align: center; padding-left: 5px; }
@@ -53,15 +63,38 @@
 
         .boleta-v2 .criterio-pas { text-align: left; font-weight: bold; padding-left: 5px; }
         .boleta-v2 .promedio-bloque-pas { background-color: #F3F3F3; font-weight: bold; text-align: left; padding-left: 5px; }
-        .boleta-v2 .promedio-final-combinado { background-color: #D9D9D9; font-weight: bold; text-align: left; padding-left: 5px; }
         
+        /* La fila gris de PROMEDIO FINAL (combinado) debe ser negrita en toda la fila */
+        .boleta-v2 .promedio-final-combinado { background-color: #D9D9D9; font-weight: bold; text-align: left; padding-left: 5px; }
+        .boleta-v2 .promedio-final-combinado td { font-weight: bold; } 
+
+        /* Estilos de valores */
         .boleta-v2 .cal-pas { font-weight: normal; }
-        .boleta-v2 .cal-sep { background-color: #E6E6FA; font-weight: bold; vertical-align: middle; }
+        
+        /* CLASE PARA PROMEDIOS QUE DEBEN IR EN NEGRITAS (CELDAS CON PUNTO ROJO) */
+        .boleta-v2 .cal-total-col { font-weight: bold; } 
+
+        .boleta-v2 .cal-sep { background-color: #E6E6FA; font-weight: normal; vertical-align: middle; }
         .boleta-v2 .cal-prom-sep { background-color: #E6E6FA; font-weight: bold; vertical-align: middle; }
-        .boleta-v2 .cal-prom-pas { background-color: #F3F3F3; font-weight: bold; }
+        
+        /* Las filas de promedio de bloques deben ser bold */
+        .boleta-v2 .promedio-bloque-pas td { font-weight: bold; }
+        
+        /* Estilo para las etiquetas de PROMEDIO GENERAL/FINAL */
+        .promedio-label-row td:first-child { 
+            font-weight: bold; 
+        }
+
+        /* Estilo para la fila de PROMEDIO GENERAL en Preescolar (gris claro) */
+        .promedio-general-preescolar td {
+            font-weight: bold;
+            background-color: #E0E0E0;
+            text-align: center;
+        }
+
         
         .asistencias-table { font-size: 7px; } 
-        .asistencias-table .label { text-align: left; padding-left: 5px; }
+        .asistencias-table .label { text-align: left; padding: 2px 5px; }
         .asistencias-table .header-row-titulo th { background-color: #D9D9D9; } 
         .asistencias-table .header-row-periodos th { background-color: #F3F3F3; }
         
@@ -124,6 +157,7 @@
                         @if($esPreescolar)
                             {{-- ==================== PREESCOLAR IZQUIERDA ==================== --}}
 
+                            @php $totalCampos = count($dataCamposSEP); @endphp
                             @foreach($dataCamposSEP as $campo)
                                 @php
                                     $bgTitle = '#E0E0E0'; 
@@ -155,13 +189,24 @@
                                                     @foreach($periodos as $periodo)
                                                         <td class="cal-pas">{{ $materia['calificaciones_pas'][$periodo->periodo_id] ?? '' }}</td>
                                                     @endforeach
-                                                    <td class="cal-pas" style="font-weight: bold;">{{ $materia['promedio_pas'] ?? '' }}</td>
+                                                    <td class="cal-pas cal-total-col">{{ $materia['promedio_pas'] ?? '' }}</td>
                                                 </tr>
                                             @endforeach
                                         @endif
                                     </tbody>
                                 </table>
                             @endforeach
+                            
+                            {{-- FILA DE PROMEDIO GENERAL PREESCOLAR --}}
+                            @if($totalCampos > 0)
+                                <table class="boleta-v2" style="margin-top: -8px;">
+                                    <tbody>
+                                        <tr class="promedio-general-preescolar">
+                                            <td colspan="{{ 1 + count($periodos) + 1 }}">PROMEDIO GENERAL</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            @endif
 
                             @php $nombreBloqueAcademico = $esPK1 ? 'PROGRAMA DE LECTURA' : 'PROGRAMA ACADEMICO'; @endphp
                             @if(!empty($datosBloques[$nombreBloqueAcademico]))
@@ -183,10 +228,15 @@
                                                 <tr>
                                                     <td class="criterio-pas" style="width: 40%;">{{ isset($criterio['nombre']) ? $criterio['nombre'] : '' }}</td>
                                                     @foreach($periodos as $periodo) <td class="cal-pas">{{ $criterio['calificaciones'][$periodo->periodo_id] ?? '' }}</td> @endforeach
-                                                    <td class="cal-pas" style="font-weight: bold;">{{ $criterio['promedio'] ?? '' }}</td>
+                                                    <td class="cal-pas cal-total-col">{{ $criterio['promedio'] ?? '' }}</td>
                                                 </tr>
                                             @endforeach
                                         @endif
+                                        <tr class="promedio-bloque-pas">
+                                            <td style="width: 40%;">PROMEDIO</td>
+                                            @foreach($periodos as $periodo) <td>{{ $bloque['promedios_bloque'][$periodo->periodo_id] ?? '' }}</td> @endforeach
+                                            <td class="cal-total-col">{{ $bloque['promedios_bloque']['promedio'] ?? '' }}</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             @endif
@@ -207,7 +257,7 @@
                                                     <tr>
                                                         <td class="criterio-pas" style="width: 40%;">{{ isset($materia['nombre']) ? $materia['nombre'] : '' }}</td>
                                                         @foreach($periodos as $periodo) <td class="cal-pas">{{ $materia['calificaciones_pas'][$periodo->periodo_id] ?? '' }}</td> @endforeach
-                                                        <td class="cal-pas" style="font-weight: bold;">{{ $materia['promedio_pas'] ?? '' }}</td>
+                                                        <td class="cal-pas cal-total-col">{{ $materia['promedio_pas'] ?? '' }}</td>
                                                     </tr>
                                                 @endforeach
                                             @endif
@@ -222,7 +272,7 @@
                                     <tr><th colspan="4">FIRMA DEL PADRE O TUTOR</th></tr>
                                     <tr>
                                         <th style="width: 10%;">PERIODO</th> {{-- Periodo más corto --}}
-                                        <th style="width: 50%;">NOMBRE</th>  {{-- Nombre más largo --}}
+                                        <th style="width: 50%;">NOMBRE</th>  {{-- Nombre más largo --}}
                                         <th style="width: 20%;">FIRMA</th>
                                         <th style="width: 20%;">FECHA</th>
                                     </tr>
@@ -263,7 +313,7 @@
                                 <table class="boleta-v2 primaria-style">
                                     <thead>
                                         <tr class="header-row-titulo">
-                                            <th colspan="{{ 3 + (count($periodos) * 2) }}" style="background-color: {{ $bgTitle }}; text-align: left; padding-left: 5px;">{{ isset($campo['nombre']) ? $campo['nombre'] : 'Campo Formativo' }}</th>
+                                            <th colspan="{{ 3 + (count($periodos) * 2) }}" style="background-color: {{ $bgTitle }}; text-align: center; padding-left: 5px;">{{ isset($campo['nombre']) ? $campo['nombre'] : 'Campo Formativo' }}</th>
                                         </tr>
                                         <tr class="header-row-gray">
                                             <th style="width: 30%;" class="header-materia">MATERIAS</th>
@@ -283,16 +333,16 @@
                                                     <td class="materia-sep">{{ isset($materia['nombre']) ? $materia['nombre'] : '' }}</td>
                                                     @if ($loop->first)
                                                         @foreach($periodos as $periodo)
-                                                            <td class="cal-pas">{{ isset($materia['calificaciones_pas'][$periodo->periodo_id]) && is_numeric($materia['calificaciones_pas'][$periodo->periodo_id]) ? round($materia['calificaciones_pas'][$periodo->periodo_id], 1) + 0 : '' }}</td>
-                                                            <td class="cal-sep" rowspan="{{ $rowCountForSEP }}">{{ isset($campo['calificaciones_sep'][$periodo->periodo_id]) && is_numeric($campo['calificaciones_sep'][$periodo->periodo_id]) ? round($campo['calificaciones_sep'][$periodo->periodo_id], 1) + 0 : '' }}</td>
+                                                            <td class="cal-pas">{{ isset($materia['calificaciones_pas'][$periodo->periodo_id]) && is_numeric($materia['calificaciones_pas'][$periodo->periodo_id]) ? $materia['calificaciones_pas'][$periodo->periodo_id] + 0 : '' }}</td>
+                                                            <td class="cal-sep cal-total-col" rowspan="{{ $rowCountForSEP }}">{{ isset($campo['calificaciones_sep'][$periodo->periodo_id]) && is_numeric($campo['calificaciones_sep'][$periodo->periodo_id]) ? $campo['calificaciones_sep'][$periodo->periodo_id] + 0 : '' }}</td>
                                                         @endforeach
-                                                        <td class="cal-pas">{{ isset($materia['promedio_pas']) && is_numeric($materia['promedio_pas']) ? round($materia['promedio_pas'], 1) + 0 : '' }}</td>
-                                                        <td class="cal-prom-sep" rowspan="{{ $rowCountForSEP }}">{{ isset($campo['promedio_final_sep']) && is_numeric($campo['promedio_final_sep']) ? round($campo['promedio_final_sep'], 1) + 0 : '' }}</td>
+                                                        <td class="cal-pas cal-total-col">{{ isset($materia['promedio_pas']) && is_numeric($materia['promedio_pas']) ? $materia['promedio_pas'] + 0 : '' }}</td>
+                                                        <td class="cal-prom-sep cal-total-col" rowspan="{{ $rowCountForSEP }}">{{ isset($campo['promedio_final_sep']) && is_numeric($campo['promedio_final_sep']) ? $campo['promedio_final_sep'] + 0 : '' }}</td>
                                                     @else
                                                         @foreach($periodos as $periodo)
-                                                            <td class="cal-pas">{{ isset($materia['calificaciones_pas'][$periodo->periodo_id]) && is_numeric($materia['calificaciones_pas'][$periodo->periodo_id]) ? round($materia['calificaciones_pas'][$periodo->periodo_id], 1) + 0 : '' }}</td>
+                                                            <td class="cal-pas">{{ isset($materia['calificaciones_pas'][$periodo->periodo_id]) && is_numeric($materia['calificaciones_pas'][$periodo->periodo_id]) ? $materia['calificaciones_pas'][$periodo->periodo_id] + 0 : '' }}</td>
                                                         @endforeach
-                                                        <td class="cal-pas">{{ isset($materia['promedio_pas']) && is_numeric($materia['promedio_pas']) ? round($materia['promedio_pas'], 1) + 0 : '' }}</td>
+                                                        <td class="cal-pas cal-total-col">{{ isset($materia['promedio_pas']) && is_numeric($materia['promedio_pas']) ? $materia['promedio_pas'] + 0 : '' }}</td>
                                                     @endif
                                                 </tr>
                                             @endforeach
@@ -304,10 +354,15 @@
                             @if(!empty($promediosGeneralesSEP))
                                 <table class="boleta-v2">
                                     <tbody>
-                                        <tr style="background-color: #E0E0E0; font-weight: bold; border-top: 2px solid #000;">
-                                            <td style="width: 30%; text-align: center;">PROMEDIO GENERAL</td>
-                                            @foreach($periodos as $periodo) <td class="cal-pas"></td> <td class="cal-prom-sep">{{ isset($promediosGeneralesSEP[$periodo->periodo_id]) ? $promediosGeneralesSEP[$periodo->periodo_id] + 0 : '' }}</td> @endforeach
-                                            <td class="cal-pas"></td> <td class="cal-prom-sep">{{ isset($promediosGeneralesSEP['final']) ? $promediosGeneralesSEP['final'] + 0 : '' }}</td>
+                                        <tr class="promedio-label-row" style="background-color: #E0E0E0; border-top: 2px solid #000;">
+                                            {{-- Etiqueta PROMEDIO GENERAL en negritas --}}
+                                            <td style="width: 30%; text-align: center; font-weight: bold;">PROMEDIO GENERAL </td>
+                                            @foreach($periodos as $periodo) 
+                                                <td class="cal-pas"></td> 
+                                                <td class="cal-prom-sep cal-total-col">{{ isset($promediosGeneralesSEP[$periodo->periodo_id]) ? $promediosGeneralesSEP[$periodo->periodo_id] + 0 : '' }}</td> 
+                                            @endforeach
+                                            <td class="cal-pas"></td> 
+                                            <td class="cal-prom-sep cal-total-col">{{ isset($promediosGeneralesSEP['final']) ? $promediosGeneralesSEP['final'] + 0 : '' }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -329,15 +384,15 @@
                                             @foreach($bloque['criterios'] as $criterio)
                                                 <tr>
                                                     <td class="criterio-pas">{{ $criterio['nombre'] }}</td>
-                                                    @foreach($periodos as $periodo) <td class="cal-pas">{{ is_numeric($criterio['calificaciones'][$periodo->periodo_id]) ? round($criterio['calificaciones'][$periodo->periodo_id], 1)+0 : '' }}</td> @endforeach
-                                                    <td class="cal-prom-pas">{{ is_numeric($criterio['promedio']) ? round($criterio['promedio'], 1)+0 : '' }}</td>
+                                                    @foreach($periodos as $periodo) <td class="cal-pas">{{ is_numeric($criterio['calificaciones'][$periodo->periodo_id]) ? $criterio['calificaciones'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
+                                                    <td class="cal-prom-pas cal-total-col">{{ is_numeric($criterio['promedio']) ? $criterio['promedio'] + 0 : '' }}</td>
                                                 </tr>
                                             @endforeach
                                         @endif
                                         <tr class="promedio-bloque-pas">
-                                            <td>PROMEDIO</td>
-                                            @foreach($periodos as $periodo) <td>{{ is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? round($bloque['promedios_bloque'][$periodo->periodo_id], 1)+0 : '' }}</td> @endforeach
-                                            <td>{{ is_numeric($bloque['promedios_bloque']['promedio']) ? round($bloque['promedios_bloque']['promedio'], 1)+0 : '' }}</td>
+                                            <td class="promedio-label-row">PROMEDIO</td>
+                                            @foreach($periodos as $periodo) <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? $bloque['promedios_bloque'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
+                                            <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque']['promedio']) ? $bloque['promedios_bloque']['promedio'] + 0 : '' }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -358,18 +413,18 @@
                                         @foreach($campo['materias'] as $materia)
                                             <tr>
                                                 <td class="criterio-pas" style="font-weight: bold;">{{ $materia['nombre'] }}</td>
-                                                @foreach($periodos as $periodo) <td class="cal-pas">{{ is_numeric($materia['calificaciones_pas'][$periodo->periodo_id]) ? round($materia['calificaciones_pas'][$periodo->periodo_id], 1)+0 : '' }}</td> @endforeach
-                                                <td class="cal-prom-pas">{{ is_numeric($materia['promedio_pas']) ? round($materia['promedio_pas'], 1)+0 : '' }}</td>
+                                                @foreach($periodos as $periodo) <td class="cal-pas">{{ is_numeric($materia['calificaciones_pas'][$periodo->periodo_id]) ? $materia['calificaciones_pas'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
+                                                <td class="cal-prom-pas cal-total-col">{{ is_numeric($materia['promedio_pas']) ? $materia['promedio_pas'] + 0 : '' }}</td>
                                             </tr>
                                         @endforeach
 
                                         {{-- NUEVA FILA DE PROMEDIO PRINCETON --}}
                                         <tr class="promedio-bloque-pas">
-                                            <td>PROMEDIO</td>
+                                            <td class="promedio-label-row">PROMEDIO</td>
                                             @foreach($periodos as $periodo) 
-                                                <td>{{ isset($promediosPrinceton[$periodo->periodo_id]) ? $promediosPrinceton[$periodo->periodo_id] : '' }}</td> 
+                                                <td class="cal-total-col">{{ isset($promediosPrinceton[$periodo->periodo_id]) ? $promediosPrinceton[$periodo->periodo_id] + 0 : '' }}</td> 
                                             @endforeach
-                                            <td>{{ isset($promediosPrinceton['promedio']) ? $promediosPrinceton['promedio'] : '' }}</td>
+                                            <td class="cal-total-col">{{ isset($promediosPrinceton['promedio']) ? $promediosPrinceton['promedio'] + 0 : '' }}</td>
                                         </tr>
                                         {{-- FIN NUEVA FILA --}}
 
@@ -381,10 +436,11 @@
                             @if(!empty($promediosCombinadosAcademico))
                                 <table class="boleta-v2">
                                     <tbody>
-                                        <tr class="promedio-final-combinado">
+                                        <tr class="promedio-final-combinado promedio-label-row">
+                                            {{-- Etiqueta PROMEDIO FINAL en negritas --}}
                                             <td style="width: 35%; text-align: left; padding-left: 5px; font-size: 9px;">PROMEDIO FINAL</td>
-                                            @foreach($periodos as $periodo) <td>{{ is_numeric($promediosCombinadosAcademico[$periodo->periodo_id]) ? round($promediosCombinadosAcademico[$periodo->periodo_id], 1)+0 : '' }}</td> @endforeach
-                                            <td>{{ is_numeric($promediosCombinadosAcademico['promedio']) ? round($promediosCombinadosAcademico['promedio'], 1)+0 : '' }}</td>
+                                            @foreach($periodos as $periodo) <td class="cal-total-col">{{ is_numeric($promediosCombinadosAcademico[$periodo->periodo_id]) ? $promediosCombinadosAcademico[$periodo->periodo_id] + 0 : '' }}</td> @endforeach
+                                            <td class="cal-total-col">{{ is_numeric($promediosCombinadosAcademico['promedio']) ? $promediosCombinadosAcademico['promedio'] + 0 : '' }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -396,7 +452,7 @@
                                     <tr><th colspan="4">FIRMA DEL PADRE O TUTOR</th></tr>
                                     <tr>
                                         <th style="width: 10%;">PERIODO</th> {{-- Periodo más corto --}}
-                                        <th style="width: 50%;">NOMBRE</th>  {{-- Nombre más largo --}}
+                                        <th style="width: 50%;">NOMBRE</th>  {{-- Nombre más largo --}}
                                         <th style="width: 20%;">FIRMA</th>
                                         <th style="width: 20%;">FECHA</th>
                                     </tr>
@@ -438,10 +494,15 @@
                                                 <tr>
                                                     <td class="criterio-pas">{{ $criterio['nombre'] }}</td>
                                                     @foreach($periodos as $periodo) <td class="cal-pas">{{ $criterio['calificaciones'][$periodo->periodo_id] ?? '' }}</td> @endforeach
-                                                    <td class="cal-prom-pas">{{ $criterio['promedio'] ?? '' }}</td>
+                                                    <td class="cal-prom-pas cal-total-col">{{ $criterio['promedio'] ?? '' }}</td>
                                                 </tr>
                                             @endforeach
                                         @endif
+                                        <tr class="promedio-bloque-pas">
+                                            <td>PROMEDIO</td>
+                                            @foreach($periodos as $periodo) <td class="cal-total-col">{{ $bloque['promedios_bloque'][$periodo->periodo_id] ?? '' }}</td> @endforeach
+                                            <td class="cal-total-col">{{ $bloque['promedios_bloque']['promedio'] ?? '' }}</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             @endif
@@ -466,14 +527,14 @@
                                                 <tr>
                                                     <td class="criterio-pas">{{ $criterio['nombre'] }}</td>
                                                     @foreach($periodos as $periodo) <td class="cal-pas">{{ $criterio['calificaciones'][$periodo->periodo_id] ?? '' }}</td> @endforeach
-                                                    <td class="cal-prom-pas">{{ $criterio['promedio'] ?? '' }}</td>
+                                                    <td class="cal-prom-pas cal-total-col">{{ $criterio['promedio'] ?? '' }}</td>
                                                 </tr>
                                             @endforeach
                                         @endif
                                         <tr class="promedio-bloque-pas">
                                             <td>SEP AVERAGE</td>
-                                            @foreach($periodos as $periodo) <td>{{ $bloque['promedios_bloque'][$periodo->periodo_id] ?? '' }}</td> @endforeach
-                                            <td>{{ $bloque['promedios_bloque']['promedio'] ?? '' }}</td>
+                                            @foreach($periodos as $periodo) <td class="cal-total-col">{{ $bloque['promedios_bloque'][$periodo->periodo_id] ?? '' }}</td> @endforeach
+                                            <td class="cal-total-col">{{ $bloque['promedios_bloque']['promedio'] ?? '' }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -489,9 +550,6 @@
                                         <tr class="header-row-titulo">
                                             <th colspan="{{ 1 + count($periodos) + 1 }}" style="background-color: {{ $bgTitle }}; text-align: center;">{{ isset($bloque['titulo']) ? $bloque['titulo'] : '' }}</th>
                                         </tr>
-                                        <tr class="header-row-periodos">
-                                            <th style="width: 35%;"></th> @foreach($periodos as $periodo) <th>{{ $periodo->nombre }}</th> @endforeach <th>TOTAL</th>
-                                        </tr>
                                     </thead>
                                     <tbody>
                                         @if (isset($bloque['criterios']))
@@ -499,10 +557,15 @@
                                                 <tr>
                                                     <td class="criterio-pas">{{ $criterio['nombre'] }}</td>
                                                     @foreach($periodos as $periodo) <td class="cal-pas">{{ $criterio['calificaciones'][$periodo->periodo_id] ?? '' }}</td> @endforeach
-                                                    <td class="cal-prom-pas">{{ $criterio['promedio'] ?? '' }}</td>
+                                                    <td class="cal-prom-pas cal-total-col">{{ $criterio['promedio'] ?? '' }}</td>
                                                 </tr>
                                             @endforeach
                                         @endif
+                                        <tr class="promedio-bloque-pas">
+                                            <td>AVERAGE</td>
+                                            @foreach($periodos as $periodo) <td class="cal-total-col">{{ $bloque['promedios_bloque'][$periodo->periodo_id] ?? '' }}</td> @endforeach
+                                            <td class="cal-total-col">{{ $bloque['promedios_bloque']['promedio'] ?? '' }}</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             @endif
@@ -523,32 +586,24 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td rowspan="1" class="label" style="font-weight: bold;">ASISTENCIAS / ATTENDANCES</td>
+                                            <td rowspan="1" class="label">ASISTENCIAS / ATTENDANCES</td>
                                             @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_asistencias'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_asistencias'] ?? 0 }}</td> @endforeach
-                                            <td>{{ $datosAsistencias['totales']['TOTAL_asistencias'] ?? 0 }}</td>
+                                            <td class="cal-total-col">{{ $datosAsistencias['totales']['TOTAL_asistencias'] ?? 0 }}</td>
                                         </tr>
                                         <tr>
-                                            <td rowspan="1" class="label" style="font-weight: bold;">RETARDOS / DELAYS</td>
+                                            <td rowspan="1" class="label">RETARDOS / DELAYS</td>
                                             @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_retardos'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_retardos'] ?? 0 }}</td> @endforeach
-                                            <td>{{ $datosAsistencias['totales']['TOTAL_retardos'] ?? 0 }}</td>
+                                            <td class="cal-total-col">{{ $datosAsistencias['totales']['TOTAL_retardos'] ?? 0 }}</td>
                                         </tr>
                                         <tr>
-                                            <td rowspan="1" class="label" style="font-weight: bold;">INASISTENCIAS / ABSENCES</td>
+                                            <td rowspan="1" class="label">INASISTENCIAS / ABSENCES</td>
                                             @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_inasistencias'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_inasistencias'] ?? 0 }}</td> @endforeach
-                                            <td>{{ $datosAsistencias['totales']['TOTAL_inasistencias'] ?? 0 }}</td>
+                                            <td class="cal-total-col">{{ $datosAsistencias['totales']['TOTAL_inasistencias'] ?? 0 }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             @endif
-                            {{-- FIRMA DEL ALUMNO (Debajo de asistencias) --}}
-                            <table style="width: 60%; margin: 40px auto 10px auto; border-collapse: collapse; text-align: center; page-break-inside: avoid;">
-                                <tr>
-                                    <td style="border-bottom: 1px solid #000; height: 1px;"></td>
-                                </tr>
-                                <tr>
-                                    <td style="font-size: 7px; font-weight: bold; padding-top: 2px;">FIRMA DEL ALUMNO</td>
-                                </tr>
-                            </table>
+                            {{-- FIRMA DEL ALUMNO (BLOQUE ELIMINADO) --}}
 
                         @else
                             {{-- ==================== PRIMARIA DERECHA ==================== --}}
@@ -568,10 +623,16 @@
                                         @foreach($bloque['criterios'] as $criterio)
                                             <tr>
                                                 <td class="criterio-pas">{{ $criterio['nombre'] }}</td>
-                                                @foreach($periodos as $periodo) <td class="cal-pas">{{ is_numeric($criterio['calificaciones'][$periodo->periodo_id]) ? round($criterio['calificaciones'][$periodo->periodo_id], 1)+0 : '' }}</td> @endforeach
-                                                <td class="cal-prom-pas">{{ is_numeric($criterio['promedio']) ? round($criterio['promedio'], 1)+0 : '' }}</td>
+                                                @foreach($periodos as $periodo) <td class="cal-pas">{{ is_numeric($criterio['calificaciones'][$periodo->periodo_id]) ? $criterio['calificaciones'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
+                                                <td class="cal-prom-pas cal-total-col">{{ is_numeric($criterio['promedio']) ? $criterio['promedio'] + 0 : '' }}</td>
                                             </tr>
                                         @endforeach
+                                        {{-- FILA DE PROMEDIO PARA HÁBITOS --}}
+                                        <tr class="promedio-bloque-pas">
+                                            <td class="promedio-label-row">PROMEDIO</td>
+                                            @foreach($periodos as $periodo) <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? $bloque['promedios_bloque'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
+                                            <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque']['promedio']) ? $bloque['promedios_bloque']['promedio'] + 0 : '' }}</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             @endif
@@ -584,21 +645,21 @@
                                             <th colspan="{{ 1 + count($periodos) + 1 }}" style="background-color: #DDEBF7;">ENGLISH</th>
                                         </tr>
                                         <tr class="header-row-periodos">
-                                            <th style="width: 35%;">TRIMESTER</th> @foreach($periodos as $periodo) <th>{{ $periodo->nombre }}</th> @endforeach <th>FINAL</th>
+                                            <th style="width: 35%;"></th> @foreach($periodos as $periodo) <th>{{ $periodo->nombre }}</th> @endforeach <th>FINAL</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach($bloque['criterios'] as $criterio)
                                             <tr>
                                                 <td class="criterio-pas">{{ $criterio['nombre'] }}</td>
-                                                @foreach($periodos as $periodo) <td class="cal-pas">{{ is_numeric($criterio['calificaciones'][$periodo->periodo_id]) ? round($criterio['calificaciones'][$periodo->periodo_id], 1)+0 : '' }}</td> @endforeach
-                                                <td class="cal-prom-pas">{{ is_numeric($criterio['promedio']) ? round($criterio['promedio'], 1)+0 : '' }}</td>
+                                                @foreach($periodos as $periodo) <td class="cal-pas">{{ is_numeric($criterio['calificaciones'][$periodo->periodo_id]) ? $criterio['calificaciones'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
+                                                <td class="cal-prom-pas cal-total-col">{{ is_numeric($criterio['promedio']) ? $criterio['promedio'] + 0 : '' }}</td>
                                             </tr>
                                         @endforeach
                                         <tr class="promedio-bloque-pas" style="background-color: #DDEBF7;">
                                             <td>SEP AVERAGE</td>
-                                            @foreach($periodos as $periodo) <td>{{ is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? round($bloque['promedios_bloque'][$periodo->periodo_id], 1)+0 : '' }}</td> @endforeach
-                                            <td>{{ is_numeric($bloque['promedios_bloque']['promedio']) ? round($bloque['promedios_bloque']['promedio'], 1)+0 : '' }}</td>
+                                            @foreach($periodos as $periodo) <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? $bloque['promedios_bloque'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
+                                            <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque']['promedio']) ? $bloque['promedios_bloque']['promedio'] + 0 : '' }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -619,10 +680,16 @@
                                         @foreach($bloque['criterios'] as $criterio)
                                             <tr>
                                                 <td class="criterio-pas">{{ $criterio['nombre'] }}</td>
-                                                @foreach($periodos as $periodo) <td class="cal-pas">{{ is_numeric($criterio['calificaciones'][$periodo->periodo_id]) ? round($criterio['calificaciones'][$periodo->periodo_id], 1)+0 : '' }}</td> @endforeach
-                                                <td class="cal-prom-pas">{{ is_numeric($criterio['promedio']) ? round($criterio['promedio'], 1)+0 : '' }}</td>
+                                                @foreach($periodos as $periodo) <td class="cal-pas">{{ is_numeric($criterio['calificaciones'][$periodo->periodo_id]) ? $criterio['calificaciones'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
+                                                <td class="cal-prom-pas cal-total-col">{{ is_numeric($criterio['promedio']) ? $criterio['promedio'] + 0 : '' }}</td>
                                             </tr>
                                         @endforeach
+                                        {{-- FILA DE PROMEDIO PARA READING PROGRAM --}}
+                                        <tr class="promedio-bloque-pas">
+                                            <td>AVERAGE</td>
+                                            @foreach($periodos as $periodo) <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? $bloque['promedios_bloque'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
+                                            <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque']['promedio']) ? $bloque['promedios_bloque']['promedio'] + 0 : '' }}</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             @endif
@@ -642,14 +709,14 @@
                                         @foreach($bloque['criterios'] as $criterio)
                                             <tr>
                                                 <td class="criterio-pas">{{ $criterio['nombre'] }}</td>
-                                                @foreach($periodos as $periodo) <td class="cal-pas">{{ is_numeric($criterio['calificaciones'][$periodo->periodo_id]) ? round($criterio['calificaciones'][$periodo->periodo_id], 1)+0 : '' }}</td> @endforeach
-                                                <td class="cal-prom-pas">{{ is_numeric($criterio['promedio']) ? round($criterio['promedio'], 1)+0 : '' }}</td>
+                                                @foreach($periodos as $periodo) <td class="cal-pas">{{ is_numeric($criterio['calificaciones'][$periodo->periodo_id]) ? $criterio['calificaciones'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
+                                                <td class="cal-prom-pas cal-total-col">{{ is_numeric($criterio['promedio']) ? $criterio['promedio'] + 0 : '' }}</td>
                                             </tr>
                                         @endforeach
                                         <tr class="promedio-bloque-pas">
                                             <td>AVERAGE</td>
-                                            @foreach($periodos as $periodo) <td>{{ is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? round($bloque['promedios_bloque'][$periodo->periodo_id], 1)+0 : '' }}</td> @endforeach
-                                            <td>{{ is_numeric($bloque['promedios_bloque']['promedio']) ? round($bloque['promedios_bloque']['promedio'], 1)+0 : '' }}</td>
+                                            @foreach($periodos as $periodo) <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? $bloque['promedios_bloque'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
+                                            <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque']['promedio']) ? $bloque['promedios_bloque']['promedio'] + 0 : '' }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -671,32 +738,24 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td rowspan="1" class="label" style="font-weight: bold;">ASISTENCIAS / ATTENDANCES</td>
+                                            <td rowspan="1" class="label">ASISTENCIAS / ATTENDANCES</td>
                                             @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_asistencias'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_asistencias'] ?? 0 }}</td> @endforeach
-                                            <td>{{ $datosAsistencias['totales']['TOTAL_asistencias'] ?? 0 }}</td>
+                                            <td class="cal-total-col">{{ $datosAsistencias['totales']['TOTAL_asistencias'] ?? 0 }}</td>
                                         </tr>
                                         <tr>
-                                            <td rowspan="1" class="label" style="font-weight: bold;">RETARDOS / DELAYS</td>
+                                            <td rowspan="1" class="label">RETARDOS / DELAYS</td>
                                             @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_retardos'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_retardos'] ?? 0 }}</td> @endforeach
-                                            <td>{{ $datosAsistencias['totales']['TOTAL_retardos'] ?? 0 }}</td>
+                                            <td class="cal-total-col">{{ $datosAsistencias['totales']['TOTAL_retardos'] ?? 0 }}</td>
                                         </tr>
                                         <tr>
-                                            <td rowspan="1" class="label" style="font-weight: bold;">INASISTENCIAS / ABSENCES</td>
+                                            <td rowspan="1" class="label">INASISTENCIAS / ABSENCES</td>
                                             @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_inasistencias'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_inasistencias'] ?? 0 }}</td> @endforeach
-                                            <td>{{ $datosAsistencias['totales']['TOTAL_inasistencias'] ?? 0 }}</td>
+                                            <td class="cal-total-col">{{ $datosAsistencias['totales']['TOTAL_inasistencias'] ?? 0 }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             @endif
-                            
-                            <table style="width: 60%; margin: 40px auto 10px auto; border-collapse: collapse; text-align: center; page-break-inside: avoid;">
-                                <tr>
-                                    <td style="border-bottom: 1px solid #000; height: 1px;"></td>
-                                </tr>
-                                <tr>
-                                    <td style="font-size: 7px; font-weight: bold; padding-top: 2px;">FIRMA DEL ALUMNO</td>
-                                </tr>
-                            </table>
+                            {{-- FIRMA DEL ALUMNO (BLOQUE ELIMINADO) --}}
 
                         @endif
 

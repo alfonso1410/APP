@@ -75,6 +75,7 @@ class BoletaController extends Controller
     {
         if (!is_numeric($valor)) return '';
 
+        // Redondeamos para aplicar la regla de redondeo a partir de .05
         $val = round($valor);
 
         if ($val == 10) return 'E';
@@ -155,7 +156,7 @@ class BoletaController extends Controller
         
         // A. SEP
         $estructuraCamposSEP = $estructuraCompleta->whereIn('nombre_campo', self::CAMPOS_FORMATIVOS_SEP)
-                                                  ->whereNotIn('nombre_materia', $nombresMateriaBloque);
+                                                ->whereNotIn('nombre_materia', $nombresMateriaBloque);
 
         // B. PRINCETON
         $estructuraPrinceton = $estructuraCompleta->where('nombre_campo', 'Programa Princeton');
@@ -208,14 +209,13 @@ class BoletaController extends Controller
 
         // 4. OBTENCIÓN DE CALIFICACIONES BASE
         
-        // Buscamos Escuela para Padres para asegurar que su ID entre en la consulta
         $materiaEscuelaPadres = $estructuraCompleta->first(function($item) {
             return str_contains(strtoupper($item->nombre_materia), 'ESCUELA PARA PADRES');
         });
 
         $idsMateriasPromedio = $estructuraCamposSEP->pluck('materia_id')
-                                ->merge($estructuraPrinceton->pluck('materia_id'))
-                                ->merge($estructuraEnglish->pluck('materia_id'));
+                                                 ->merge($estructuraPrinceton->pluck('materia_id'))
+                                                 ->merge($estructuraEnglish->pluck('materia_id'));
 
         // Si existe Escuela para Padres, agregamos su ID a la lista de búsqueda
         if ($materiaEscuelaPadres) {
@@ -246,7 +246,7 @@ class BoletaController extends Controller
         }
 
         // ==================================================================================
-        //  PROCESAR BLOQUE ENGLISH E INYECCIÓN EN LENGUA EXTRANJERA
+        //  PROCESAR BLOQUE ENGLISH E INYECCIÓN EN LENGUA EXTRANJERA
         // ==================================================================================
         $datosEnglish = null;
         if ($estructuraEnglish->isNotEmpty()) {
@@ -311,8 +311,51 @@ class BoletaController extends Controller
             $ponderacionesCampos,
             $esPreescolar
         );
+        
+        // 5.1. PROMEDIO SIMPLE DE MATERIAS (POR PERIODO) DENTRO DE CADA CAMPO
+        $promediosSimplesPorCampo = [];
+        foreach ($boletaDataSEP['campos'] as $campo) {
+            // El resultado de esta función ya está en el formato ['periodo_id' => calif, 'promedio' => final]
+            $promediosSimplesPorCampo[$campo['nombre']] = $this->calcularPromedioSimpleMateriasPorPeriodo(
+                $campo['materias'] ?? [],
+                $periodos,
+                $esPreescolar,
+                true // Retorna solo la fila de promedio
+            );
+        }
 
-        // 6. CALCULAR PROMEDIO GENERAL SEP
+        // ===========================================================================
+        // 5.5. RECOLECCIÓN DE CALIFICACIONES PARA PROMEDIO FINAL COMBINADO
+        // ===========================================================================
+        $califsMateriasSEP_ParaCombinado = ['califs_para_promedio_final' => []];
+        $califsMateriasSEP_Academico = ['califs_para_promedio_final' => []];
+        foreach ($periodos as $p) {
+            $califsMateriasSEP_ParaCombinado['califs_para_promedio_final'][$p->periodo_id] = [];
+            $califsMateriasSEP_Academico['califs_para_promedio_final'][$p->periodo_id] = [];
+        }
+        
+        foreach ($boletaDataSEP['califs_por_materia_numerica'] as $materiaId => $califsPorPeriodo) {
+            
+            foreach ($periodos as $p) {
+                if (isset($califsPorPeriodo[$p->periodo_id]) && is_numeric($califsPorPeriodo[$p->periodo_id])) {
+                    $cal = $califsPorPeriodo[$p->periodo_id];
+
+                    $califsMateriasSEP_ParaCombinado['califs_para_promedio_final'][$p->periodo_id][] = $cal;
+                    
+                    if (!$esPreescolar) {
+                        $materiaInfo = $estructuraCamposSEP->firstWhere('materia_id', $materiaId);
+                        if ($materiaInfo && !str_contains(strtoupper($materiaInfo->nombre_campo), 'DE LO HUMANO')) {
+                            $califsMateriasSEP_Academico['califs_para_promedio_final'][$p->periodo_id][] = $cal;
+                        }
+                    } else {
+                        // En Preescolar, todos los campos SEP cuentan para el promedio académico.
+                        $califsMateriasSEP_Academico['califs_para_promedio_final'][$p->periodo_id][] = $cal;
+                    }
+                }
+            }
+        }
+
+        // 6. CALCULAR PROMEDIO GENERAL SEP (Solo Primaria)
         $promediosGeneralesSEP = [];
         $sumasSEP = [];
         $contadoresSEP = [];
@@ -357,60 +400,28 @@ class BoletaController extends Controller
         );
 
         // ===========================================================================
-        // NUEVO: Calcular Promedios Simples para la tabla visual de Princeton
+        // NUEVO: Calcular Promedios Simples para la tabla visual de Princeton y Recolección
         // ===========================================================================
-        $promediosVisualesPrinceton = [];
-        foreach ($periodos as $p) {
-            $promediosVisualesPrinceton[$p->periodo_id] = null;
-        }
-        $promediosVisualesPrinceton['promedio'] = null;
+        // Promedio simple (PAS) de las materias en el bloque Princeton
+        $promediosVisualesPrinceton = $this->calcularPromedioSimpleMateriasPorPeriodo(
+            $boletaDataPrinceton['campos'][0]['materias'] ?? [], 
+            $periodos,
+            $esPreescolar,
+            true 
+        );
 
-        if (!$esPreescolar && !empty($boletaDataPrinceton['campos'])) {
-            $sumaFinal = 0; $conteoFinal = 0;
-            
-            foreach ($periodos as $p) {
-                $sumaPeriodo = 0;
-                $conteoPeriodo = 0;
-                
-                // Recorremos los campos (normalmente solo hay 1: Programa Princeton)
-                foreach ($boletaDataPrinceton['campos'] as $campo) {
-                    foreach ($campo['materias'] as $materia) {
-                        // Usamos la calificación PAS (interna) numérica
-                        $calif = $materia['calificaciones_pas'][$p->periodo_id] ?? null;
-                        if (is_numeric($calif)) {
-                            $sumaPeriodo += $calif;
-                            $conteoPeriodo++;
-                        }
-                    }
-                }
-                
-                if ($conteoPeriodo > 0) {
-                    $prom = round($sumaPeriodo / $conteoPeriodo, 1);
-                    $promediosVisualesPrinceton[$p->periodo_id] = $prom;
-                    $sumaFinal += $prom;
-                    $conteoFinal++;
-                }
-            }
-            
-            if ($conteoFinal > 0) {
-                $promediosVisualesPrinceton['promedio'] = round($sumaFinal / $conteoFinal, 1);
-            }
-        }
-        // ===========================================================================
-
-
-        // Extraer datos Princeton para combinado (bottom gray row)
-        $datosPrincetonParaCombinado = ['califs_para_promedio_final' => []];
+        $datosPrincetonParaCombinado = ['califs_para_promedio_final' => []]; 
         foreach ($periodos as $p) $datosPrincetonParaCombinado['califs_para_promedio_final'][$p->periodo_id] = [];
-        foreach ($estructuraPrinceton as $matPrinc) {
+        
+        foreach ($boletaDataPrinceton['califs_por_materia_numerica'] as $materiaId => $califsPorPeriodo) {
             foreach ($periodos as $p) {
-                $llave = $matPrinc->materia_id . '_' . $p->periodo_id;
-                // Usamos el valor numérico crudo del mapa
-                if (isset($mapaCalificacionesPAS[$llave]) && is_numeric($mapaCalificacionesPAS[$llave])) {
-                    $datosPrincetonParaCombinado['califs_para_promedio_final'][$p->periodo_id][] = $mapaCalificacionesPAS[$llave];
+                if (isset($califsPorPeriodo[$p->periodo_id]) && is_numeric($califsPorPeriodo[$p->periodo_id])) {
+                    $datosPrincetonParaCombinado['califs_para_promedio_final'][$p->periodo_id][] = $califsPorPeriodo[$p->periodo_id];
                 }
             }
         }
+        // ===========================================================================
+
 
         // 8. PROCESAR BLOQUES DE CRITERIOS
         $datosBloquesCriterios = [];
@@ -431,72 +442,111 @@ class BoletaController extends Controller
             );
         }
 
-        // --- INYECCIÓN DE ESCUELA PARA PADRES EN HÁBITOS ---
-        // Se inyecta manualmente al final del arreglo de criterios de HÁBITOS
+        // --- MANEJO DE ESCUELA PARA PADRES --- (Se mantiene la lógica original)
         if (isset($datosBloquesCriterios['HÁBITOS']) && $materiaEscuelaPadres) {
             $rowEscuelaPadres = [];
             $rowEscuelaPadres['nombre'] = $materiaEscuelaPadres->nombre_materia; 
             $rowEscuelaPadres['calificaciones'] = [];
-            
-            $sumaEP = 0; 
-            $countEP = 0;
+            $sumaEP = 0; $countEP = 0;
 
             foreach ($periodos as $periodo) {
-                // Buscamos la calificación en el mapa que obtuvimos en el Paso 4
                 $llave = $materiaEscuelaPadres->materia_id . '_' . $periodo->periodo_id;
                 $nota = $mapaCalificacionesPAS[$llave] ?? null;
 
-                // Formateamos según si es Preescolar (Letra) o Primaria (Número)
                 if ($esPreescolar) {
                     $notaMostrada = $this->getLetraCalificacion($nota);
                     $notaNum = is_numeric($nota) ? $nota : null;
                 } else {
-                    $notaMostrada = is_numeric($nota) ? round($nota, 1) : null;
-                    $notaNum = $notaMostrada;
+                    $notaRedondeada = is_numeric($nota) ? round($nota, 1) : null;
+                    $notaMostrada = $notaRedondeada;
+                    $notaNum = $notaRedondeada;
                 }
-
                 $rowEscuelaPadres['calificaciones'][$periodo->periodo_id] = $notaMostrada;
-
                 if (is_numeric($notaNum)) {
                     $sumaEP += $notaNum;
                     $countEP++;
                 }
             }
-
-            // Calculamos promedio final de Escuela para Padres
             $promedioEPNum = ($countEP > 0) ? round($sumaEP / $countEP, 1) : null;
             $rowEscuelaPadres['promedio'] = $esPreescolar 
                 ? $this->getLetraCalificacion($promedioEPNum) 
                 : $promedioEPNum;
-
-            // INYECTAMOS LA FILA AL FINAL DEL ARREGLO DE CRITERIOS DE HÁBITOS
             $datosBloquesCriterios['HÁBITOS']['criterios'][] = $rowEscuelaPadres;
+            
+            $califsHabitos = $datosBloquesCriterios['HÁBITOS']['califs_para_promedio_final'];
+            $califsEP = [];
+            foreach ($periodos as $periodo) {
+                $llave = $materiaEscuelaPadres->materia_id . '_' . $periodo->periodo_id;
+                $nota = $mapaCalificacionesPAS[$llave] ?? null;
+                $notaRedondeada = is_numeric($nota) ? round($nota, 1) : null;
+                if (is_numeric($notaRedondeada)) {
+                    $califsEP[$periodo->periodo_id] = $notaRedondeada;
+                }
+            }
+            $sumaFinalHabitos = 0; $countFinalHabitos = 0; $promediosBloqueHabitos = [];
+            foreach ($periodos as $periodo) {
+                $califsPeriodo = $califsHabitos[$periodo->periodo_id] ?? [];
+                if (isset($califsEP[$periodo->periodo_id])) { $califsPeriodo[] = $califsEP[$periodo->periodo_id]; }
+                $sumaPeriodo = array_sum($califsPeriodo); $countPeriodo = count($califsPeriodo);
+                $promedioPeriodo = ($countPeriodo > 0) ? round($sumaPeriodo / $countPeriodo, 1) : null;
+                $promediosBloqueHabitos[$periodo->periodo_id] = $promedioPeriodo;
+                if (is_numeric($promedioPeriodo)) {
+                    $sumaFinalHabitos += $promedioPeriodo;
+                    $countFinalHabitos++;
+                }
+            }
+            $promFinalNumHabitos = ($countFinalHabitos > 0) ? round($sumaFinalHabitos / $countFinalHabitos, 1) : null;
+
+            foreach ($periodos as $periodo) {
+                $datosBloquesCriterios['HÁBITOS']['promedios_bloque'][$periodo->periodo_id] = $esPreescolar
+                    ? $this->getLetraCalificacion($promediosBloqueHabitos[$periodo->periodo_id] ?? null)
+                    : $promediosBloqueHabitos[$periodo->periodo_id];
+            }
+            $datosBloquesCriterios['HÁBITOS']['promedios_bloque']['promedio'] = $esPreescolar
+                ? $this->getLetraCalificacion($promFinalNumHabitos)
+                : $promFinalNumHabitos;
+
+            foreach ($periodos as $periodo) {
+                if (isset($califsEP[$periodo->periodo_id])) {
+                       $datosBloquesCriterios['HÁBITOS']['califs_para_promedio_final'][$periodo->periodo_id][] = $califsEP[$periodo->periodo_id];
+                }
+            }
         }
         // -------------------------------------------------------------------
 
         // 9. ASISTENCIAS
         $datosAsistencias = $this->procesarAsistencias($alumno, $ciclo, $periodos);
 
-        // 10. PROMEDIOS COMBINADOS (PROMEDIO FINAL)
+        // 10. PROMEDIOS COMBINADOS ACADÉMICOS (PROMEDIO FINAL REQUERIDO)
         $bloqueAcademicoKey = ($esPreescolar && $esPK1) ? 'PROGRAMA DE LECTURA' : 'PROGRAMA ACADEMICO';
         
+        $componentesAcademicosACombinar = [
+            $califsMateriasSEP_Academico, 
+            $datosPrincetonParaCombinado
+        ];
+
+        if (isset($datosBloquesCriterios[$bloqueAcademicoKey])) {
+            $componentesAcademicosACombinar[] = $datosBloquesCriterios[$bloqueAcademicoKey];
+        }
+
         $promediosCombinadosAcademico = $this->calcularPromediosCombinados(
             $periodos,
-            [
-                $datosBloquesCriterios[$bloqueAcademicoKey] ?? null,
-                $datosPrincetonParaCombinado 
-            ]
+            $componentesAcademicosACombinar,
+            $esPreescolar
         );
 
+        // 11. PROMEDIOS COMBINADOS HABITS
         $promediosCombinadosHabits = $this->calcularPromediosCombinados(
             $periodos,
             [
                 $datosBloquesCriterios['READING PROGRAM'] ?? null,
                 $datosBloquesCriterios['HABITS'] ?? null, 
-            ]
+            ],
+            false
         );
 
-        // 11. MAESTROS
+
+        // 12. MAESTROS
         $titular = DB::table('grupo_titular as gt')
                     ->join('users as m', 'gt.maestro_titular_id', '=', 'm.id') 
                     ->where('gt.grupo_id', $grupo->grupo_id)
@@ -524,8 +574,9 @@ class BoletaController extends Controller
             'esPK1' => $esPK1,
             
             'dataCamposSEP' => $boletaDataSEP['campos'],
+            'promediosSimplesPorCampo' => $promediosSimplesPorCampo, 
             'dataPrinceton' => $boletaDataPrinceton['campos'], 
-            'promediosPrinceton' => $promediosVisualesPrinceton, // <-- Se envía el nuevo cálculo
+            'promediosPrinceton' => $promediosVisualesPrinceton, 
             'promediosFinalesSEP' => $boletaDataSEP['promediosFinales'],
             'promediosGeneralesSEP' => $promediosGeneralesSEP,
             'datosBloques' => $datosBloquesCriterios,
@@ -538,14 +589,66 @@ class BoletaController extends Controller
             'maestroIngles' => $maestroIngles,
         ];
 
+        // *** CONFIGURACIÓN A OFICIO VERTICAL ***
         $pdf = PDF::loadView('reportes.boleta-FINAL-PORFAVOR', $data, [
-            'format' => 'Legal-L', 
-            'orientation' => 'L',
+            'format' => 'Legal', 
+            'orientation' => 'P', 
             'mode' => 'utf-8'
         ]);
 
         return $pdf->stream('boleta-' . $alumno->apellido_paterno . '-' . $alumno->nombres . '.pdf');
     }
+
+    private function calcularPromedioSimpleMateriasPorPeriodo(array $materias, Collection $periodos, bool $esPreescolar, bool $retornarSoloPromedio = false)
+    {
+        // Esta función calcula el promedio simple (no ponderado) de las materias por periodo y el promedio final.
+        $promedios = [];
+        $sumaFinal = 0;
+        $conteoFinal = 0;
+
+        foreach ($periodos as $p) {
+            $promedios[$p->periodo_id] = ['suma' => 0, 'contador' => 0];
+        }
+
+        // 1. Sumar por Periodo
+        foreach ($materias as $materia) {
+            foreach ($periodos as $p) {
+                // Usamos la calificación numérica, ya redondeada/procesada en procesarCamposSEP
+                $calif = $materia['calificaciones_pas_numerica'][$p->periodo_id] ?? null;
+                if (is_numeric($calif)) {
+                    $promedios[$p->periodo_id]['suma'] += $calif;
+                    $promedios[$p->periodo_id]['contador']++;
+                }
+            }
+        }
+
+        // 2. Calcular promedios de Periodo y Promedio Final
+        $filaPromedios = [];
+        foreach ($periodos as $p) {
+            $suma = $promedios[$p->periodo_id]['suma'];
+            $count = $promedios[$p->periodo_id]['contador'];
+            $promedioPeriodoNum = ($count > 0) ? round($suma / $count, 1) : null;
+            
+            $filaPromedios[$p->periodo_id] = $esPreescolar 
+                ? $this->getLetraCalificacion($promedioPeriodoNum)
+                : $promedioPeriodoNum;
+            
+            if (is_numeric($promedioPeriodoNum)) {
+                $sumaFinal += $promedioPeriodoNum;
+                $conteoFinal++;
+            }
+        }
+        
+        $promedioFinalNum = ($conteoFinal > 0) ? round($sumaFinal / $conteoFinal, 1) : null;
+
+        $filaPromedios['promedio'] = $esPreescolar 
+            ? $this->getLetraCalificacion($promedioFinalNum)
+            : $promedioFinalNum;
+
+        // Se retorna la fila de promedios ya formateada (letra o número redondeado)
+        return $filaPromedios;
+    }
+
 
     private function procesarBloqueMaterias($estructuraMaterias, $periodos, $mapaCalificacionesPAS, $tituloBloque, $esPreescolar = false)
     {
@@ -568,8 +671,10 @@ class BoletaController extends Controller
                     $notaMostrada = $this->getLetraCalificacion($nota);
                     $notaNum = is_numeric($nota) ? $nota : null;
                 } else {
-                    $notaMostrada = is_numeric($nota) ? round($nota, 1) : null;
-                    $notaNum = $notaMostrada;
+                    // Aplicamos redondeo a 1 decimal
+                    $notaRedondeada = is_numeric($nota) ? round($nota, 1) : null;
+                    $notaMostrada = $notaRedondeada;
+                    $notaNum = $notaRedondeada;
                 }
                 
                 $califsMateria[$periodo->periodo_id] = $notaMostrada;
@@ -586,6 +691,7 @@ class BoletaController extends Controller
                 $val = $mapaCalificacionesPAS[$llave] ?? null;
                 if(is_numeric($val)) { $sumaMat += $val; $countMat++; }
             }
+            // Redondeamos el promedio de la materia a 1 decimal
             $promedioMateriaNum = ($countMat > 0) ? round($sumaMat / $countMat, 1) : null;
             
             $promedioMateriaShow = $esPreescolar 
@@ -606,6 +712,7 @@ class BoletaController extends Controller
         foreach ($periodos as $periodo) {
             $suma = $promediosBloque[$periodo->periodo_id]['suma'];
             $count = $promediosBloque[$periodo->periodo_id]['contador'];
+            // Redondeamos el promedio del periodo a 1 decimal
             $promedioPeriodo = ($count > 0) ? round($suma / $count, 1) : null;
             
             $promediosBloqueNumericos[$periodo->periodo_id] = $promedioPeriodo;
@@ -620,6 +727,7 @@ class BoletaController extends Controller
             }
         }
         
+        // Redondeamos el promedio final a 1 decimal
         $promFinalNum = ($countPromedioFinal > 0) ? round($sumaPromedioFinal / $countPromedioFinal, 1) : null;
         $filaPromedios['promedio'] = $esPreescolar 
             ? $this->getLetraCalificacion($promFinalNum)
@@ -639,6 +747,7 @@ class BoletaController extends Controller
         $dataCampos = [];
         $promediosFinales = [];
         $promediosFinalesCalculados = [];
+        $califsPorMateriaNumerica = []; 
 
         foreach ($periodos as $periodo) {
             $promediosFinales[$periodo->periodo_id] = ['suma_ponderada' => 0, 'total_ponderacion' => 0];
@@ -646,7 +755,6 @@ class BoletaController extends Controller
         }
 
         foreach ($camposFormativos as $nombreCampo => $materias) {
-            // Evitar error si materias viene vacía por alguna razón
             if ($materias->isEmpty()) continue;
 
             $campoId = $materias->first()->campo_id;
@@ -662,6 +770,7 @@ class BoletaController extends Controller
 
             foreach ($materias as $materia) {
                 $califsMateria_PAS = []; 
+                $califsMateria_PAS_Numerica = []; 
                 $sumaMateriaPAS = 0; $countMateriaPAS = 0;
                 $ponderacionMateria = $materia->ponderacion_materia / 100.0;
 
@@ -670,10 +779,13 @@ class BoletaController extends Controller
                     $notaPAS = $mapaCalificacionesPAS[$llave] ?? null;
                     
                     if ($esPreescolar) {
-                        // Convertimos el número a Letra
                         $califsMateria_PAS[$periodo->periodo_id] = $this->getLetraCalificacion($notaPAS);
+                        // Guardamos el valor numérico original para los promedios
+                        $califsMateria_PAS_Numerica[$periodo->periodo_id] = is_numeric($notaPAS) ? $notaPAS : null; 
                     } else {
-                        $califsMateria_PAS[$periodo->periodo_id] = $notaPAS; 
+                        $notaRedondeada = is_numeric($notaPAS) ? round($notaPAS, 1) : null;
+                        $califsMateria_PAS[$periodo->periodo_id] = $notaRedondeada; 
+                        $califsMateria_PAS_Numerica[$periodo->periodo_id] = $notaRedondeada; 
                     }
 
                     if (is_numeric($notaPAS)) {
@@ -687,7 +799,7 @@ class BoletaController extends Controller
                     }
                 }
 
-                $promedioPAS_MateriaNum = ($countMateriaPAS > 0) ? round($sumaMateriaPAS / $countMateriaPAS, 2) : null;
+                $promedioPAS_MateriaNum = ($countMateriaPAS > 0) ? round($sumaMateriaPAS / $countMateriaPAS, 1) : null;
                 
                 $promedioPAS_Mostrado = $esPreescolar 
                     ? $this->getLetraCalificacion($promedioPAS_MateriaNum)
@@ -701,8 +813,11 @@ class BoletaController extends Controller
                 $dataMaterias[] = [
                     'nombre' => $materia->nombre_materia,
                     'calificaciones_pas' => $califsMateria_PAS,
+                    'calificaciones_pas_numerica' => $califsMateria_PAS_Numerica,
                     'promedio_pas' => $promedioPAS_Mostrado
                 ];
+
+                $califsPorMateriaNumerica[$materia->materia_id] = $califsMateria_PAS_Numerica; 
             }
 
             $califsMateria_SEP = []; 
@@ -711,26 +826,29 @@ class BoletaController extends Controller
                     $totalPond = $promediosSEP_Campo[$periodo->periodo_id]['total_ponderacion'];
                     $sumaPond = $promediosSEP_Campo[$periodo->periodo_id]['suma_ponderada'];
 
-                    $promedioSEP = ($totalPond > 0) ? round($sumaPond / $totalPond, 2) : null;
+                    $promedioSEP = ($totalPond > 0) ? round($sumaPond / $totalPond, 1) : null;
                     $califsMateria_SEP[$periodo->periodo_id] = $promedioSEP; 
 
                     if (is_numeric($promedioSEP)) {
                         $promediosSEP_Campo['promedio_sep']['suma'] += $promedioSEP;
                         $promediosSEP_Campo['promedio_sep']['contador']++;
-                        $promediosFinales[$periodo->periodo_id]['suma_ponderada'] += ($promedioSEP * $ponderacionCampo);
-                        $promediosFinales[$periodo->periodo_id]['total_ponderacion'] += $ponderacionCampo;
+                        $promedioSinRedondear = ($totalPond > 0) ? $sumaPond / $totalPond : null;
+                        if (is_numeric($promedioSinRedondear)) {
+                             $promediosFinales[$periodo->periodo_id]['suma_ponderada'] += ($promedioSinRedondear * $ponderacionCampo);
+                             $promediosFinales[$periodo->periodo_id]['total_ponderacion'] += $ponderacionCampo;
+                        }
                     }
                 }
             }
-
+            
             $promedioSEP_Materia = null;
             if (!$esPreescolar && $promediosSEP_Campo['promedio_sep']['contador'] > 0) {
-                $promedioSEP_Materia = round($promediosSEP_Campo['promedio_sep']['suma'] / $promediosSEP_Campo['promedio_sep']['contador'], 2);
+                $promedioSEP_Materia = round($promediosSEP_Campo['promedio_sep']['suma'] / $promediosSEP_Campo['promedio_sep']['contador'], 1);
             }
 
             $promedioFinalPAS = null;
             if (!$esPreescolar && $promediosSEP_Campo['promedio_pas']['contador'] > 0) {
-                $promedioFinalPAS = round($promediosSEP_Campo['promedio_pas']['suma'] / $promediosSEP_Campo['promedio_pas']['contador'], 2);
+                $promedioFinalPAS = round($promediosSEP_Campo['promedio_pas']['suma'] / $promediosSEP_Campo['promedio_pas']['contador'], 1);
             }
 
             $dataCampos[] = [
@@ -750,7 +868,7 @@ class BoletaController extends Controller
                 $totalPond = $promediosFinales[$periodo->periodo_id]['total_ponderacion'];
                 $sumaPond = $promediosFinales[$periodo->periodo_id]['suma_ponderada'];
 
-                $promedioFinalPond = ($totalPond > 0) ? round($sumaPond / $totalPond, 2) : null;
+                $promedioFinalPond = ($totalPond > 0) ? round($sumaPond / $totalPond, 1) : null;
                 $promediosFinalesCalculados[$periodo->periodo_id] = $promedioFinalPond; 
 
                 if (is_numeric($promedioFinalPond)) {
@@ -760,13 +878,14 @@ class BoletaController extends Controller
             }
 
             $promediosFinalesCalculados['promedio_final_sep'] = ($contadorPromedioFinal > 0)
-                ? round($sumaPromedioFinal / $contadorPromedioFinal, 2)
+                ? round($sumaPromedioFinal / $contadorPromedioFinal, 1)
                 : null;
         }
 
         return [
             'campos' => $dataCampos,
-            'promediosFinales' => $promediosFinalesCalculados
+            'promediosFinales' => $promediosFinalesCalculados,
+            'califs_por_materia_numerica' => $califsPorMateriaNumerica 
         ];
     }
 
@@ -817,8 +936,9 @@ class BoletaController extends Controller
                     $notaMostrada = $this->getLetraCalificacion($nota);
                     $notaNum = is_numeric($nota) ? $nota : null;
                 } else {
-                    $notaMostrada = is_numeric($nota) ? round($nota, 1) : null;
-                    $notaNum = $notaMostrada;
+                    $notaRedondeada = is_numeric($nota) ? round($nota, 1) : null;
+                    $notaMostrada = $notaRedondeada;
+                    $notaNum = $notaRedondeada;
                 }
 
                 $califsCriterio[$periodo->periodo_id] = $notaMostrada; 
@@ -826,9 +946,10 @@ class BoletaController extends Controller
                 if (is_numeric($notaNum)) {
                     $sumaCriterio += $notaNum;
                     $countCriterio++;
+                    
                     $promediosBloque[$periodo->periodo_id]['suma'] += $notaNum;
                     $promediosBloque[$periodo->periodo_id]['contador']++;
-                    $califsParaPromedioFinal[$periodo->periodo_id][] = $notaNum;
+                    $califsParaPromedioFinal[$periodo->periodo_id][] = $esPreescolar ? $notaNum : $notaRedondeada; 
                 }
             }
 
@@ -870,40 +991,62 @@ class BoletaController extends Controller
         return [
             'titulo' => $tituloBloque,
             'criterios' => $filasCriterios,
-            'promedios_bloque' => $filaPromedios,
+            'promedios_bloque' => $filaPromedios, 
             'califs_para_promedio_final' => $califsParaPromedioFinal,
         ];
     }
 
-    private function calcularPromediosCombinados(Collection $periodos, array $bloquesDatos)
+    private function calcularPromediosCombinados(Collection $periodos, array $bloquesDatos, bool $esPreescolar = false)
     {
         $califsPorPeriodo = [];
         $promediosFinales = []; 
+        
         foreach ($periodos as $periodo) {
             $califsPorPeriodo[$periodo->periodo_id] = [];
             $promediosFinales[$periodo->periodo_id] = null; 
         }
+        
         foreach ($bloquesDatos as $bloque) {
             if (empty($bloque) || empty($bloque['califs_para_promedio_final'])) { continue; }
             foreach ($bloque['califs_para_promedio_final'] as $periodoId => $califs) {
                 if (isset($califsPorPeriodo[$periodoId])) {
-                    $califsPorPeriodo[$periodoId] = array_merge($califsPorPeriodo[$periodoId], $califs);
+                    foreach ($califs as $calif) {
+                        if (is_numeric($calif)) {
+                             $califsPorPeriodo[$periodoId][] = $calif;
+                        }
+                    }
                 }
             }
         }
+        
         $sumaTotal = 0; $countTotal = 0;
+        
         foreach ($periodos as $periodo) {
             $califs = $califsPorPeriodo[$periodo->periodo_id]; 
             $count = count($califs);
             $suma = array_sum($califs);
-            $promedio = ($count > 0) ? round($suma / $count, 1) : null;
-            $promediosFinales[$periodo->periodo_id] = $promedio; 
-            if (is_numeric($promedio)) {
-                $sumaTotal += $promedio;
+            
+            // Redondeamos el promedio del periodo a 1 decimal
+            $promedioNum = ($count > 0) ? round($suma / $count, 1) : null;
+            
+            $promediosFinales[$periodo->periodo_id] = $esPreescolar
+                ? $this->getLetraCalificacion($promedioNum)
+                : $promedioNum; 
+            
+            // Para el cálculo del promedio final de promedios, usamos el valor numérico
+            if (is_numeric($promedioNum)) {
+                $sumaTotal += $promedioNum;
                 $countTotal++;
             }
         }
-        $promediosFinales['promedio'] = ($countTotal > 0) ? round($sumaTotal / $countTotal, 1) : null;
+        
+        // Redondeamos el promedio final a 1 decimal
+        $promedioFinalNum = ($countTotal > 0) ? round($sumaTotal / $countTotal, 1) : null;
+        
+        $promediosFinales['promedio'] = $esPreescolar
+            ? $this->getLetraCalificacion($promedioFinalNum)
+            : $promedioFinalNum;
+            
         return $promediosFinales;
     }
 
