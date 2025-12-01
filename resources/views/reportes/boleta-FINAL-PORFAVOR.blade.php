@@ -4,19 +4,20 @@
     <meta charset="UTF-8">
     <title>Boleta de Calificaciones</title>
     <style>
+        /* Estilos CSS compatibles con mPDF */
+        
         body {
             font-family: 'Helvetica', sans-serif;
             font-size: 8px;
             line-height: 1.3;
             color: #000;
-            margin: 0;
+            margin: 0; 
             padding: 0;
         }
         .container {
-            /* Ajuste para Oficio Vertical */
-            width: 100%;
+            width: 195mm; 
             margin: 0 auto;
-            padding: 20px; 
+            padding: 0; 
         }
         
         /* --- ENCABEZADO Y DATOS ALUMNO --- */
@@ -33,16 +34,37 @@
         .info-alumno-table td { border: 1px solid #000; padding: 3px 6px; }
         .info-alumno-table .label { background-color: #eee; font-weight: bold; width: 15%; }
         
-        /* --- MAQUETACIÓN DE COLUMNAS --- */
+        /* --- MAQUETACIÓN DE COLUMNAS (Asegura que no se corte al final de página) --- */
         .main-container { width: 100%; }
-        .main-columns-table { width: 100%; border-collapse: collapse; border: none; page-break-inside: auto; }
+        .main-columns-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            border: none; 
+            page-break-inside: auto; 
+        }
         
-        /* Ajuste de anchos para formato vertical: 55% y 45% (antes 60/40) */
-        .main-left-td { width: 55%; padding-right: 5px; vertical-align: top; border: none; } 
-        .main-right-td { width: 45%; padding-left: 5px; vertical-align: top; border: none; }
+        .main-left-td { 
+            width: 55%; 
+            padding-right: 5px; 
+            vertical-align: top; 
+            border: none;
+        } 
+        .main-right-td { 
+            width: 45%; 
+            padding-left: 5px; 
+            vertical-align: top; 
+            border: none;
+        }
 
         /* --- ESTILOS DE TABLAS --- */
-        .boleta-v2 { width: 100%; border-collapse: collapse; font-size: 8px; text-align: center; margin-bottom: 8px; page-break-inside: avoid; }
+        .boleta-v2 { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 8px; 
+            text-align: center; 
+            margin-bottom: 8px; 
+            page-break-inside: avoid; 
+        }
         .boleta-v2 th, .boleta-v2 td { border: 1px solid #000; padding: 2px; height: 16px; }
         
         /* APLICAR MAYÚSCULAS A TODOS LOS ENCABEZADOS DE TABLA */
@@ -70,14 +92,11 @@
 
         /* Estilos de valores */
         .boleta-v2 .cal-pas { font-weight: normal; }
-        
-        /* CLASE PARA PROMEDIOS QUE DEBEN IR EN NEGRITAS (CELDAS CON PUNTO ROJO) */
         .boleta-v2 .cal-total-col { font-weight: bold; } 
 
         .boleta-v2 .cal-sep { background-color: #E6E6FA; font-weight: normal; vertical-align: middle; }
         .boleta-v2 .cal-prom-sep { background-color: #E6E6FA; font-weight: bold; vertical-align: middle; }
         
-        /* Las filas de promedio de bloques deben ser bold */
         .boleta-v2 .promedio-bloque-pas td { font-weight: bold; }
         
         /* Estilo para las etiquetas de PROMEDIO GENERAL/FINAL */
@@ -92,8 +111,7 @@
             text-align: center;
         }
 
-        
-        .asistencias-table { font-size: 7px; } 
+        .asistencias-table { font-size: 7px; page-break-inside: avoid; } 
         .asistencias-table .label { text-align: left; padding: 2px 5px; }
         .asistencias-table .header-row-titulo th { background-color: #D9D9D9; } 
         .asistencias-table .header-row-periodos th { background-color: #F3F3F3; }
@@ -102,13 +120,29 @@
         .tutor-table th, .tutor-table td { border: 1px solid #000; padding: 2px; height: 25px; }
         .tutor-table th { background-color: #E0E0E0; font-size: 8px; }
 
-        .signatures-bottom-container { width: 100%; margin-top: 60px; page-break-inside: avoid; }
-        .sig-col-table { width: 90%; margin: 0 auto; border-collapse: collapse; text-align: center; }
+        .signatures-bottom-container { 
+            width: 100%; 
+            margin-top: 60px; 
+            page-break-inside: avoid; 
+        }
+        .sig-col-table { 
+            width: 90%; 
+            margin: 0 auto; 
+            border-collapse: collapse; 
+            text-align: center; 
+        }
         .sig-line-cell { border-bottom: 1px solid #000; height: 1px; width: 100%; }
         .sig-name { font-weight: bold; font-size: 8px; padding-top: 3px; }
         .sig-title { font-size: 7px; }
         
-        .equivalencias-table { width: 100%; border-collapse: collapse; font-size: 6px; text-align: center; margin-bottom: 10px; page-break-inside: avoid; }
+        .equivalencias-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 6px; 
+            text-align: center; 
+            margin-bottom: 10px; 
+            page-break-inside: avoid; 
+        }
         .equivalencias-table td { border: 1px solid #000; padding: 1px; }
         .equivalencias-table .head { background-color: #E0E0E0; font-weight: bold; }
     </style>
@@ -151,7 +185,7 @@
         <div class="main-container">
             <table class="main-columns-table">
                 <tr>
-                    {{-- COLUMNA IZQUIERDA --}}
+                    {{-- COLUMNA IZQUIERDA (Ancho 55%) --}}
                     <td class="main-left-td">
 
                         @if($esPreescolar)
@@ -197,16 +231,21 @@
                                 </table>
                             @endforeach
                             
-                            {{-- FILA DE PROMEDIO GENERAL PREESCOLAR --}}
-                            @if($totalCampos > 0)
+                            {{-- INICIO: TABLA PROMEDIO GENERAL (SEP) PREESCOLAR (REQUERIMIENTO) --}}
+                            @if($totalCampos > 0 && !empty($promediosGeneralesPreescolar))
                                 <table class="boleta-v2" style="margin-top: -8px;">
                                     <tbody>
                                         <tr class="promedio-general-preescolar">
-                                            <td colspan="{{ 1 + count($periodos) + 1 }}">PROMEDIO GENERAL</td>
+                                            <td style="width: 40%; text-align: left; padding-left: 5px;">PROMEDIO GENERAL</td>
+                                            @foreach($periodos as $periodo)
+                                                <td>{{ $promediosGeneralesPreescolar[$periodo->periodo_id] ?? '' }}</td>
+                                            @endforeach
+                                            <td class="cal-total-col">{{ $promediosGeneralesPreescolar['promedio'] ?? '' }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             @endif
+                            {{-- FIN: TABLA PROMEDIO GENERAL (SEP) PREESCOLAR --}}
 
                             @php $nombreBloqueAcademico = $esPK1 ? 'PROGRAMA DE LECTURA' : 'PROGRAMA ACADEMICO'; @endphp
                             @if(!empty($datosBloques[$nombreBloqueAcademico]))
@@ -223,6 +262,11 @@
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        <tr class="header-row-periodos">
+                                            <th style="width: 40%; text-align: left; padding-left: 5px;">MOMENTOS --></th>
+                                            @foreach($periodos as $periodo) <th>{{ isset($periodo->nombre) ? $periodo->nombre : '' }}</th> @endforeach
+                                            <th>PROMEDIO FINAL</th>
+                                        </tr>
                                         @if (isset($bloque['criterios']))
                                             @foreach($bloque['criterios'] as $criterio)
                                                 <tr>
@@ -252,6 +296,11 @@
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            <tr class="header-row-periodos">
+                                                <th style="width: 40%; text-align: left; padding-left: 5px;">MOMENTOS --></th>
+                                                @foreach($periodos as $periodo) <th>{{ isset($periodo->nombre) ? $periodo->nombre : '' }}</th> @endforeach
+                                                <th>PROMEDIO FINAL</th>
+                                            </tr>
                                             @if(isset($campo['materias']))
                                                 @foreach($campo['materias'] as $materia)
                                                     <tr>
@@ -260,19 +309,40 @@
                                                         <td class="cal-pas cal-total-col">{{ $materia['promedio_pas'] ?? '' }}</td>
                                                     </tr>
                                                 @endforeach
+                                                {{-- FILA DE PROMEDIO PARA PREESCOLAR PRINCETON --}}
+                                                <tr class="promedio-bloque-pas">
+                                                    <td style="width: 40%;">PROMEDIO</td>
+                                                    @foreach($periodos as $periodo) <td class="cal-total-col">{{ $promediosPrinceton[$periodo->periodo_id] ?? '' }}</td> @endforeach
+                                                    <td class="cal-total-col">{{ $promediosPrinceton['promedio'] ?? '' }}</td>
+                                                </tr>
                                             @endif
                                         </tbody>
                                     </table>
                                 @endforeach
                             @endif
+                            
+                            {{-- INICIO: TABLA PROMEDIO FINAL (Combinado) PREESCOLAR (REQUERIMIENTO) --}}
+                            {{-- Nota: Esta tabla debe ir DESPUÉS de la tabla de Princeton --}}
+                            @if(!empty($promediosCombinadosAcademico))
+                                <table class="boleta-v2">
+                                    <tbody>
+                                        <tr class="promedio-final-combinado promedio-label-row">
+                                            <td style="width: 40%; text-align: left; padding-left: 5px; font-size: 9px;">PROMEDIO FINAL</td>
+                                            @foreach($periodos as $periodo) <td class="cal-total-col">{{ $promediosCombinadosAcademico[$periodo->periodo_id] ?? '' }}</td> @endforeach
+                                            <td class="cal-total-col">{{ $promediosCombinadosAcademico['promedio'] ?? '' }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            @endif
+                            {{-- FIN: TABLA PROMEDIO FINAL (Combinado) PREESCOLAR --}}
 
-                            {{-- PREESCOLAR: TABLA DE FIRMAS (MOVIDA AQUI DESDE LA DERECHA) --}}
+                            {{-- PREESCOLAR: TABLA DE FIRMAS (Para equilibrar la columna izquierda) --}}
                             <table class="tutor-table">
                                 <thead>
                                     <tr><th colspan="4">FIRMA DEL PADRE O TUTOR</th></tr>
                                     <tr>
-                                        <th style="width: 10%;">PERIODO</th> {{-- Periodo más corto --}}
-                                        <th style="width: 50%;">NOMBRE</th>  {{-- Nombre más largo --}}
+                                        <th style="width: 15%;">PERIODO</th> 
+                                        <th style="width: 45%;">NOMBRE</th> 
                                         <th style="width: 20%;">FIRMA</th>
                                         <th style="width: 20%;">FECHA</th>
                                     </tr>
@@ -284,25 +354,12 @@
                                 </tbody>
                             </table>
 
-                            {{-- PREESCOLAR: EQUIVALENCIAS (SE MANTIENE AQUI) --}}
-                            <table class="equivalencias-table" style="margin-top: 10px;">
-                                <tr><td class="head">EQUIVALENCIAS</td></tr>
-                                <tr><td>E- EXCELENTE (10)</td></tr>
-                                <tr><td>MB- MUY BIEN (9)</td></tr>
-                                <tr><td>B- BIEN (8)</td></tr>
-                                <tr><td>R- REGULAR (7 Y 6)</td></tr>
-                                <tr><td>NA- NO ACREDITO</td></tr>
-                                <tr><td>NP- NO PRESENTO</td></tr>
-                            </table>
-
                         @else
-                            {{-- ==================== PRIMARIA IZQUIERDA ==================== --}}
+                            {{-- ==================== PRIMARIA IZQUIERDA (SIN CAMBIOS) ==================== --}}
                             
                             @foreach($dataCamposSEP as $campo)
                                 @php 
                                     $rowCountForSEP = (isset($campo['materias']) && is_array($campo['materias'])) ? count($campo['materias']) : 0;
-                                    
-                                    // Lógica de colores para Primaria igual a la imagen
                                     $bgTitle = '#DDEBF7'; 
                                     $n = strtoupper($campo['nombre']);
                                     if(str_contains($n, 'LENGUAJES')) $bgTitle = '#FFE699'; 
@@ -355,7 +412,6 @@
                                 <table class="boleta-v2">
                                     <tbody>
                                         <tr class="promedio-label-row" style="background-color: #E0E0E0; border-top: 2px solid #000;">
-                                            {{-- Etiqueta PROMEDIO GENERAL en negritas --}}
                                             <td style="width: 30%; text-align: center; font-weight: bold;">PROMEDIO GENERAL </td>
                                             @foreach($periodos as $periodo) 
                                                 <td class="cal-pas"></td> 
@@ -418,7 +474,7 @@
                                             </tr>
                                         @endforeach
 
-                                        {{-- NUEVA FILA DE PROMEDIO PRINCETON --}}
+                                        {{-- FILA DE PROMEDIO PRINCETON (Primaria usa números) --}}
                                         <tr class="promedio-bloque-pas">
                                             <td class="promedio-label-row">PROMEDIO</td>
                                             @foreach($periodos as $periodo) 
@@ -426,7 +482,7 @@
                                             @endforeach
                                             <td class="cal-total-col">{{ isset($promediosPrinceton['promedio']) ? $promediosPrinceton['promedio'] + 0 : '' }}</td>
                                         </tr>
-                                        {{-- FIN NUEVA FILA --}}
+                                        {{-- FIN FILA --}}
 
                                     </tbody>
                                 </table>
@@ -437,7 +493,6 @@
                                 <table class="boleta-v2">
                                     <tbody>
                                         <tr class="promedio-final-combinado promedio-label-row">
-                                            {{-- Etiqueta PROMEDIO FINAL en negritas --}}
                                             <td style="width: 35%; text-align: left; padding-left: 5px; font-size: 9px;">PROMEDIO FINAL</td>
                                             @foreach($periodos as $periodo) <td class="cal-total-col">{{ is_numeric($promediosCombinadosAcademico[$periodo->periodo_id]) ? $promediosCombinadosAcademico[$periodo->periodo_id] + 0 : '' }}</td> @endforeach
                                             <td class="cal-total-col">{{ is_numeric($promediosCombinadosAcademico['promedio']) ? $promediosCombinadosAcademico['promedio'] + 0 : '' }}</td>
@@ -446,13 +501,13 @@
                                 </table>
                             @endif
 
-                            {{-- PRIMARIA: TABLA DE FIRMAS (MOVIDA AQUI DESDE LA DERECHA) --}}
+                            {{-- PRIMARIA: TABLA DE FIRMAS (Para equilibrar la columna izquierda) --}}
                             <table class="tutor-table">
                                 <thead>
                                     <tr><th colspan="4">FIRMA DEL PADRE O TUTOR</th></tr>
                                     <tr>
-                                        <th style="width: 10%;">PERIODO</th> {{-- Periodo más corto --}}
-                                        <th style="width: 50%;">NOMBRE</th>  {{-- Nombre más largo --}}
+                                        <th style="width: 15%;">PERIODO</th> 
+                                        <th style="width: 45%;">NOMBRE</th> 
                                         <th style="width: 20%;">FIRMA</th>
                                         <th style="width: 20%;">FECHA</th>
                                     </tr>
@@ -468,21 +523,22 @@
 
                     </td>
                     
-                    {{-- COLUMNA DERECHA --}}
+                    {{-- COLUMNA DERECHA (Ancho 45%) --}}
                     <td class="main-right-td">
 
                         @if($esPreescolar)
                             {{-- ==================== PREESCOLAR DERECHA ==================== --}}
-
+                            
+                            {{-- TABLA HÁBITOS (ESPAÑOL) --}}
                             @if(!empty($datosBloques['HÁBITOS']))
                                 @php 
                                     $bloque = $datosBloques['HÁBITOS'];
-                                    $bgTitle = '#F8CBAD'; 
+                                    $bgTitle = '#FFE699'; 
                                 @endphp
                                 <table class="boleta-v2">
                                     <thead>
                                         <tr class="header-row-titulo">
-                                            <th colspan="{{ 1 + count($periodos) + 1 }}" style="background-color: {{ $bgTitle }}; text-align: center;">{{ isset($bloque['titulo']) ? $bloque['titulo'] : '' }}</th>
+                                            <th colspan="{{ 1 + count($periodos) + 1 }}" style="background-color: {{ $bgTitle }}; text-align: center;">{{ isset($bloque['titulo']) ? $bloque['titulo'] : 'HÁBITOS' }}</th>
                                         </tr>
                                         <tr class="header-row-periodos">
                                             <th style="width: 35%;">MOMENTOS --></th> @foreach($periodos as $periodo) <th>{{ $periodo->nombre }}</th> @endforeach <th>TOTAL</th>
@@ -507,10 +563,11 @@
                                 </table>
                             @endif
 
+                            {{-- TABLA ENGLISH --}}
                             @if(!empty($datosBloques['ENGLISH']))
                                 @php 
                                     $bloque = $datosBloques['ENGLISH'];
-                                    $bgTitle = '#DDEBF7'; 
+                                    $bgTitle = '#C6E0B4'; 
                                 @endphp
                                 <table class="boleta-v2">
                                     <thead>
@@ -540,15 +597,19 @@
                                 </table>
                             @endif
 
+                            {{-- TABLA HABITS (INGLÉS) - Esto fue solicitado en el último prompt, aunque la lógica original la usaba en Primaria --}}
                             @if(!empty($datosBloques['HABITS']))
                                 @php 
                                     $bloque = $datosBloques['HABITS'];
-                                    $bgTitle = '#C6E0B4';
+                                    $bgTitle = '#BDD7EE'; 
                                 @endphp
                                 <table class="boleta-v2">
                                     <thead>
                                         <tr class="header-row-titulo">
-                                            <th colspan="{{ 1 + count($periodos) + 1 }}" style="background-color: {{ $bgTitle }}; text-align: center;">{{ isset($bloque['titulo']) ? $bloque['titulo'] : '' }}</th>
+                                            <th colspan="{{ 1 + count($periodos) + 1 }}" style="background-color: {{ $bgTitle }}; text-align: center;">{{ isset($bloque['titulo']) ? $bloque['titulo'] : 'HABITS' }}</th>
+                                        </tr>
+                                        <tr class="header-row-periodos">
+                                            <th style="width: 35%;">MOMENTS --></th> @foreach($periodos as $periodo) <th>{{ $periodo->nombre }}</th> @endforeach <th>TOTAL</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -562,7 +623,7 @@
                                             @endforeach
                                         @endif
                                         <tr class="promedio-bloque-pas">
-                                            <td>AVERAGE</td>
+                                            <td>PROMEDIO</td>
                                             @foreach($periodos as $periodo) <td class="cal-total-col">{{ $bloque['promedios_bloque'][$periodo->periodo_id] ?? '' }}</td> @endforeach
                                             <td class="cal-total-col">{{ $bloque['promedios_bloque']['promedio'] ?? '' }}</td>
                                         </tr>
@@ -570,12 +631,11 @@
                                 </table>
                             @endif
                             
-                            {{-- PREESCOLAR: TABLA DE ASISTENCIAS (MOVIDA AQUI DESDE LA IZQUIERDA Y SIN LA 2DA COLUMNA) --}}
+                            {{-- PREESCOLAR: TABLA DE ASISTENCIAS --}}
                             @if(!empty($datosAsistencias))
-                                <table class="boleta-v2 asistencias-table" style="margin-top: 15px;">
+                                <table class="boleta-v2 asistencias-table" style="margin-top: 20px;">
                                     <thead>
                                         <tr class="header-row-titulo">
-                                            {{-- Colspan ajustado: 1(label) + Periodos + 1(Total) --}}
                                             <th colspan="{{ 1 + count($periodos) + 1 }}">CONTROL DE ASISTENCIAS // ATTENDANCE CONTROL</th>
                                         </tr>
                                         <tr class="header-row-periodos">
@@ -603,10 +663,23 @@
                                     </tbody>
                                 </table>
                             @endif
-                            {{-- FIRMA DEL ALUMNO (BLOQUE ELIMINADO) --}}
+                            
+                            {{-- PREESCOLAR: EQUIVALENCIAS --}}
+                            <table class="equivalencias-table" style="margin-top: 20px;">
+                                <tr><td class="head">EQUIVALENCIAS</td></tr>
+                                <tr><td>E- EXCELENTE (10)</td></tr>
+                                <tr><td>MB- MUY BIEN (9)</td></tr>
+                                <tr><td>B- BIEN (8)</td></tr>
+                                
+                                {{-- Aseguramos que R sea para 7 Y 6 --}}
+                                <tr><td>R- REGULAR (7 Y 6)</td></tr> 
+                                
+                                <tr><td>NA- NO ACREDITO</td></tr>
+                                <tr><td>NP- NO PRESENTO</td></tr>
+                            </table>
 
                         @else
-                            {{-- ==================== PRIMARIA DERECHA ==================== --}}
+                            {{-- ==================== PRIMARIA DERECHA (CÓDIGO ORIGINAL) ==================== --}}
 
                             @if(!empty($datosBloques['HÁBITOS']))
                                 @php $bloque = $datosBloques['HÁBITOS']; @endphp
@@ -627,7 +700,6 @@
                                                 <td class="cal-prom-pas cal-total-col">{{ is_numeric($criterio['promedio']) ? $criterio['promedio'] + 0 : '' }}</td>
                                             </tr>
                                         @endforeach
-                                        {{-- FILA DE PROMEDIO PARA HÁBITOS --}}
                                         <tr class="promedio-bloque-pas">
                                             <td class="promedio-label-row">PROMEDIO</td>
                                             @foreach($periodos as $periodo) <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? $bloque['promedios_bloque'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
@@ -684,7 +756,6 @@
                                                 <td class="cal-prom-pas cal-total-col">{{ is_numeric($criterio['promedio']) ? $criterio['promedio'] + 0 : '' }}</td>
                                             </tr>
                                         @endforeach
-                                        {{-- FILA DE PROMEDIO PARA READING PROGRAM --}}
                                         <tr class="promedio-bloque-pas">
                                             <td>AVERAGE</td>
                                             @foreach($periodos as $periodo) <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? $bloque['promedios_bloque'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
@@ -722,12 +793,11 @@
                                 </table>
                             @endif
 
-                            {{-- PRIMARIA: TABLA DE ASISTENCIAS (MOVIDA AQUI DESDE LA IZQUIERDA Y ACTUALIZADA EXACTAMENTE IGUAL A PREESCOLAR) --}}
+                            {{-- PRIMARIA: TABLA DE ASISTENCIAS --}}
                             @if(!empty($datosAsistencias))
-                                <table class="boleta-v2 asistencias-table" style="margin-top: 15px;">
+                                <table class="boleta-v2 asistencias-table" style="margin-top: 50px;">
                                     <thead>
                                         <tr class="header-row-titulo">
-                                            {{-- Colspan ajustado: 1(label) + Periodos + 1(Total) --}}
                                             <th colspan="{{ 1 + count($periodos) + 1 }}">CONTROL DE ASISTENCIAS // ATTENDANCE CONTROL</th>
                                         </tr>
                                         <tr class="header-row-periodos">
@@ -755,7 +825,6 @@
                                     </tbody>
                                 </table>
                             @endif
-                            {{-- FIRMA DEL ALUMNO (BLOQUE ELIMINADO) --}}
 
                         @endif
 
