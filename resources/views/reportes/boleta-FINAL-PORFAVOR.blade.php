@@ -80,7 +80,7 @@
         .boleta-v2 thead .header-row-gray th { background-color: #E0E0E0; font-weight: bold; font-size: 8px; padding: 3px; text-align: center; }
         .boleta-v2 thead .header-row-gray .header-materia { text-align: left; padding-left: 5px; font-size: 9px; }
 
-        .boleta-v2 .materia-sep { background-color: #ffffff; text-align: left; font-weight: bold; padding-left: 10px; }
+        .boleta-v2 .materia-sep { background-color: #ffffff; text-align: left; font-weight: bold; padding-left: 5px; }
         .primaria-style .materia-sep { background-color: #F5F5F5; }
 
         .boleta-v2 .criterio-pas { text-align: left; font-weight: bold; padding-left: 5px; }
@@ -236,7 +236,7 @@
                                 <table class="boleta-v2" style="margin-top: -8px;">
                                     <tbody>
                                         <tr class="promedio-general-preescolar">
-                                            <td style="width: 40%; text-align: left; padding-left: 5px;">PROMEDIO GENERAL</td>
+                                            <td style="width: 40%; text-align: left; padding-left: 5px;">PROMEDIO GENERAL SEP</td>
                                             @foreach($periodos as $periodo)
                                                 <td>{{ $promediosGeneralesPreescolar[$periodo->periodo_id] ?? '' }}</td>
                                             @endforeach
@@ -247,10 +247,11 @@
                             @endif
                             {{-- FIN: TABLA PROMEDIO GENERAL (SEP) PREESCOLAR --}}
 
-                            @php $nombreBloqueAcademico = $esPK1 ? 'PROGRAMA DE LECTURA' : 'PROGRAMA ACADEMICO'; @endphp
-                            @if(!empty($datosBloques[$nombreBloqueAcademico]))
+                            {{-- INICIO: TABLA PROGRAMA ACADEMICO / PROGRAMA DE LECTURA (Preescolar) --}}
+                            {{-- Se usa la variable $bloqueAcademicoKey para determinar qué bloque buscar --}}
+                            @if(!empty($datosBloques[$bloqueAcademicoKey]))
                                 @php
-                                    $bloque = $datosBloques[$nombreBloqueAcademico];
+                                    $bloque = $datosBloques[$bloqueAcademicoKey];
                                     $bgTitle = '#F8CBAD';
                                 @endphp
                                 <table class="boleta-v2">
@@ -260,13 +261,13 @@
                                                 {{ isset($bloque['titulo']) ? $bloque['titulo'] : '' }}
                                             </th>
                                         </tr>
-                                    </thead>
-                                    <tbody>
                                         <tr class="header-row-periodos">
                                             <th style="width: 40%; text-align: left; padding-left: 5px;">MOMENTOS --></th>
                                             @foreach($periodos as $periodo) <th>{{ isset($periodo->nombre) ? $periodo->nombre : '' }}</th> @endforeach
                                             <th>PROMEDIO FINAL</th>
                                         </tr>
+                                    </thead>
+                                    <tbody>
                                         @if (isset($bloque['criterios']))
                                             @foreach($bloque['criterios'] as $criterio)
                                                 <tr>
@@ -277,13 +278,14 @@
                                             @endforeach
                                         @endif
                                         <tr class="promedio-bloque-pas">
-                                            <td style="width: 40%;">PROMEDIO</td>
+                                            <td style="width: 40%;">PROMEDIO GENERAL P.A.</td>
                                             @foreach($periodos as $periodo) <td>{{ $bloque['promedios_bloque'][$periodo->periodo_id] ?? '' }}</td> @endforeach
                                             <td class="cal-total-col">{{ $bloque['promedios_bloque']['promedio'] ?? '' }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             @endif
+                            {{-- FIN: TABLA PROGRAMA ACADEMICO / PROGRAMA DE LECTURA (Preescolar) --}}
 
                             @if(!empty($dataPrinceton))
                                 @foreach($dataPrinceton as $campo)
@@ -311,7 +313,7 @@
                                                 @endforeach
                                                 {{-- FILA DE PROMEDIO PARA PREESCOLAR PRINCETON --}}
                                                 <tr class="promedio-bloque-pas">
-                                                    <td style="width: 40%;">PROMEDIO</td>
+                                                    <td style="width: 40%;">PROMEDIO GENERAL P.P.</td>
                                                     @foreach($periodos as $periodo) <td class="cal-total-col">{{ $promediosPrinceton[$periodo->periodo_id] ?? '' }}</td> @endforeach
                                                     <td class="cal-total-col">{{ $promediosPrinceton['promedio'] ?? '' }}</td>
                                                 </tr>
@@ -355,7 +357,7 @@
                             </table>
 
                         @else
-                            {{-- ==================== PRIMARIA IZQUIERDA (SIN CAMBIOS) ==================== --}}
+                            {{-- ==================== PRIMARIA IZQUIERDA (CÓDIGO ORIGINAL) ==================== --}}
                             
                             @foreach($dataCamposSEP as $campo)
                                 @php 
@@ -412,7 +414,7 @@
                                 <table class="boleta-v2">
                                     <tbody>
                                         <tr class="promedio-label-row" style="background-color: #E0E0E0; border-top: 2px solid #000;">
-                                            <td style="width: 30%; text-align: center; font-weight: bold;">PROMEDIO GENERAL </td>
+                                            <td style="width: 30%; text-align: center; font-weight: bold;">PROMEDIO GENERAL S.E.P.</td>
                                             @foreach($periodos as $periodo) 
                                                 <td class="cal-pas"></td> 
                                                 <td class="cal-prom-sep cal-total-col">{{ isset($promediosGeneralesSEP[$periodo->periodo_id]) ? $promediosGeneralesSEP[$periodo->periodo_id] + 0 : '' }}</td> 
@@ -429,7 +431,7 @@
                                 <table class="boleta-v2">
                                     <thead>
                                         <tr class="header-row-titulo">
-                                            <th colspan="{{ 1 + count($periodos) + 1 }}" style="background-color: #C6E0B4;">{{ isset($bloque['titulo']) ? $bloque['titulo'] : '' }}</th>
+                                            <th colspan="{{ 1 + count($periodos) + 1 }}" style="background-color: #C6E0B4;">{{ $bloque['titulo'] }}</th>
                                         </tr>
                                         <tr class="header-row-periodos">
                                             <th style="width: 35%;"></th> @foreach($periodos as $periodo) <th>{{ isset($periodo->nombre) ? $periodo->nombre : '' }}</th> @endforeach <th>PROMEDIO</th>
@@ -446,7 +448,7 @@
                                             @endforeach
                                         @endif
                                         <tr class="promedio-bloque-pas">
-                                            <td class="promedio-label-row">PROMEDIO</td>
+                                            <td class="promedio-label-row">PROMEDIO GENERAL P.A.</td>
                                             @foreach($periodos as $periodo) <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? $bloque['promedios_bloque'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
                                             <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque']['promedio']) ? $bloque['promedios_bloque']['promedio'] + 0 : '' }}</td>
                                         </tr>
@@ -476,7 +478,7 @@
 
                                         {{-- FILA DE PROMEDIO PRINCETON (Primaria usa números) --}}
                                         <tr class="promedio-bloque-pas">
-                                            <td class="promedio-label-row">PROMEDIO</td>
+                                            <td class="promedio-label-row">PROMEDIO GENERAL P.P.</td>
                                             @foreach($periodos as $periodo) 
                                                 <td class="cal-total-col">{{ isset($promediosPrinceton[$periodo->periodo_id]) ? $promediosPrinceton[$periodo->periodo_id] + 0 : '' }}</td> 
                                             @endforeach
@@ -555,7 +557,7 @@
                                             @endforeach
                                         @endif
                                         <tr class="promedio-bloque-pas">
-                                            <td>PROMEDIO</td>
+                                            <td>PROMEDIO G.H.</td>
                                             @foreach($periodos as $periodo) <td class="cal-total-col">{{ $bloque['promedios_bloque'][$periodo->periodo_id] ?? '' }}</td> @endforeach
                                             <td class="cal-total-col">{{ $bloque['promedios_bloque']['promedio'] ?? '' }}</td>
                                         </tr>
@@ -597,7 +599,7 @@
                                 </table>
                             @endif
 
-                            {{-- TABLA HABITS (INGLÉS) - Esto fue solicitado en el último prompt, aunque la lógica original la usaba en Primaria --}}
+                            {{-- TABLA HABITS (INGLÉS) - Requerido por el diseño base --}}
                             @if(!empty($datosBloques['HABITS']))
                                 @php 
                                     $bloque = $datosBloques['HABITS'];
@@ -623,7 +625,7 @@
                                             @endforeach
                                         @endif
                                         <tr class="promedio-bloque-pas">
-                                            <td>PROMEDIO</td>
+                                            <td>AVERAGE HABITS</td>
                                             @foreach($periodos as $periodo) <td class="cal-total-col">{{ $bloque['promedios_bloque'][$periodo->periodo_id] ?? '' }}</td> @endforeach
                                             <td class="cal-total-col">{{ $bloque['promedios_bloque']['promedio'] ?? '' }}</td>
                                         </tr>
@@ -701,7 +703,7 @@
                                             </tr>
                                         @endforeach
                                         <tr class="promedio-bloque-pas">
-                                            <td class="promedio-label-row">PROMEDIO</td>
+                                            <td class="promedio-label-row">PROMEDIO G.H.</td>
                                             @foreach($periodos as $periodo) <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? $bloque['promedios_bloque'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
                                             <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque']['promedio']) ? $bloque['promedios_bloque']['promedio'] + 0 : '' }}</td>
                                         </tr>
@@ -757,7 +759,7 @@
                                             </tr>
                                         @endforeach
                                         <tr class="promedio-bloque-pas">
-                                            <td>AVERAGE</td>
+                                            <td>AVERAGE R.P.</td>
                                             @foreach($periodos as $periodo) <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? $bloque['promedios_bloque'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
                                             <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque']['promedio']) ? $bloque['promedios_bloque']['promedio'] + 0 : '' }}</td>
                                         </tr>
@@ -785,7 +787,7 @@
                                             </tr>
                                         @endforeach
                                         <tr class="promedio-bloque-pas">
-                                            <td>AVERAGE</td>
+                                            <td>AVERAGE HABITS</td>
                                             @foreach($periodos as $periodo) <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque'][$periodo->periodo_id]) ? $bloque['promedios_bloque'][$periodo->periodo_id] + 0 : '' }}</td> @endforeach
                                             <td class="cal-total-col">{{ is_numeric($bloque['promedios_bloque']['promedio']) ? $bloque['promedios_bloque']['promedio'] + 0 : '' }}</td>
                                         </tr>

@@ -19,12 +19,12 @@ use PDF;
 
 class BoletaController extends Controller
 {
+    // Ajustado para reflejar la estructura de la boleta mostrada, con nombres de BLOQUES.
     private const ORDEN_CAMPOS_PREESCOLAR = [
         'Lenguajes',
         'Saberes y Pensamiento Científico',
         'Ética, Naturaleza y Sociedad',
         'De lo Humano a lo Comunitario',
-        'Programa de Lectura',
         'Programa Académico',
         'Programa Princeton',
         'Hábitos',
@@ -44,12 +44,20 @@ class BoletaController extends Controller
         'Habits'
     ];
 
+    // Mapeo de nombres de Materia a Títulos de Bloque. Usado en $estructuraBloquesCriterios.
     private const BLOQUES_CRITERIOS_MAPA = [
+        'Programa Académico PK' => 'PROGRAMA ACADEMICO',
         'Programa Académico' => 'PROGRAMA ACADEMICO',
-        'Programa de Lectura' => 'PROGRAMA DE LECTURA',
+        'Programa de Lectura' => 'PROGRAMA DE LECTURA', 
         'Reading Program' => 'READING PROGRAM',
         'Habits' => 'HABITS', 
         'Hábitos' => 'HÁBITOS', 
+    ];
+    
+    // Nombres de materias que deben ser excluidas de la vista de Programa Princeton
+    private const MATERIAS_PRINCETON_EXCLUIDAS_PK = [
+        'Phonics/Vocabulary',
+        'Programa de Lectura',
     ];
 
     private const CAMPOS_FORMATIVOS_SEP = [
@@ -62,7 +70,12 @@ class BoletaController extends Controller
     private function getCampoOrderList(string $nivelNombre): ?array
     {
         switch (strtoupper($nivelNombre)) {
-            case 'PREESCOLAR': return self::ORDEN_CAMPOS_PREESCOLAR;
+            case 'PREESCOLAR': 
+                // Usamos una versión limpia del orden para campos formativos SEP y luego los bloques (programas)
+                $ordenBase = array_filter(self::ORDEN_CAMPOS_PREESCOLAR, function($campo) {
+                    return in_array($campo, self::CAMPOS_FORMATIVOS_SEP) || $campo === 'Programa Princeton';
+                });
+                return array_values($ordenBase);
             case 'PRIMARIA': return self::ORDEN_CAMPOS_PRIMARIA;
             default: return null;
         }
@@ -152,24 +165,28 @@ class BoletaController extends Controller
             ->get();
 
         // 3. CLASIFICACIÓN DE ESTRUCTURAS
-        $nombresMateriaBloque = array_keys(self::BLOQUES_CRITERIOS_MAPA);
+        $nombresMateriasBloqueCrit = array_keys(self::BLOQUES_CRITERIOS_MAPA);
         
-        // A. SEP
+        // A. SEP (Los 4 campos formativos)
         $estructuraCamposSEP = $estructuraCompleta->whereIn('nombre_campo', self::CAMPOS_FORMATIVOS_SEP)
-                                                ->whereNotIn('nombre_materia', $nombresMateriaBloque);
+                                                ->whereNotIn('nombre_materia', $nombresMateriasBloqueCrit);
 
-        // B. PRINCETON
-        $estructuraPrinceton = $estructuraCompleta->where('nombre_campo', 'Programa Princeton');
+        // B. PRINCETON (Sólo el campo Princeton)
+        $estructuraPrinceton = $estructuraCompleta->where('nombre_campo', 'Programa Princeton')
+            ->whereNotIn('nombre_materia', $nombresMateriasBloqueCrit)
+            // *** APLICACIÓN DE LA EXCLUSIÓN DIRECTA PARA LAS MATERIAS QUE NO DEBEN VISUALIZARSE ***
+            ->whereNotIn('nombre_materia', self::MATERIAS_PRINCETON_EXCLUIDAS_PK); 
 
-        // C. English y Bloques
+        // C. English 
         $estructuraEnglish = $estructuraCompleta->where('nombre_campo', 'English');
-        // Aquí se buscan explícitamente HÁBITOS y HABITS
-        $estructuraBloquesCriterios = $estructuraCompleta->whereIn('nombre_materia', [
-            'Programa Académico', 'Programa de Lectura', 'Reading Program', 'Habits', 'Hábitos'
-        ]);
+        
+        // D. Bloques de Criterios (Ej. HÁBITOS, PROGRAMA ACADEMICO, etc.)
+        $estructuraBloquesCriterios = $estructuraCompleta->whereIn('nombre_materia', $nombresMateriasBloqueCrit);
+
 
         // ==================================================================================
         // 3.5. DETECCIÓN DE EXTRACURRICULARES (POR CALIFICACIONES EXISTENTES)
+        // Se inyectan en Princeton
         // ==================================================================================
         if (!$esPK1) {
             $idsMateriasOficiales = $estructuraCompleta->pluck('materia_id')->toArray();
@@ -187,23 +204,24 @@ class BoletaController extends Controller
 
             if (!empty($idsExtras)) {
                 $materiasExtras = Materia::whereIn('materia_id', $idsExtras)->get();
+                $idsMateriasEnglish = $estructuraEnglish->pluck('materia_id')->toArray();
 
                 foreach ($materiasExtras as $extra) {
-                    $nombreUpper = strtoupper($extra->nombre);
-                    if (str_contains($nombreUpper, 'INGLÉS') || str_contains($nombreUpper, 'ENGLISH') || str_contains($nombreUpper, 'LENGUA EXTRA')) {
-                        continue;
+                    // Si ya está en Princeton o English, o si está en la lista de exclusión, saltamos.
+                    if ($estructuraPrinceton->contains('materia_id', $extra->materia_id) || 
+                        in_array($extra->materia_id, $idsMateriasEnglish) ||
+                        in_array($extra->nombre, self::MATERIAS_PRINCETON_EXCLUIDAS_PK)) { 
+                         continue;
                     }
 
-                    if (!$estructuraPrinceton->contains('materia_id', $extra->materia_id)) {
-                        $nodoExtra = (object) [
-                            'campo_id' => 0, 
-                            'nombre_campo' => 'Programa Princeton',
-                            'materia_id' => $extra->materia_id,
-                            'nombre_materia' => $extra->nombre, 
-                            'ponderacion_materia' => 0
-                        ];
-                        $estructuraPrinceton->push($nodoExtra);
-                    }
+                    $nodoExtra = (object) [
+                        'campo_id' => 0, 
+                        'nombre_campo' => 'Programa Princeton',
+                        'materia_id' => $extra->materia_id,
+                        'nombre_materia' => $extra->nombre, 
+                        'ponderacion_materia' => 0
+                    ];
+                    $estructuraPrinceton->push($nodoExtra);
                 }
             }
         }
@@ -216,9 +234,10 @@ class BoletaController extends Controller
             return str_contains(strtoupper($item->nombre_materia), 'ESCUELA PARA PADRES');
         });
 
+        // NOTA IMPORTANTE: $idsMateriasPromedio SOLO debe incluir MATERIAS (no bloques de criterios).
         $idsMateriasPromedio = $estructuraCamposSEP->pluck('materia_id')
-                                                 ->merge($estructuraPrinceton->pluck('materia_id'))
-                                                 ->merge($estructuraEnglish->pluck('materia_id'));
+                                                ->merge($estructuraPrinceton->pluck('materia_id'))
+                                                ->merge($estructuraEnglish->pluck('materia_id'));
 
         // Si existe Escuela para Padres, agregamos su ID a la lista de búsqueda
         if ($materiaEscuelaPadres) {
@@ -261,6 +280,7 @@ class BoletaController extends Controller
                 $esPreescolar
             );
 
+            // Lógica de inyección de promedio en Lengua Extranjera (se mantiene igual y es correcta)
             if (isset($datosEnglish['promedios_bloque_numericos'])) {
                 $fakeIdLengua = 999999; 
 
@@ -282,7 +302,10 @@ class BoletaController extends Controller
                             'nombre_materia' => 'Lengua Extranjera',
                             'ponderacion_materia' => 0
                         ];
-                        $estructuraCamposSEP->push($materiaSimulada);
+                        if ($estructuraCamposSEP instanceof Collection) {
+                             $estructuraCamposSEP->push($materiaSimulada);
+                             $camposFormativosSEP_Agrupados = $estructuraCamposSEP->groupBy('nombre_campo');
+                        }
                     }
                 }
 
@@ -297,8 +320,8 @@ class BoletaController extends Controller
         }
         // ==================================================================================
 
-        // 5. PROCESAR CAMPOS SEP
-        $camposFormativosSEP_Agrupados = $estructuraCamposSEP->groupBy('nombre_campo');
+        // 5. PROCESAR CAMPOS SEP (Se mantiene la re-agrupación aquí o antes de la llamada)
+        $camposFormativosSEP_Agrupados = isset($camposFormativosSEP_Agrupados) ? $camposFormativosSEP_Agrupados : $estructuraCamposSEP->groupBy('nombre_campo');
 
         if ($orderList) {
             $camposFormativosSEP_Agrupados = $camposFormativosSEP_Agrupados->sortBy(function ($materias, $nombreCampo) use ($orderList) {
@@ -327,10 +350,10 @@ class BoletaController extends Controller
         }
 
         // 5.5. RECOLECCIÓN DE CALIFICACIONES PARA PROMEDIO FINAL COMBINADO
-        $califsMateriasSEP_ParaCombinado = ['califs_para_promedio_final' => []];
+        $califsMateriasSEP_ParaCombinado = ['califs_for_promedio_final' => []];
         $califsMateriasSEP_Academico = ['califs_para_promedio_final' => []];
         foreach ($periodos as $p) {
-            $califsMateriasSEP_ParaCombinado['califs_para_promedio_final'][$p->periodo_id] = [];
+            $califsMateriasSEP_ParaCombinado['califs_for_promedio_final'][$p->periodo_id] = [];
             $califsMateriasSEP_Academico['califs_para_promedio_final'][$p->periodo_id] = [];
         }
         
@@ -340,7 +363,7 @@ class BoletaController extends Controller
                 if (isset($califsPorPeriodo[$p->periodo_id]) && is_numeric($califsPorPeriodo[$p->periodo_id])) {
                     $cal = $califsPorPeriodo[$p->periodo_id];
 
-                    $califsMateriasSEP_ParaCombinado['califs_para_promedio_final'][$p->periodo_id][] = $cal;
+                    $califsMateriasSEP_ParaCombinado['califs_for_promedio_final'][$p->periodo_id][] = $cal;
                     
                     if (!$esPreescolar) {
                         $materiaInfo = $estructuraCamposSEP->firstWhere('materia_id', $materiaId);
@@ -348,6 +371,7 @@ class BoletaController extends Controller
                             $califsMateriasSEP_Academico['califs_para_promedio_final'][$p->periodo_id][] = $cal;
                         }
                     } else {
+                        // En Preescolar, todas las materias de la SEP se consideran "Académicas" para este cálculo
                         $califsMateriasSEP_Academico['califs_para_promedio_final'][$p->periodo_id][] = $cal;
                     }
                 }
@@ -358,7 +382,7 @@ class BoletaController extends Controller
         $promediosGeneralesPreescolar = [];
         if ($esPreescolar) {
             $promediosGeneralesPreescolar = $this->calcularPromedioGeneralPreescolar(
-                $califsMateriasSEP_ParaCombinado['califs_para_promedio_final'], 
+                $califsMateriasSEP_ParaCombinado['califs_for_promedio_final'], 
                 $periodos
             );
         }
@@ -436,14 +460,13 @@ class BoletaController extends Controller
         }
         
         // Procesar todos los bloques que se extrajeron en $estructuraBloquesCriterios
-        foreach ($estructuraBloquesCriterios as $materiaBloque) {
+        foreach ($estructuraBloquesCriterios->unique('nombre_materia') as $materiaBloque) {
             $key = $materiaBloque->nombre_materia;
             $titulo = self::BLOQUES_CRITERIOS_MAPA[$key] ?? $key;
             
-            // Si ya procesamos este bloque (ej. Hábitos en Español y Habits en Inglés)
+            // Si ya procesamos un bloque con este título, lo saltamos (prevención de duplicados).
             if (isset($datosBloquesCriterios[$titulo])) {
-                 // Si son bloques duplicados (ej. 2 programas academicos), ignoramos si ya existe.
-                 continue;
+                   continue;
             }
             
             $datosBloquesCriterios[$titulo] = $this->procesarBloqueCriterios(
@@ -524,7 +547,7 @@ class BoletaController extends Controller
 
             foreach ($periodos as $periodo) {
                 if (isset($califsEP[$periodo->periodo_id])) {
-                        $datosBloquesCriterios['HÁBITOS']['califs_para_promedio_final'][$periodo->periodo_id][] = $califsEP[$periodo->periodo_id];
+                    $datosBloquesCriterios['HÁBITOS']['califs_para_promedio_final'][$periodo->periodo_id][] = $califsEP[$periodo->periodo_id];
                 }
             }
         }
@@ -534,7 +557,7 @@ class BoletaController extends Controller
         $datosAsistencias = $this->procesarAsistencias($alumno, $ciclo, $periodos);
 
         // 10. PROMEDIOS COMBINADOS ACADÉMICOS (PROMEDIO FINAL REQUERIDO)
-        $bloqueAcademicoKey = ($esPreescolar && $esPK1) ? 'PROGRAMA DE LECTURA' : 'PROGRAMA ACADEMICO';
+        $bloqueAcademicoKey = $esPK1 ? 'PROGRAMA DE LECTURA' : 'PROGRAMA ACADEMICO';
         
         $componentesAcademicosACombinar = [
             $califsMateriasSEP_Academico, 
@@ -601,6 +624,7 @@ class BoletaController extends Controller
 
             'promediosCombinadosAcademico' => $promediosCombinadosAcademico,
             'promediosCombinadosHabits' => $promediosCombinadosHabits,
+            'bloqueAcademicoKey' => $bloqueAcademicoKey, 
 
             'maestroEspanol' => $maestroEspanol,
             'maestroIngles' => $maestroIngles,
@@ -875,6 +899,8 @@ class BoletaController extends Controller
                 'promedio_final_pas' => $promedioFinalPAS,
                 'promedio_final_sep' => $promedioSEP_Materia
             ];
+
+            $califsPorMateriaNumerica[$materia->materia_id] = $califsMateria_PAS_Numerica; 
         }
 
         if (!$esPreescolar) {

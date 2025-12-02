@@ -27,7 +27,6 @@ use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\PonderacionController;
 use App\Http\Controllers\BoletaController;
 use App\Models\CatalogoCriterio;
-// --- IMPORTACIÓN NUEVA ---
 use App\Http\Controllers\PdaController; 
 
 
@@ -62,7 +61,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |--------------------------------------------------------------------------
     | =================== ZONA DE ADMINISTRACIÓN ===================
     |--------------------------------------------------------------------------
-    | Rutas exclusivas para Directores y Coordinadores
     */
     Route::middleware(['role:DIRECTOR,COORDINADOR'])->prefix('admin')->name('admin.')->group(function () {
 
@@ -120,8 +118,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Administración Escolar (Ciclos y Periodos)
         Route::resource('ciclo-escolar', CicloEscolarController::class);
         
-        // 🛑 CAMBIO CLAVE: ANIDACIÓN DE PERIODOS BAJO CICLO-ESCOLAR
-        Route::resource('ciclo-escolar.periodos', PeriodoController::class)->except(['show', 'edit']); // La ruta nombrada ahora es admin.ciclo-escolar.periodos.*
+        // ANIDACIÓN DE PERIODOS BAJO CICLO-ESCOLAR
+        Route::resource('ciclo-escolar.periodos', PeriodoController::class)->except(['show', 'edit']);
 
         Route::get('/ponderaciones', [PonderacionController::class, 'index'])
              ->name('ponderaciones.index');
@@ -129,14 +127,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/ponderaciones/guardar', [PonderacionController::class, 'store'])
              ->name('ponderaciones.store');
 
-        // 1. Página de selectores para generar boletas
+        // Boletas
         Route::get('/boletas', [BoletaController::class, 'index'])->name('boletas.index');
-        
-        // 2. Ruta que genera el PDF de la boleta final
         Route::get('/reportes/boleta-alumno/{grupo}/{alumno}', [BoletaController::class, 'generarBoletaAlumno'])
             ->name('reportes.boleta.alumno');
-
-        // 3. Ruta JSON para que la página de boletas cargue alumnos dinámicamente
         Route::get('/json/grupo/{grupo}/alumnos', [BoletaController::class, 'getAlumnosPorGrupo'])->name('json.grupo.alumnos');
 
     }); // <-- Fin de la ZONA DE ADMINISTRACIÓN
@@ -146,38 +140,40 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |--------------------------------------------------------------------------
     | ===== ZONA COMPARTIDA (ADMINS Y MAESTROS) =====
     |--------------------------------------------------------------------------
-    | Rutas accesibles por ambos roles, pero que muestran
-    | vistas/datos diferentes según el rol.
     */
     Route::middleware(['role:DIRECTOR,COORDINADOR,MAESTRO'])
-          ->prefix('admin') // Mantenemos el prefijo /admin/ para que las URLs de Alpine no se rompan
-          ->name('admin.')  // Mantenemos el nombre 'admin.' por la misma razón
-          ->group(function () {
+             ->prefix('admin') 
+             ->name('admin.')
+             ->group(function () {
     
         // ==========================================================
-        // == INICIO: RUTAS DE CALIFICACIONES (COMPARTIDAS)        ==
+        // == INICIO: RUTAS DE CALIFICACIONES (COMPARTIDAS) 
         // ==========================================================
         
         Route::resource('calificaciones', CalificacionController::class)->only(['index', 'store']);
 
         // --- Rutas JSON para Alpine.js (para los selects dinámicos) ---
-        // Estas rutas ahora podrán ser consumidas por la vista de admin y la de maestro
-        Route::get('/json/grados/{grado}/grupos', [CalificacionJsonController::class, 'getGrupos'])->name('json.grados.grupos');
-        Route::get('/json/grados/{grado}/materias', [CalificacionJsonController::class, 'getMaterias'])->name('json.grados.materias');
-        Route::get('/json/tabla-calificaciones', [CalificacionJsonController::class, 'getTablaCalificaciones'])->name('json.tabla.calificaciones');
         Route::get('/json/niveles/{nivel}/grados', [CalificacionJsonController::class, 'getGradosPorNivel'])->name('json.niveles.grados');
         Route::get('/json/grados-extracurriculares', [CalificacionJsonController::class, 'getGradosExtracurriculares'])->name('json.grados.extra');
+        Route::get('/json/grados/{grado}/grupos', [CalificacionJsonController::class, 'getGrupos'])->name('json.grados.grupos');
+        
+        // 🔥 RUTA CORREGIDA/NUEVA: Obtiene materias filtradas por GRUPO 🔥
+        Route::get('/json/grupos/{grupo}/materias', [CalificacionJsonController::class, 'getMateriasPorGrupo'])->name('json.grupos.materias');
+        
+        // Esta ruta original para obtener materias por Grado ya NO se usará en la vista
+        // para evitar que cargue todas las extracurriculares.
+        Route::get('/json/grados/{grado}/materias', [CalificacionJsonController::class, 'getMaterias'])->name('json.grados.materias');
+
+        Route::get('/json/tabla-calificaciones', [CalificacionJsonController::class, 'getTablaCalificaciones'])->name('json.tabla.calificaciones');
     
         // ==========================================================
-        // == FIN: RUTAS DE CALIFICACIONES                       ==
+        // == FIN: RUTAS DE CALIFICACIONES 
         // ==========================================================
 
         // ==========================================================
-        // == INICIO: RUTAS PDA (PREESCOLAR)                       ==
+        // == INICIO: RUTAS PDA (PREESCOLAR) 
         // ==========================================================
         
-        // Estas rutas heredan el prefijo 'admin.', por lo que se llaman:
-        // admin.pda.index, admin.pda.store, admin.json.pda.data
         Route::get('/pda', [PdaController::class, 'index'])->name('pda.index');
         Route::post('/pda/guardar', [PdaController::class, 'store'])->name('pda.store');
         Route::get('/json/pda/data', [PdaController::class, 'getData'])->name('json.pda.data');
@@ -186,7 +182,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/json/ciclos/{ciclo}/periodos', [PdaController::class, 'getPeriodos'])->name('json.ciclos.periodos');
 
         // ==========================================================
-        // == FIN: RUTAS PDA                                     ==
+        // == FIN: RUTAS PDA 
         // ==========================================================
 
         Route::get('/reportes/concentrado-periodo/{grupo}/{periodo}/{materia}', [ReporteController::class, 'generarConcentradoPeriodo'])

@@ -12,9 +12,10 @@
             <div x-data="calificacionesManager()" 
                  class="bg-white p-6 shadow-sm rounded-lg">
                 
-                {{-- Selectores (Sin cambios) --}}
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-                    {{-- ... (selects de Nivel, Grado, Grupo, etc.) ... --}}
+                {{-- Diseño Original: Selectores de Nivel, Grado, Grupo, Materia y Periodo --}}
+                <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-6">
+                    
+                    {{-- Selector de Nivel --}}
                     <div>
                         <label for="nivel" class="block text-sm font-medium text-gray-700">Nivel</label>
                         <select id="nivel" x-model="selectedNivel" @change="nivelChanged()"
@@ -29,19 +30,20 @@
                         </select>
                     </div>
 
+                    {{-- Selector de Grado --}}
                     <div>
                         <label for="grado" class="block text-sm font-medium text-gray-700">Grado</label>
                         <select id="grado" x-model="selectedGrado" @change="gradoChanged()"
                                 :disabled="loading.grados || !selectedNivel"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100">
                             
-                           <option value="">
+                            <option value="" disabled selected>
                                 <span x-show="loading.grados">Cargando grados...</span>
                                 <span x-show="!loading.grados && !selectedNivel">Selecciona un nivel</span>
                                 <span x-show="!loading.grados && selectedNivel && grados.length === 0">Sin grados</span>
                                 <span x-show="!loading.grados && selectedNivel && grados.length > 0">Selecciona un grado</span>
                             </option>
-                           <template x-for="grado in grados" :key="grado.id">
+                            <template x-for="grado in grados" :key="grado.id">
                                 <option :value="grado.id" 
                                         x-text="grado.nombre"
                                         :selected="grado.id == selectedGrado">
@@ -50,12 +52,13 @@
                         </select>
                     </div>
                     
-                      <div>
+                    {{-- Selector de Grupo (CLAVE: Añadir @change="grupoChanged()") --}}
+                    <div>
                         <label for="grupo" class="block text-sm font-medium text-gray-700">Grupo</label>
-                        <select id="grupo" x-model="selectedGrupo" :disabled="loading.grupos || !selectedGrado"
+                        <select id="grupo" x-model="selectedGrupo" @change="grupoChanged()" :disabled="loading.grupos || !selectedGrado"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100">
 
-                            <option value="">
+                            <option value="" disabled selected>
                                 <span x-show="loading.grupos">Cargando...</span>
                                 <span x-show="!loading.grupos && !selectedGrado">Selecciona un grado</span>
                                 <span x-show="!loading.grupos && selectedGrado && grupos.length === 0">Sin grupos</span>
@@ -63,48 +66,51 @@
                             </option>
                             <template x-for="grupo in grupos" :key="grupo.id">
                                 <option :value="grupo.id" 
-                                    x-text="grupo.nombre_grupo"
-                                    :selected="grupo.id == selectedGrupo">
+                                        x-text="grupo.nombre_grupo"
+                                        :selected="grupo.id == selectedGrupo">
                                 </option>
                             </template>
                         </select>
                     </div>
 
+                    {{-- Selector de Materia (Depende de selectedGrupo) --}}
                     <div>
                         <label for="materia" class="block text-sm font-medium text-gray-700">Materia</label>
-                        <select id="materia" x-model="selectedMateria" :disabled="loading.materias || !selectedGrado"
+                        <select id="materia" x-model="selectedMateria" :disabled="loading.materias || !selectedGrupo"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100">
 
-                            <option value="">
+                            <option value="" disabled selected>
                                 <span x-show="loading.materias">Cargando...</span>
-                                <span x-show="!loading.materias && !selectedGrado">Selecciona un grado</span>
-                                <span x-show="!loading.materias && selectedGrado && materias.length === 0">Sin materias</span>
-                                <span x-show="!loading.materias && selectedGrado && materias.length > 0">Selecciona una materia</span>
+                                <span x-show="!loading.materias && !selectedGrupo">Selecciona un grupo</span>
+                                <span x-show="!loading.materias && selectedGrupo && materias.length === 0">Sin materias</span>
+                                <span x-show="!loading.materias && selectedGrupo && materias.length > 0">Selecciona una materia</span>
                             </option>
                             <template x-for="materia in materias" :key="materia.id">
                                 <option :value="materia.id" 
-                                    x-text="materia.nombre"
-                                    :selected="materia.id == selectedMateria">
+                                        x-text="materia.nombre"
+                                        :selected="materia.id == selectedMateria">
                                 </option>
                             </template>
                         </select>
                     </div>
 
+                    {{-- Selector de Periodo --}}
                     <div>
                         <label for="periodo" class="block text-sm font-medium text-gray-700">Periodo</label>
                         <select id="periodo" x-model="selectedPeriodo"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             <option value="">Selecciona un periodo</option>
                             @foreach($periodos as $periodo)
-                               <option value="{{ $periodo->id }}" 
-                                    @selected(old('periodo_id') == $periodo->id)>
-                                   {{ $periodo->nombre }}
-                               </option>
+                                <option value="{{ $periodo->id }}" 
+                                        @selected(old('periodo_id') == $periodo->id)>
+                                    {{ $periodo->nombre }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
                 </div>
 
+                {{-- Botón de Cargar Alumnos --}}
                 <div class="mb-6">
                     <button @click="cargarTabla()" 
                             :disabled="!selectedGrado || !selectedGrupo || !selectedMateria || !selectedPeriodo || loading.tabla"
@@ -118,20 +124,16 @@
                             Cargando...
                         </span>
                     </button>
-                    
-                    {{-- 
-                      ===============================================
-                      CORRECCIÓN: Se elimina el botón "Generar Reporte" 
-                      de aquí, ya que lo moviste al final.
-                      ===============================================
-                    --}}
                 </div>
                 
-                {{-- INICIO: Mostrar Nombre del Maestro --}}
+                <hr class="mb-4">
+
+                {{-- Mostrar Nombre del Maestro --}}
                 <div x-show="tabla.nombreMaestro && tabla.alumnos.length > 0" class="mb-4 text-sm text-gray-700">
                     Maestro asignado: <strong x-text="tabla.nombreMaestro"></strong>
                 </div>
 
+                {{-- Advertencia de Configuración --}}
                 <div x-show="tabla.setup_warning" 
                      class="my-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800"
                      role="alert">
@@ -151,14 +153,13 @@
                         
                         <div class="overflow-x-auto border rounded-lg">
                             <table class="min-w-full divide-y divide-gray-200">
-                                {{-- ... (El <thead> y <tbody> de tu tabla no cambian) ... --}}
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase ...">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-64 min-w-[16rem] sticky left-0 z-10 bg-gray-50">
                                             Alumno
                                         </th>
                                         <template x-for="criterio in tabla.criterios" :key="criterio.id">
-                                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase"
+                                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase min-w-[8rem]"
                                                 x-text="criterio.nombre_criterio"></th>
                                         </template>
                                     </tr>
@@ -166,22 +167,23 @@
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     <template x-for="(alumno, index) in tabla.alumnos" :key="alumno.id">
                                         <tr :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
-                                            <td class="px-6 py-4 ... sticky left-0 ..."
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 z-10"
+                                                :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'"
                                                 x-text="`${alumno.apellido_paterno} ${alumno.apellido_materno} ${alumno.nombres}`">
                                             </td>
                                             
                                             <template x-for="criterio in tabla.criterios" :key="criterio.id">
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                                                     <input type="number"
-                                                           step="0.1" 
-                                                           min="0" 
-                                                           max="10"
-                                                           :name="`calificaciones[${alumno.id}][${criterio.id}]`"
-                                                           :value="tabla.calificaciones[alumno.id] && tabla.calificaciones[alumno.id][criterio.id] ? tabla.calificaciones[alumno.id][criterio.id] : ''"
-                                                           class="w-24 rounded-md border-gray-300 ... text-center"
-                                                           
-                                                           :disabled="criterio.es_promedio || criterio.es_faltas || criterio.es_calculado"
-                                                           :class="{ 'bg-gray-100 font-bold': criterio.es_promedio, 'bg-gray-100': criterio.es_faltas }"
+                                                            step="0.1" 
+                                                            min="0" 
+                                                            max="10"
+                                                            :name="`calificaciones[${alumno.id}][${criterio.id}]`"
+                                                            :value="tabla.calificaciones[alumno.id] && tabla.calificaciones[alumno.id][criterio.id] ? tabla.calificaciones[alumno.id][criterio.id] : ''"
+                                                            class="w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-center"
+                                                            
+                                                            :disabled="criterio.es_promedio || criterio.es_faltas || criterio.es_calculado"
+                                                            :class="{ 'bg-gray-100 font-bold': criterio.es_promedio || criterio.es_faltas || criterio.es_calculado }"
                                                     >
                                                 </td>
                                             </template>
@@ -189,29 +191,23 @@
                                     </template>
                                 </tbody>
                                 <tfoot x-show="tabla.promedioGrupo > 0" 
-                                       class="bg-gray-100 border-t-2 border-gray-400">
+                                        class="bg-gray-100 border-t-2 border-gray-400">
                                     <tr>
-                                        <td class="px-6 py-3 text-right text-sm font-bold text-gray-800 uppercase"
-                                            :colspan="tabla.criterios.length">
+                                        <td class="px-6 py-3 text-right text-sm font-bold text-gray-800 uppercase sticky left-0 z-10 bg-gray-100">
                                             Promedio del Grupo
                                         </td>
                                         
-                                        <td class="px-6 py-3 text-center text-sm font-bold text-gray-900">
-                                            <span x-text="tabla.promedioGrupo.toFixed(2)"></span>
-                                        </td>
+                                        <template x-for="criterio in tabla.criterios">
+                                            <td class="px-6 py-3 text-center text-sm font-bold text-gray-900">
+                                                <span x-show="criterio.es_promedio" x-text="tabla.promedioGrupo.toFixed(2)"></span>
+                                            </td>
+                                        </template>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
 
-                        {{-- =============================================== --}}
-                        {{-- =========== INICIO DE LA CORRECCIÓN =========== --}}
-                        {{-- =============================================== --}}
-
-                        {{-- 
-                            Se añade 'gap-4' al 'flex justify-end' 
-                            para crear espacio entre los botones.
-                        --}}
+                        {{-- Botones de acción --}}
                         <div class="mt-6 flex justify-end gap-4">
                             
                             {{-- Botón de Guardar --}}
@@ -228,13 +224,10 @@
                                 Generar Reporte
                             </a>
                         </div>
-                        {{-- =============================================== --}}
-                        {{-- ============= FIN DE LA CORRECCIÓN ============ --}}
-                        {{-- =============================================== --}}
                     </form>
                 </div>
 
-                {{-- Mensajes de "No encontrado" (sin cambios) --}}
+                {{-- Mensajes de "No encontrado" --}}
                 <div x-show="!loading.tabla && (tabla.alumnos.length === 0 || tabla.criterios.length === 0) && tabla.intentado"
                      class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
                     <p x-show="tabla.alumnos.length === 0">No se encontraron alumnos en el grupo seleccionado.</p>
@@ -249,15 +242,15 @@
         function calificacionesManager() {
             return {
                 // IDs seleccionados
-               selectedNivel:   '{{ old('nivel_id') }}' || '',
-                selectedGrado:   '{{ old('grado_id') }}' || '',
-                selectedGrupo:   '{{ old('grupo_id') }}' || '',
+                selectedNivel:   '{{ old('nivel_id') }}' || '',
+                selectedGrado:   '{{ old('grado_id') }}' || '',
+                selectedGrupo:   '{{ old('grupo_id') }}' || '',
                 selectedMateria: '{{ old('materia_id') }}' || '',
                 selectedPeriodo: '{{ old('periodo_id') }}' || '',
 
                 reportUrlTemplate: '{{ url("/admin/reportes/concentrado-periodo") }}/:grupoId/:periodoId/:materiaId',
-                // --- FIN DE MODIFICACIÓN ---
-                   // Datos para los dropdowns
+                
+                // Datos para los dropdowns
                 grados: [],
                 grupos: [],
                 materias: [],
@@ -281,16 +274,14 @@
                     tabla: false
                 },
 
-            init() {
-                if (this.selectedGrado) {
-                    // Si 'selectedGrado' tiene un valor 'old',
-                    // cargamos las dependencias y la tabla automáticamente.
-                    this.autoLoadOnRefresh();
-                }
-            },
+                init() {
+                    if (this.selectedGrado) {
+                        this.autoLoadOnRefresh();
+                    }
+                },
 
-            // --- AÑADIR ESTA NUEVA FUNCIÓN async ---
-            async autoLoadOnRefresh() {
+                // Función de autocarga (corregida para usar la nueva ruta de materias si hay grupo)
+                async autoLoadOnRefresh() {
                     if (!this.selectedNivel) return;
                     
                     this.loading.grados = true;
@@ -298,8 +289,7 @@
                     this.loading.materias = true;
 
                     try {
-                        // --- 4. MODIFICAR AUTOLOAD ---
-                        // Primero, esperamos a que carguen los grados
+                        // 1. Cargar Grados
                         let gradosUrl = (this.selectedNivel === 'extra')
                             ? '{{ route("admin.json.grados.extra") }}'
                             : `{{ url('/admin/json/niveles') }}/${this.selectedNivel}/grados`;
@@ -311,11 +301,16 @@
                             this.selectedGrado = '';
                         }
                         
-                        // Si seguimos teniendo un grado, cargamos grupos y materias
+                        // 2. Si hay grado, cargar grupos y materias
                         if (this.selectedGrado) {
+                            
+                            let materiasUrl = this.selectedGrupo 
+                                ? `{{ url('/admin/json/grupos') }}/${this.selectedGrupo}/materias` 
+                                : Promise.resolve([]);
+
                             const [gruposData, materiasData] = await Promise.all([
                                 fetch(`{{ url('/admin/json/grados') }}/${this.selectedGrado}/grupos`).then(res => res.json()),
-                                fetch(`{{ url('/admin/json/grados') }}/${this.selectedGrado}/materias`).then(res => res.json())
+                                (typeof materiasUrl === 'string' ? fetch(materiasUrl).then(res => res.json()) : materiasUrl)
                             ]);
                             
                             this.grupos = gruposData;
@@ -338,7 +333,7 @@
                         }
                     }
                 },
-             
+                
                 nivelChanged() {
                     // Resetea todo hacia abajo
                     this.selectedGrado = '';
@@ -376,67 +371,66 @@
                             this.loading.grados = false;
                         });
                 },
-                // --- MÉTODOS ---
 
-             gradoChanged() {
-                // Esta función SÍ debe resetear, porque es una acción del usuario
-                this.selectedGrupo = '';
-                this.selectedMateria = '';
-                this.grupos = [];
-                this.materias = [];
-                this.resetTabla();
+                gradoChanged() {
+                    // Resetea grupo, materia y la tabla
+                    this.selectedGrupo = '';
+                    this.selectedMateria = '';
+                    this.grupos = [];
+                    this.materias = [];
+                    this.resetTabla();
 
-                if (!this.selectedGrado) return;
+                    if (!this.selectedGrado) return;
 
-                this.loadGrupos();
-                this.loadMaterias();
-            },
+                    this.loadGrupos();
+                    // Importante: No se llama a loadMaterias() aquí.
+                },
 
                 loadGrupos() {
                     this.loading.grupos = true;
-                    // Usamos la ruta que definimos en web.php
                     fetch(`{{ url('/admin/json/grados') }}/${this.selectedGrado}/grupos`)
                         .then(res => res.json())
                         .then(data => {
                             this.grupos = data;
                             this.loading.grupos = false;
                         })
-                        // =============================================
-                        // == INICIO DE CORRECCIÓN: AÑADIR .catch() ==
-                        // =============================================
                         .catch(err => {
                             console.error('Error cargando GRUPOS:', err);
                             alert('Hubo un error en el servidor al cargar grupos.');
-                            this.grupos = []; // Resetea a un array vacío
-                            this.loading.grupos = false; // Desbloquea el select
+                            this.grupos = [];
+                            this.loading.grupos = false;
                         });
-                        // =============================================
-                        // == FIN DE CORRECCIÓN                       ==
-                        // =============================================
                 },
 
-                loadMaterias() {
+                // CLAVE: Función que se dispara al cambiar el grupo para cargar las materias filtradas
+                grupoChanged() {
+                    this.selectedMateria = '';
+                    this.materias = [];
+                    this.resetTabla();
+
+                    if (this.selectedGrupo) {
+                        this.loadMateriasForGrupo(); 
+                    }
+                },
+
+                // CLAVE: Carga de materias filtrada por Grupo (la nueva lógica)
+                loadMateriasForGrupo() {
                     this.loading.materias = true;
-                    fetch(`{{ url('/admin/json/grados') }}/${this.selectedGrado}/materias`)
+                    // Usa la nueva ruta que incluye el ID del Grupo
+                    fetch(`{{ url('/admin/json/grupos') }}/${this.selectedGrupo}/materias`)
                         .then(res => res.json())
                         .then(data => {
                             this.materias = data;
                             this.loading.materias = false;
                         })
-                        // =============================================
-                        // == INICIO DE CORRECCIÓN: AÑADIR .catch() ==
-                        // =============================================
                         .catch(err => {
-                            console.error('Error cargando MATERIAS:', err);
-                            alert('Hubo un error en el servidor al cargar materias.');
-                            this.materias = []; // Resetea a un array vacío
-                            this.loading.materias = false; // Desbloquea el select
+                            console.error('Error cargando MATERIAS por grupo:', err);
+                            alert('Hubo un error en el servidor al cargar materias del grupo.');
+                            this.materias = [];
+                            this.loading.materias = false;
                         });
-                        // =============================================
-                        // == FIN DE CORRECCIÓN                       ==
-                        // =============================================
                 },
-
+                
                 cargarTabla() {
                     if (!this.selectedGrupo || !this.selectedMateria || !this.selectedPeriodo) {
                         return;
@@ -453,9 +447,7 @@
                     
                     fetch(`{{ route('admin.json.tabla.calificaciones') }}?${params.toString()}`)
                         .then(res => {
-                            // Añadimos una validación extra
                             if (!res.ok) {
-                                // Lanza un error si la respuesta no es 200-299
                                 throw new Error(`Error del servidor: ${res.status}`);
                             }
                             return res.json();
@@ -472,9 +464,8 @@
                         })
                         .catch(err => {
                             console.error('Error al cargar la TABLA:', err);
-                            // Este es el alert que ya veías
                             alert('Hubo un error al cargar los datos de la tabla.');
-                            this.resetTabla(); // Resetea la tabla
+                            this.resetTabla(); 
                             this.loading.tabla = false;
                         });
                 },
