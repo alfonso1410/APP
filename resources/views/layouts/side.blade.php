@@ -202,20 +202,10 @@
                             <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            <span class="flex-1 ms-3 whitespace-nowrap">PDA (Preescolar)</span>
+                            <span class="flex-1 ms-3 whitespace-nowrap">PDA</span>
                         </a>
                     </li>
-
-                    {{-- 5. ENLACE MI PERFIL --}}
-                    <li>
-                        <a href="{{ route('maestro.perfil') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">
-                            <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
-                                <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-user"> </use>
-                            </svg>
-                            <span class="flex-1 ms-3 whitespace-nowrap">Mi Perfil</span>
-                        </a>
-                    </li>
-                
+             
                 @endif
     
                 {{-- 5. ENLACE PARA CERRAR SESIÓN (Común para todos) --}}
