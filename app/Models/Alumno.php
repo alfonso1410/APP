@@ -48,14 +48,20 @@ class Alumno extends Model
         return $this->calificaciones->avg('calificacion_obtenida');
     }
 
-  public function getMateriaExtracurricularAttribute()
+public function getMateriaExtracurricularAttribute()
 {
-    $grupoExtra = $this->grupos->firstWhere('tipo_grupo', 'EXTRA');
+    // USAMOS filter() O first() CON UNA FUNCIÓN DE CALLBACK
+    // Para buscar un grupo que sea EXTRA **Y ADEMÁS** sea el actual.
+    $grupoExtra = $this->grupos->first(function ($grupo) {
+        // Accedemos al pivot para verificar el estado
+        return $grupo->tipo_grupo === 'EXTRA' && $grupo->pivot->es_actual == 1;
+    });
+
+    // Obtenemos la materia de ese grupo activo (si existe)
     $materia = $grupoExtra?->materias?->first();
 
     return $materia?->nombre ?? 'Ninguna';
 }
-
      public function grupoRegularActivo()
     {
         return $this->belongsToMany(Grupo::class, 'asignacion_grupal', 'alumno_id', 'grupo_id')

@@ -10,6 +10,7 @@ use App\Models\RegistroAsistencia;
 use Carbon\Carbon;
 use App\Models\CicloEscolar; // <-- 1. Importar CicloEscolar
 use App\Models\Periodo;
+use Illuminate\Support\Facades\DB;
 
 class AsistenciaController extends Controller
 {
@@ -250,29 +251,43 @@ class AsistenciaController extends Controller
         return $semanas;
     }
 
-    private function obtenerIdiomaDelMaestro($maestro, $grupo)
+   private function obtenerIdiomaDelMaestro($maestro, $grupo)
     {
         // 1. Verificar si es TITULAR (Español / Inglés / General)
-        // Esta relación busca en la tabla 'grupo_titular'
+        // (Esta parte se queda igual, tiene prioridad)
         $pivoteTitular = $maestro->gruposTitulares()->find($grupo->grupo_id);
 
         if ($pivoteTitular) {
-            // Si es titular, respetamos su idioma original (INGLES o ESPAÑOL)
-            return $pivoteTitular->pivot->idioma;
+            return $pivoteTitular->pivot->idioma; // Retorna 'INGLES' o 'ESPAÑOL'
         }
 
-        // 2. Verificar si es COMPLEMENTARIO
-        // Verificamos si existe en la relación 'maestrosComplementarios' del grupo
+        // 2. Verificar si tiene una MATERIA ASIGNADA en este grupo
+        // Buscamos en la tabla 'grupo_materia_maestro' para ver qué da clases aquí.
+        $asignacionMateria = DB::table('grupo_materia_maestro')
+            ->join('materias', 'grupo_materia_maestro.materia_id', '=', 'materias.materia_id')
+            ->where('grupo_materia_maestro.grupo_id', $grupo->grupo_id)
+            ->where('grupo_materia_maestro.maestro_id', $maestro->id)
+            ->select('materias.nombre')
+            ->first();
+
+        if ($asignacionMateria) {
+            // ¡AQUÍ ESTÁ LA SOLUCIÓN!
+            // En lugar de 'ESPAÑOL', devolvemos el nombre de la materia (ej: 'COMPUTACION')
+            // Lo convertimos a mayúsculas para mantener consistencia.
+            return strtoupper($asignacionMateria->nombre);
+        }
+
+        // 3. Fallback: Verificar si es complementario genérico (sin materia asignada aún)
         $esComplementario = $grupo->maestrosComplementarios()
                                   ->where('users.id', $maestro->id)
                                   ->exists();
 
         if ($esComplementario) {
-            // AQUÍ ESTÁ LA CLAVE: Si es complementario, lo forzamos a ESPAÑOL
-            return 'ESPAÑOL';
+            // Si está en el grupo pero aún no le asignan materia específica en el panel de materias,
+            // podemos devolver un genérico diferente a español para no mezclar.
+            return 'COMPLEMENTARIA'; 
         }
 
-        // Si no es nada, retornamos null
         return null;
     }
 }

@@ -347,7 +347,7 @@ class CalificacionJsonController extends Controller
                             ->exists();
 
                         if ($esComplementario) {
-                            $idiomaDeLaMateria = 'ESPAÑOL'; 
+                           $idiomaDeLaMateria = strtoupper($materia->nombre);
                         }
                     }
                 } catch (\Exception $e) {
