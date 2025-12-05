@@ -93,6 +93,11 @@
                 <div x-show="tabla.nombreMaestro && tabla.alumnos.length > 0" class="mb-4 text-sm text-gray-700">
                     Maestro asignado: <strong x-text="tabla.nombreMaestro"></strong>
                 </div>
+                
+                <div x-show="!periodoActivo && tabla.alumnos.length > 0"
+     class="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded">
+    ⚠️ Este periodo está cerrado. Las calificaciones son de solo lectura.
+</div>
 
                 {{-- Advertencia de Configuración --}}
                 <div x-show="tabla.setup_warning" 
@@ -141,8 +146,8 @@
                                                             :value="tabla.calificaciones[alumno.id] && tabla.calificaciones[alumno.id][criterio.id] ? tabla.calificaciones[alumno.id][criterio.id] : ''"
                                                             class="w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-center"
                                                             
-                                                            :disabled="criterio.es_promedio || criterio.es_faltas || criterio.es_calculado"
-                                                            :class="{ 'bg-gray-100 font-bold': criterio.es_promedio, 'bg-gray-100': criterio.es_faltas }"
+                                                            :disabled="criterio.es_promedio || criterio.es_faltas || criterio.es_calculado || !periodoActivo"
+                                                            :class="{ 'bg-gray-100 font-bold': criterio.es_promedio, 'bg-gray-100': criterio.es_faltas, 'bg-gray-200': !periodoActivo  }"
                                                     >
                                                 </td>
                                             </template>
@@ -150,21 +155,28 @@
                                     </template>
                                 </tbody>
                                 {{-- Footer con Promedio --}}
-                                <tfoot x-show="tabla.promedioGrupo > 0" 
-                                        class="bg-gray-100 border-t-2 border-gray-400">
-                                    <tr>
-                                        <td class="px-6 py-3 text-right text-sm font-bold text-gray-800 uppercase sticky left-0 z-10 bg-gray-100"
-                                            :colspan="tabla.criterios.length">
-                                            Promedio del Grupo
-                                        </td>
-                                        
-                                        <template x-for="criterio in tabla.criterios">
-                                            <td class="px-6 py-3 text-center text-sm font-bold text-gray-900">
-                                                <span x-show="criterio.es_promedio" x-text="tabla.promedioGrupo.toFixed(2)"></span>
-                                            </td>
-                                        </template>
-                                    </tr>
-                                </tfoot>
+                              <tfoot x-show="tabla.promedioGrupo > 0" 
+        class="bg-gray-100 border-t-2 border-gray-400">
+    <tr>
+        <td class="px-6 py-3 text-right text-sm font-bold text-gray-800 uppercase sticky left-0 z-10 bg-gray-100"
+            :colspan="tabla.criterios.length + 1">
+            Promedio del Grupo
+        </td>
+    </tr>
+    <tr>
+        <!-- Celda vacía para la columna de alumno -->
+        <td class="px-6 py-3 text-right text-sm font-bold text-gray-800 uppercase sticky left-0 z-10 bg-gray-100">
+            &nbsp;
+        </td>
+        
+        <!-- Iterar sobre criterios y mostrar el promedio solo en la columna correcta -->
+        <template x-for="(criterio, index) in tabla.criterios" :key="criterio.id">
+            <td class="px-6 py-3 text-center text-sm font-bold text-gray-900">
+                <span x-show="criterio.es_promedio" x-text="tabla.promedioGrupo.toFixed(2)"></span>
+            </td>
+        </template>
+    </tr>
+</tfoot>
                             </table>
                         </div>
 
@@ -235,6 +247,8 @@
                 loading: {
                     tabla: false
                 },
+
+                periodoActivo: true,
 
                 // 7. Función de inicialización
                 init() {
@@ -307,6 +321,7 @@
                             this.tabla.promedioGrupo = data.promedioGrupo;
                             this.tabla.nombreMaestro = data.nombreMaestro;
                             this.tabla.setup_warning = data.setup_warning || '';
+                            this.periodoActivo = data.periodo_estado === 'ABIERTO';
                             this.loading.tabla = false;
                         })
                         .catch(err => {

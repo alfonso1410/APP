@@ -34,9 +34,8 @@ class CalificacionController extends Controller
         $periodos = collect(); // Colección vacía por defecto
         if ($cicloActivo) {
             $periodos = Periodo::where('ciclo_escolar_id', $cicloActivo->ciclo_escolar_id)
-                              ->where('estado', 'ABIERTO')
                               ->orderBy('fecha_inicio')
-                              ->get(['periodo_id as id', 'nombre']);
+                              ->get(['periodo_id as id', 'nombre', 'estado']);
         } else {
             // Si no hay ciclo activo, no se puede hacer nada.
             // (Podrías redirigir con un error si lo prefieres)
@@ -151,7 +150,12 @@ class CalificacionController extends Controller
 
 
         // 1. Obtener el modelo Periodo
+        $user = Auth::user();
         $periodo = Periodo::findOrFail($periodoId);
+
+      if ($user->rol === 'MAESTRO' && $periodo->estado !== 'ABIERTO') {
+        return back()->withErrors('No puedes guardar calificaciones: el periodo está cerrado.');
+    }
 
         // 2. Obtener las reglas de ponderación y criterios calculados
         $materiaCriterios = MateriaCriterio::where('materia_id', $materiaId)

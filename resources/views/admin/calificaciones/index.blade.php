@@ -133,6 +133,7 @@
                     Maestro asignado: <strong x-text="tabla.nombreMaestro"></strong>
                 </div>
 
+    
                 {{-- Advertencia de Configuración --}}
                 <div x-show="tabla.setup_warning" 
                      class="my-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800"
@@ -140,6 +141,11 @@
                     <p class="font-bold">Advertencia de Configuración</p>
                     <p x-text="tabla.setup_warning"></p>
                 </div>
+
+                            <div x-show="!periodoActivo && tabla.alumnos.length > 0"
+     class="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded">
+    ⚠️ Este periodo está cerrado. Las calificaciones son de solo lectura.
+</div>
 
                 {{-- Inicio de la Tabla --}}
                 <div x-show="tabla.alumnos.length > 0" class="mt-6">

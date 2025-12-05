@@ -294,7 +294,8 @@ class CalificacionJsonController extends Controller
             'calificaciones' => $mapaCalificaciones,
             'promedioGrupo' => round($promedioGrupo, 2),
             'nombreMaestro' => trim($nombreMaestro),
-            'setup_warning' => ''
+            'setup_warning' => '',
+            'periodo_estado' => $periodo->estado
         ]);
     }
 
@@ -481,7 +482,8 @@ class CalificacionJsonController extends Controller
             'criterios' => $criteriosOrdenados,
             'calificaciones' => $mapaCalificaciones,
             'promedioGrupo' => round($promedioGrupo, 2),
-            'nombreMaestro' => trim($nombreMaestro)
+            'nombreMaestro' => trim($nombreMaestro),
+            'periodo_estado' => $periodo->estado
         ]);
     }
 }
