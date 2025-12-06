@@ -65,11 +65,11 @@
                                         {{ $alumno->apellido_paterno }} {{ $alumno->apellido_materno }} {{ $alumno->nombres }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $alumno->curp }}</td>
-                                    {{-- ===== LÍNEA 61 CORREGIDA ===== --}}
+                                    
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {{ $alumno->grupos->where('pivot.es_actual', 1)->where('tipo_grupo', 'REGULAR')->first()?->grado?->nombre ?? 'Sin asignar' }}
                                     </td>
-                                    {{-- ============================== --}}
+                                    
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {{ $alumno->grupos->where('pivot.es_actual', 1)->where('tipo_grupo', 'REGULAR')->first()?->nombre_grupo ?? 'Sin asignar' }}
                                     </td>
@@ -85,7 +85,7 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div class="flex items-center justify-center space-x-2">
-                                            {{-- Botón Editar (Estilo Original + Modal) --}}
+                                            {{-- Botón Editar --}}
                                             <button
                                                 type="button"
                                                 x-on:click.prevent='$dispatch("open-modal", "editar-alumno-{{ $alumno->alumno_id }}"); currentAlumno = @json($alumno)'
@@ -95,7 +95,7 @@
                                                 <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path></svg>
                                             </button>
 
-                                            {{-- Botón Eliminar (Estilo Original) --}}
+                                            {{-- Botón Eliminar --}}
                                             <form method="POST" action="{{ route('admin.alumnos.destroy', $alumno) }}" onsubmit="return confirm('¿Estás seguro de que deseas INACTIVAR a este alumno?');">
                                                 @csrf
                                                 @method('DELETE')
@@ -111,74 +111,37 @@
                                     </td>
                                 </tr>
 
-                                {{-- ============================================= --}}
-                                {{-- ===== INICIO DE CAMBIOS (MODAL EDITAR) ===== --}}
-                                {{-- ============================================= --}}
-          <x-modal :name="'editar-alumno-'.$alumno->alumno_id" :show="$errors->update->isNotEmpty() && old('alumno_id_error_key') == $alumno->alumno_id" focusable >
-    
-    <form 
-        method="POST" 
-        action="{{ route('admin.alumnos.update', $alumno) }}" 
-        class="p-6"
-        x-data="{ isEditSubmitting: false }"
-        @submit="isEditSubmitting = true"
-    >
-        @method('PUT')
-        @csrf
-        <input type="hidden" name="current_nivel_id" value="{{ request()->input('nivel', 0) }}">
-        <input type="hidden" name="alumno_id_error_key" value="{{ $alumno->alumno_id }}">
-        
-     
-        <div class="max-w-xl mx-auto space-y-4">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">Editar Alumno: {{ $alumno->nombres }} {{ $alumno->apellido_paterno }}</h2>
-            <div>
-                <x-input-label for="edit_{{ $alumno->alumno_id }}_nombres" :value="__('Nombre(s)')" />
-                <x-text-input id="edit_{{ $alumno->alumno_id }}_nombres" class="block mt-1 w-full" type="text" name="nombres" :value="old('nombres', $alumno->nombres)" required autofocus />
-                @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('nombres')" class="mt-2" />@endif
-            </div>
-            <div>
-                <x-input-label for="edit_{{ $alumno->alumno_id }}_apellido_paterno" :value="__('Apellido Paterno')" />
-                <x-text-input id="edit_{{ $alumno->alumno_id }}_apellido_paterno" class="block mt-1 w-full" type="text" name="apellido_paterno" :value="old('apellido_paterno', $alumno->apellido_paterno)" required />
-                @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('apellido_paterno')" class="mt-2" />@endif
-            </div>
-            <div>
-                <x-input-label for="edit_{{ $alumno->alumno_id }}_apellido_materno" :value="__('Apellido Materno')" />
-                <x-text-input id="edit_{{ $alumno->alumno_id }}_apellido_materno" class="block mt-1 w-full" type="text" name="apellido_materno" :value="old('apellido_materno', $alumno->apellido_materno)" required />
-                @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('apellido_materno')" class="mt-2" />@endif
-            </div>
-            <div>
-                <x-input-label for="edit_{{ $alumno->alumno_id }}_fecha_nacimiento" :value="__('Fecha de Nacimiento')" />
-                <x-text-input id="edit_{{ $alumno->alumno_id }}_fecha_nacimiento" class="block mt-1 w-full" type="date" name="fecha_nacimiento" :value="old('fecha_nacimiento', $alumno->fecha_nacimiento)" required />
-                @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('fecha_nacimiento')" class="mt-2" />@endif
-            </div>
-            <div>
-                <x-input-label for="edit_{{ $alumno->alumno_id }}_curp" :value="__('CURP')" />
-                <x-text-input id="edit_{{ $alumno->alumno_id }}_curp" class="block mt-1 w-full uppercase" type="text" name="curp" :value="old('curp', $alumno->curp)" required pattern="[A-Z]{4}[0-9]{6}[H,M][A-Z]{5}[A-Z0-9]{2}" title="Formato CURP inválido" maxlength="18" />
-                @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('curp')" class="mt-2" />@endif
-            </div>
-            <div>
-                <x-input-label for="edit_{{ $alumno->alumno_id }}_estado_alumno" :value="__('Estado del Alumno')" />
-                <select name="estado_alumno" id="edit_{{ $alumno->alumno_id }}_estado_alumno" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                    <option value="ACTIVO" {{ old('estado_alumno', $alumno->estado_alumno) === 'ACTIVO' ? 'selected' : '' }}>Activo</option>
-                    <option value="INACTIVO" {{ old('estado_alumno', $alumno->estado_alumno) === 'INACTIVO' ? 'selected' : '' }}>Inactivo</option>
-                </select>
-                @if(old('alumno_id_error_key') == $alumno->alumno_id)<x-input-error :messages="$errors->update->get('estado_alumno')" class="mt-2" />@endif
-            </div>
-        </div>
-
-        <div class="flex items-center justify-end mt-6 ">
-            <x-secondary-button x-on:click="$dispatch('close')" ::disabled="isEditSubmitting" class="disabled:opacity-50">
-                Cancelar
-            </x-secondary-button>
-            <x-primary-button class="ms-4 disabled:opacity-50" ::disabled="isEditSubmitting">
-                <span ::x-show="!isEditSubmitting">Actualizar Alumno</span>
-                <span ::x-show="isEditSubmitting" style="display: none;">Actualizando...</span>
-            </x-primary-button>
-        </div>
-    </form>
-</x-modal>
                                 {{-- =========================================== --}}
-                                {{-- ===== FIN DE CAMBIOS (MODAL EDITAR) ===== --}}
+                                {{-- ===== MODAL EDITAR (CORREGIDO) ===== --}}
+                                {{-- =========================================== --}}
+                                <x-modal :name="'editar-alumno-'.$alumno->alumno_id" :show="$errors->update->isNotEmpty() && old('alumno_id_error_key') == $alumno->alumno_id" focusable >
+                                    
+                                    {{-- Diseño limpio con 'p-6' --}}
+                                    <div class="p-6">
+                                        <h2 class="text-lg font-medium text-gray-900 mb-4">
+                                            Editar Alumno: {{ $alumno->nombres }} {{ $alumno->apellido_paterno }}
+                                        </h2>
+                                        
+                                        <form method="POST" action="{{ route('admin.alumnos.update', $alumno) }}">
+                                            @method('PUT')
+                                            
+                                            {{-- RUTA CORREGIDA: alumnos._form en lugar de admin.alumnos._form --}}
+                                            @include('alumnos._form', [
+                                                'alumno' => $alumno, 
+                                                'prefix' => 'edit_'.$alumno->alumno_id.'_'
+                                            ])
+                                            
+                                            <div class="flex items-center justify-end mt-6">
+                                                <x-secondary-button x-on:click="$dispatch('close')">
+                                                    Cancelar
+                                                </x-secondary-button>
+                                                <x-primary-button class="ms-4">
+                                                    Actualizar Alumno
+                                                </x-primary-button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </x-modal>
                                 {{-- =========================================== --}}
 
                             @empty
@@ -193,11 +156,10 @@
             </div>
 
             {{-- ============================================= --}}
-            {{-- ===== INICIO DE CAMBIOS (MODAL CREAR) ===== --}}
+            {{-- ===== MODAL CREAR (ORIGINAL RESTAURADO) ===== --}}
             {{-- ============================================= --}}
             <x-modal name="agregar-alumno" :show="$errors->store->isNotEmpty()" focusable>
                 
-                {{-- 1. Añadimos x-data y @submit al formulario --}}
                 <form 
                     method="POST" 
                     action="{{ route('admin.alumnos.store') }}" 
@@ -209,7 +171,7 @@
                     <input type="hidden" name="current_nivel_id" value="{{ request()->input('nivel', 0) }}">
                     <h2 class="text-lg font-medium text-gray-900 mb-4">Agregar Nuevo Alumno</h2>
                     
-                    {{-- (Aquí van todos tus campos de formulario: nombres, curp, etc.) --}}
+                    {{-- Formulario Manual Original --}}
                     <div class="mt-4">
                         <x-input-label for="create_nombres" :value="__('Nombre(s)')" />
                         <x-text-input id="create_nombres" class="block mt-1 w-full" type="text" name="nombres" :value="old('nombres')" required autofocus />
@@ -238,7 +200,6 @@
                     
                     <input type="hidden" name="estado_alumno" value="ACTIVO">
                     
-                    {{-- 2. Modificamos los botones --}}
                     <div class="flex items-center justify-end mt-6">
                         <x-secondary-button x-on:click="$dispatch('close')" ::disabled="isAlumnoSubmitting" class="disabled:opacity-50">
                             Cancelar
@@ -250,8 +211,6 @@
                     </div>
                 </form>
             </x-modal>
-            {{-- =========================================== --}}
-            {{-- ===== FIN DE CAMBIOS (MODAL CREAR) ===== --}}
             {{-- =========================================== --}}
 
         </div>
