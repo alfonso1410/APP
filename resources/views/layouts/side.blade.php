@@ -125,6 +125,17 @@
                         </a>
                     </li>
 
+                    {{-- ENLACE REPORTE DE ASISTENCIA --}}
+<li>
+    <a href="{{ route('admin.reportes.asistencia.index') }}" 
+       class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group {{ request()->routeIs('admin.reportes.asistencia.*') ? 'bg-gray-700' : '' }}">
+        <svg class="shrink-0 w-5 h-5 text-white-500 transition duration-75 group-hover:text-gray-900">
+            <use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-asistencias"> </use>
+        </svg>
+        <span class="flex-1 ms-3 whitespace-nowrap">Reporte de Asistencia</span>
+    </a>
+</li>
+
                     {{-- ENLACE PARA PDA --}}
                     <li>
                         <a href="{{ route('admin.pda.index') }}" class="flex items-center p-2 text-white rounded-lg hover:bg-gray-700 group">

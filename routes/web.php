@@ -28,6 +28,7 @@ use App\Http\Controllers\PonderacionController;
 use App\Http\Controllers\BoletaController;
 use App\Models\CatalogoCriterio;
 use App\Http\Controllers\PdaController; 
+use App\Http\Controllers\ReporteAsistenciaController;
 
 
 /*
@@ -132,6 +133,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/reportes/boleta-alumno/{grupo}/{alumno}', [BoletaController::class, 'generarBoletaAlumno'])
             ->name('reportes.boleta.alumno');
         Route::get('/json/grupo/{grupo}/alumnos', [BoletaController::class, 'getAlumnosPorGrupo'])->name('json.grupo.alumnos');
+
+        // Reporte de asistencia
+Route::prefix('reportes')->name('reportes.')->group(function () {
+    Route::get('/asistencia', [ReporteAsistenciaController::class, 'index'])->name('asistencia.index');
+    Route::get('/asistencia/generar', [ReporteAsistenciaController::class, 'generar'])->name('asistencia.generar');
+});
+   
 
     }); // <-- Fin de la ZONA DE ADMINISTRACIÓN
 
