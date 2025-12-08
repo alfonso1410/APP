@@ -14,7 +14,7 @@
                  class="bg-white p-6 shadow-sm rounded-lg">
                 
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-                    
+
                     {{-- 1. Selector de Nivel --}}
                     <div>
                         <label for="nivel" class="block text-sm font-medium text-gray-700">Nivel</label>
@@ -22,7 +22,9 @@
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             <option value="">Selecciona un nivel</option>
                             @foreach($niveles as $nivel)
-                                <option value="{{ $nivel->id }}">{{ $nivel->nombre }}</option>
+                                @if(in_array($nivel->nombre, ['Preescolar', 'Primaria']))
+                                    <option value="{{ $nivel->id }}">{{ $nivel->nombre }}</option>
+                                @endif
                             @endforeach
                         </select>
                     </div>

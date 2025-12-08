@@ -4,10 +4,9 @@
         <h2 class="text-2xl font-bold mb-4 text-gray-800">Evaluación PDA (Preescolar)</h2>
 
         {{-- SELECTORES --}}
-        {{-- Cambiamos a grid-cols-5 para acomodar el nuevo campo --}}
         <div class="bg-white p-4 rounded-lg shadow mb-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             
-            {{-- 1. CICLO ESCOLAR (NUEVO) --}}
+            {{-- 1. CICLO ESCOLAR --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700">Ciclo Escolar</label>
                 <select x-model="selectedCiclo" @change="cambioCiclo()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
@@ -51,12 +50,11 @@
                 </select>
             </div>
 
-            {{-- 5. PERIODO (Modificado para usar Alpine x-for) --}}
+            {{-- 5. PERIODO --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700">Periodo</label>
                 <select x-model="selectedPeriodo" @change="cargarDatos()" :disabled="!selectedGrupo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                     <option value="">Seleccione Periodo</option>
-                    {{-- Usamos template porque los periodos cambian según el ciclo --}}
                     <template x-for="periodo in periodos" :key="periodo.id || periodo.periodo_id">
                         <option :value="periodo.id || periodo.periodo_id" x-text="periodo.nombre"></option>
                     </template>
@@ -69,19 +67,25 @@
             
             {{-- CONTROLES DE EDICIÓN --}}
             <div class="flex justify-end mb-4 space-x-2">
-                <button @click="editing = !editing" 
-                    :class="editing ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-blue-600 hover:bg-blue-700'"
-                    class="text-white px-4 py-2 rounded shadow">
-                    <span x-text="editing ? 'Deshabilitar Edición' : 'Habilitar Edición'"></span>
+                <button @click="editing = true" 
+                    x-show="!editing"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow transition">
+                    Habilitar Edición
                 </button>
-                <button @click="guardarCambios()" x-show="editing" 
-                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center">
-                    <span x-show="saving">Guardando...</span>
-                    <span x-show="!saving">Guardar Todo</span>
+
+                <button @click="guardarCambios()" 
+                    x-show="editing" 
+                    :disabled="saving"
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center transition">
+                    <span x-show="saving" class="flex items-center">
+                        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Guardando...
+                    </span>
+                    <span x-show="!saving">Guardar Cambios</span>
                 </button>
             </div>
 
-            {{-- TABLA A: CAMPOS FORMATIVOS (FILTRADOS) --}}
+            {{-- TABLA A: CAMPOS FORMATIVOS --}}
             <div class="bg-white rounded-lg shadow overflow-x-auto mb-8">
                 <h3 class="p-4 font-bold bg-gray-50 border-b">Campos Formativos</h3>
                 <table class="w-full text-sm text-left text-gray-500">
@@ -100,15 +104,15 @@
                                 <template x-for="campo in data.campos" :key="campo.id || campo.campo_id">
                                     <td class="px-2 py-2 min-w-[200px]">
                                         <textarea 
-                                            x-model="getValor(alumno.id || alumno.alumno_id, 'campo', campo.id || campo.campo_id).texto" 
+                                            x-model="data.valores[`al_${alumno.id || alumno.alumno_id}_cf_${campo.id || campo.campo_id}`].texto" 
                                             :disabled="!editing"
-                                            class="w-full text-xs border-gray-200 rounded focus:ring-blue-500 focus:border-blue-500" 
+                                            :class="!editing ? 'bg-gray-100 text-gray-500' : 'bg-white'"
+                                            class="w-full text-xs border-gray-200 rounded focus:ring-blue-500 focus:border-blue-500 transition-colors" 
                                             rows="4"></textarea>
                                     </td>
                                 </template>
                             </tr>
                         </template>
-                        {{-- Mensaje si no hay alumnos --}}
                         <tr x-show="data.alumnos.length === 0">
                             <td colspan="100%" class="px-4 py-3 text-center text-gray-500">
                                 No se encontraron alumnos en este grupo.
@@ -135,9 +139,10 @@
                                     <td class="px-4 py-3 font-medium text-gray-900" x-text="alumno.apellido_paterno + ' ' + alumno.apellido_materno + ' ' + alumno.nombres"></td>
                                     <td class="px-2 py-2">
                                         <textarea 
-                                            x-model="getValor(alumno.id || alumno.alumno_id, 'materia', materia.id || materia.materia_id).texto"
+                                            x-model="data.valores[`al_${alumno.id || alumno.alumno_id}_mat_${materia.id || materia.materia_id}`].texto"
                                             :disabled="!editing"
-                                            class="w-full text-xs border-gray-200 rounded focus:ring-blue-500 focus:border-blue-500" 
+                                            :class="!editing ? 'bg-gray-100 text-gray-500' : 'bg-white'"
+                                            class="w-full text-xs border-gray-200 rounded focus:ring-blue-500 focus:border-blue-500 transition-colors" 
                                             rows="3"></textarea>
                                     </td>
                                 </tr>
@@ -154,14 +159,12 @@
     <script>
     function pdaManager() {
         return {
-            // Inicialización con variables de Blade (Ciclo Activo)
             selectedCiclo: '{{ $cicloActivo->id ?? "" }}',
             selectedNivel: '',
             selectedGrado: '',
             selectedGrupo: '',
             selectedPeriodo: '',
             
-            // Periodos iniciales (del ciclo activo)
             periodos: @json($cicloActivo->periodos ?? []),
             grados: [],
             grupos: [],
@@ -184,9 +187,7 @@
                 "De lo Humano a lo Comunitario"
             ],
 
-            // NUEVA FUNCIÓN: Cambio de Ciclo
             cambioCiclo() {
-                // Reset de cascada hacia abajo
                 this.selectedGrupo = '';
                 this.selectedPeriodo = '';
                 this.grupos = [];
@@ -197,19 +198,12 @@
                     return;
                 }
 
-                // Obtener periodos del nuevo ciclo
-                // NOTA: Asegúrate de tener la ruta en web.php: Route::get('/json/ciclos/{ciclo}/periodos', ...)
                 fetch(`{{ url('/admin/json/ciclos') }}/${this.selectedCiclo}/periodos`)
                     .then(res => res.json())
-                    .then(data => {
-                        this.periodos = data;
-                    })
-                    .catch(err => console.error("Error cargando periodos:", err));
+                    .then(data => { this.periodos = data; })
+                    .catch(err => console.error(err));
 
-                // Si ya hay grado seleccionado, recargar grupos porque dependen del ciclo
-                if(this.selectedGrado) {
-                    this.loadGrupos();
-                }
+                if(this.selectedGrado) this.loadGrupos();
             },
 
             loadGrados() {
@@ -221,14 +215,10 @@
 
                 if(!this.selectedNivel) return;
                 
-                let url = `{{ url('/admin/json/niveles') }}/${this.selectedNivel}/grados`;
-                
-                fetch(url)
+                fetch(`{{ url('/admin/json/niveles') }}/${this.selectedNivel}/grados`)
                     .then(res => res.json())
-                    .then(data => {
-                        this.grados = data;
-                    })
-                    .catch(err => console.error("Error cargando grados:", err));
+                    .then(data => { this.grados = data; })
+                    .catch(err => console.error(err));
             },
 
             loadGrupos() {
@@ -238,19 +228,15 @@
 
                 if(!this.selectedGrado) return;
 
-                // MODIFICADO: Añadimos ?ciclo_id=... para filtrar grupos del año correcto
-                let url = `{{ url('/admin/json/grados') }}/${this.selectedGrado}/grupos?ciclo_id=${this.selectedCiclo}`;
-
-                fetch(url)
+                fetch(`{{ url('/admin/json/grados') }}/${this.selectedGrado}/grupos?ciclo_id=${this.selectedCiclo}`)
                     .then(res => res.json())
-                    .then(data => {
-                        this.grupos = data;
-                    })
-                    .catch(err => console.error("Error cargando grupos:", err));
+                    .then(data => { this.grupos = data; })
+                    .catch(err => console.error(err));
             },
 
             resetData() {
                 this.loaded = false;
+                this.editing = false;
             },
 
             cargarDatos() {
@@ -258,6 +244,7 @@
                 
                 this.loaded = false; 
                 this.data.alumnos = []; 
+                this.editing = false; 
 
                 const params = new URLSearchParams({
                     grupo_id: this.selectedGrupo,
@@ -279,6 +266,7 @@
                             );
                         });
                         
+                        // Eliminar duplicados
                         const uniqueCampos = [];
                         const mapCampos = new Map();
                         for (const item of this.data.campos) {
@@ -288,10 +276,41 @@
                             }
                         }
                         this.data.campos = uniqueCampos;
-
                         this.data.materias = resp.materias;
-                        this.data.valores = {}; 
+                        
+                        // INICIALIZAR TODOS LOS VALORES VACÍOS
+                        // Esto es vital para que x-model funcione correctamente
+                        this.data.valores = {};
+                        
+                        this.data.alumnos.forEach(alu => {
+                            const aid = alu.id || alu.alumno_id;
+                            
+                            // Para cada campo formativo
+                            this.data.campos.forEach(c => {
+                                const cid = c.id || c.campo_id;
+                                const key = `al_${aid}_cf_${cid}`;
+                                this.data.valores[key] = { 
+                                    texto: '', 
+                                    alumno_id: aid, 
+                                    campo_formativo_id: cid,
+                                    materia_id: null 
+                                };
+                            });
 
+                            // Para cada materia
+                            this.data.materias.forEach(m => {
+                                const mid = m.id || m.materia_id;
+                                const key = `al_${aid}_mat_${mid}`;
+                                this.data.valores[key] = { 
+                                    texto: '', 
+                                    alumno_id: aid, 
+                                    campo_formativo_id: null,
+                                    materia_id: mid 
+                                };
+                            });
+                        });
+
+                        // Llenar con datos existentes
                         resp.evaluaciones.forEach(ev => {
                             let key = '';
                             if(ev.campo_formativo_id) {
@@ -300,11 +319,9 @@
                                 key = `al_${ev.alumno_id}_mat_${ev.materia_id}`;
                             }
                             
-                            if(key) {
-                                this.data.valores[key] = { 
-                                    texto: ev.observacion,
-                                    id: ev.id 
-                                };
+                            if(key && this.data.valores[key]) {
+                                this.data.valores[key].texto = ev.observacion;
+                                this.data.valores[key].id = ev.id;
                             }
                         });
 
@@ -316,25 +333,20 @@
                     });
             },
 
-            getValor(alumnoId, tipo, idTipo) {
-                let key = '';
-                if(tipo === 'campo') key = `al_${alumnoId}_cf_${idTipo}`;
-                else key = `al_${alumnoId}_mat_${idTipo}`;
-
-                if (!this.data.valores[key]) {
-                    this.data.valores[key] = { 
-                        texto: '', 
-                        alumno_id: alumnoId, 
-                        campo_formativo_id: (tipo === 'campo' ? idTipo : null),
-                        materia_id: (tipo === 'materia' ? idTipo : null)
-                    };
-                }
-                return this.data.valores[key];
-            },
-
             guardarCambios() {
+                if(!confirm("¿Desea guardar los cambios?")) return;
+
                 this.saving = true;
-                const payload = Object.values(this.data.valores);
+                
+                // Convertir el objeto de valores a un array para enviar
+                const payload = Object.values(this.data.valores).map(v => ({
+                    alumno_id: v.alumno_id,
+                    campo_formativo_id: v.campo_formativo_id,
+                    materia_id: v.materia_id,
+                    texto: v.texto
+                }));
+
+                // (Línea de console.log eliminada aquí)
 
                 fetch('{{ route("admin.pda.store") }}', {
                     method: 'POST',
@@ -350,13 +362,17 @@
                 })
                 .then(res => res.json())
                 .then(data => {
-                    alert('Información guardada correctamente');
+                    if(data.error) {
+                        alert("Error del servidor: " + data.error);
+                    } else {
+                        alert('Información guardada correctamente');
+                        this.editing = false;
+                    }
                     this.saving = false;
-                    this.editing = false;
                 })
                 .catch(err => {
-                    console.error(err);
-                    alert('Error al guardar');
+                    console.error(err); // Este lo dejamos por si hay error de red real
+                    alert('Error de conexión al guardar');
                     this.saving = false;
                 });
             }
