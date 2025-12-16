@@ -43,13 +43,15 @@ class BoletaController extends Controller
         'Habits'
     ];
 
+    // AQUÍ FUE EL CAMBIO: Se agregaron las nuevas materias para mapearlas al bloque interno correcto
     private const BLOQUES_CRITERIOS_MAPA = [
-        'Programa Académico PK' => 'PROGRAMA ACADEMICO',
-        'Programa Académico' => 'PROGRAMA ACADEMICO',
         'Programa de Lectura' => 'PROGRAMA DE LECTURA', 
+        'Programa Académico PK2' => 'PROGRAMA ACADEMICO',
+        'Programa Académico PK3' => 'PROGRAMA ACADEMICO',
+        'Programa Académico Primaria' => 'PROGRAMA ACADEMICO',
         'Reading Program' => 'READING PROGRAM',
         'Habits' => 'HABITS', 
-        'Hábitos' => 'HÁBITOS', 
+        'Hábitos' => 'HÁBITOS',
     ];
     
     private const MATERIAS_PRINCETON_EXCLUIDAS_PK = [
