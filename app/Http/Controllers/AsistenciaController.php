@@ -122,9 +122,20 @@ class AsistenciaController extends Controller
 
         // 7. Generar Días de la Semana (Lunes a Viernes)
         $diasDeLaSemana = [];
-        for ($i = 0; $i < 5; $i++) {
-            $diasDeLaSemana[] = $lunesCarbon->copy()->addDays($i)->format('Y-m-d');
+        // Parseamos las fechas límite del periodo para comparar correctamente
+    $inicioPeriodo = Carbon::parse($periodoSeleccionado->fecha_inicio)->startOfDay();
+    $finPeriodo    = Carbon::parse($periodoSeleccionado->fecha_fin)->endOfDay();
+
+    for ($i = 0; $i < 5; $i++) {
+        $diaActual = $lunesCarbon->copy()->addDays($i);
+
+        // CONDICIÓN CLAVE: 
+        // Solo agregamos el día al array si está dentro del rango del periodo.
+        // betweenIncluded verifica: inicio <= dia <= fin
+        if ($diaActual->betweenIncluded($inicioPeriodo, $finPeriodo)) {
+            $diasDeLaSemana[] = $diaActual->format('Y-m-d');
         }
+    }
 
         // 8. Cargar Asistencias
         $asistencias = RegistroAsistencia::where('grupo_id', $grupo->grupo_id)
