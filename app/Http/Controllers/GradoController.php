@@ -25,7 +25,7 @@ class GradoController extends Controller
             $grados = Grado::where('tipo_grado', 'EXTRA')
                 ->with(['grupos', 'gradosRegularesMapeados']) 
                 ->when($search, fn($q, $s) => $q->where('nombre', 'like', "%{$s}%"))
-                ->orderBy('orden')
+                ->orderBy('nombre', 'asc')
                 ->get();
 
             return view('grados.index', [
