@@ -225,7 +225,7 @@ class CalificacionController extends Controller
                     $promedioCalculado = $sumaPonderada / $sumaPonderaciones;
                     $calificacionesParaGuardar[$alumnoId][$criterioPromedioId] = round($promedioCalculado, 2);
                 } else {
-                    $calificacionesParaGuardar[$alumnoId][$criterioPromedioId] = 0;
+                    $calificacionesParaGuardar[$alumnoId][$criterioPromedioId] = null;
                 }
             }
         } // Fin del bucle foreach $alumnoId
@@ -235,13 +235,14 @@ class CalificacionController extends Controller
             foreach ($calificacionesParaGuardar as $alumnoId => $criterios) {
                 foreach ($criterios as $materiaCriterioId => $valor) {
 
-                    if (is_null($valor) || $valor === '') {
+                  if ($valor === null || $valor === '') {
                         Calificacion::where([
                             'alumno_id' => $alumnoId,
                             'materia_criterio_id' => $materiaCriterioId,
                             'periodo_id' => $periodoId,
                         ])->delete();
-                        continue;
+                        
+                        continue; // Saltamos al siguiente para no intentar el updateOrCreate
                     }
 
                     Calificacion::updateOrCreate(
