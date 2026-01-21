@@ -5,7 +5,6 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Concentrado de Calificaciones</title>
     <style>
-        /* Fuentes y estilos generales */
         body {
             font-family: "DejaVu Sans", sans-serif;
             font-size: 9px;
@@ -13,15 +12,13 @@
             padding: 0;
         }
 
-        /* Definir márgenes de página */
         @page {
-            margin-top: 10px; /* Reducido para aprovechar espacio */
-            margin-bottom: 5px; /* Reducido para aprovechar espacio */
+            margin-top: 10px;
+            margin-bottom: 5px;
             margin-left: 5px;
             margin-right: 0;
         }
 
-        /* Encabezado (solo en la primera página) */
         .header-table {
             width: 100%;
             border-collapse: collapse;
@@ -53,7 +50,6 @@
             padding: 1px;
         }
 
-        /* Información de Docente/Grado/Materia (solo en la primera página) */
        .info-table {
     width: 100%;
     border-collapse: collapse;
@@ -61,9 +57,9 @@
 }
    .info-table tr.info-table-row td {
     border: 1px solid #000;
-    padding: 4px; /* Aumentado de 2px a 4px */
+    padding: 4px;
     font-weight: bold;
-    font-size: 9px; /* Aumentado de 8px a 9px */
+    font-size: 9px;
     text-align: left;
     vertical-align: middle;
     background-color: #FFFFFF;
@@ -72,10 +68,9 @@
     background-color: #E0E0E0;
     font-weight: bold;
     width: 15%;
-    font-size: 9px; /* Aumentado de 8px a 9px */
+    font-size: 9px;
 }
 
-        /* Tabla Principal con barra lateral integrada */
         .tabla-con-barra {
             width: 100%;
             border-collapse: collapse;
@@ -88,37 +83,33 @@
             vertical-align: top;
         }
 
-        /* Tabla Principal de Calificaciones */
        .main-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 8px; /* Aumentado de 8px a 9px */
+    font-size: 8px;
     table-layout: fixed;
 }
      .main-table th, .main-table td {
     border: 1px solid #000;
-    padding: 3px; /* Aumentado de 2px a 4px */
-    height: 24px; /* Aumentado de 20px a 25px */
+    padding: 3px;
+    height: 24px;
     text-align: center;
     vertical-align: middle;
 }
         
-        /* THEAD se repite en cada página */
         .main-table thead {
             display: table-header-group;
         }
         
-     /* Headers de columnas */
 .main-table thead tr.column-headers th { 
     font-weight: bold;
-    font-size: 8px; /* Aumentado de 7px a 8px */
+    font-size: 8px;
     background-color: #F0F0F0;
-    padding: 4px; /* Aumentado de 2px a 4px */
+    padding: 4px;
     word-wrap: break-word;
     line-height: 1.2;
 }
 
-    /* Columnas específicas */
 .main-table .cell-num {
     width: 3%;
     font-weight: bold;
@@ -126,19 +117,27 @@
       .main-table .cell-alumno {
     width: 25%;
     text-align: left;
-    padding-left: 5px; /* Aumentado de 3px a 5px */
+    padding-left: 5px;
     font-weight: bold;
-    font-size: 8px; /* Aumentado de 7px a 8px */
+    font-size: 8px;
 }
 
-       /* Filas de datos */
-.main-table tbody tr {
-    height: 25px; /* Aumentado de 20px a 25px */
+       .main-table tbody tr {
+    height: 25px;
 }
      .main-table tbody td {
-    font-size: 9px; /* Aumentado de 8px a 9px */
+    font-size: 9px;
 }
-        /* Barra lateral vertical */
+
+        /* NUEVO: Estilo para la fila de promedios por criterio */
+        .main-table .fila-promedios-criterio {
+            background-color: #FFFFFF;
+            font-weight: bold;
+        }
+        .main-table .fila-promedios-criterio td {
+            font-size: 9px;
+        }
+
         .barra-lateral {
             width: 3%;
             background-color: #004A99;
@@ -156,7 +155,6 @@
             padding: 3px 0;
         }
 
-        /* Resumen (más pequeño) */
         .resumen-promedio {
             width: 100%;
             margin-top: 5px;
@@ -188,7 +186,6 @@
             background-color: #90EE90;
         }
 
-        /* Pie de página (Firmas, más pequeñas) */
         .footer-firmas {
             width: 100%;
             margin-top: 30px;
@@ -196,9 +193,9 @@
             font-size: 7px;
         }
        .footer-firmas table {
-    width: 80%; /* Ancho de la tabla que contiene las firmas */
+    width: 80%;
     border-collapse: collapse;
-    margin: 0 auto; /* Centra la tabla */
+    margin: 0 auto;
 }
         .footer-firmas td {
             width: 50%;
@@ -219,7 +216,6 @@
             text-align: center;
         }
 
-        /* Contenedor para evitar salto de página */
         .contenido-no-separar {
             page-break-inside: avoid;
             margin-bottom: 5px;
@@ -228,7 +224,6 @@
 </head>
 <body>
 
-    <!-- Encabezado (solo en la primera página) -->
     <table class="header-table">
         <tr>
             <td class="logo-izquierda" style="text-align: left; width: 170px;">
@@ -249,7 +244,6 @@
         </tr>
     </table>
 
-    <!-- Tabla de DOCENTE/MATERIA/GRADO (solo en la primera página) -->
     <table class="info-table">
         <tr class="info-table-row">
             <td class="label" style="width: 10%;">DOCENTE:</td>
@@ -265,23 +259,19 @@
         </tr>
     </table>
 
-    <!-- Dividir los alumnos en grupos de 25 -->
     @php
-        $alumnosChunked = $alumnos->chunk(25); // Divide en grupos de 25
+        $alumnosChunked = $alumnos->chunk(25);
     @endphp
 
     @foreach($alumnosChunked as $index => $chunk)
         <div class="contenido-no-separar">
 
-            <!-- Tabla con barra lateral integrada -->
             <table class="tabla-con-barra">
                 <tbody>
                     <tr>
-                        <!-- Celda de la tabla principal (97%) -->
                         <td style="width: 97%;">
                             <table class="main-table">
                                 <thead>
-                                    <!-- Solo Headers de columnas en THEAD -->
                                     <tr class="column-headers">
                                         <th class="cell-num">#</th>
                                         <th class="cell-alumno">ALUMNO</th>
@@ -293,7 +283,7 @@
                                 <tbody>
                                     @foreach($chunk as $alumno)
                                     <tr>
-                                        <td class="cell-num">{{ $loop->iteration + ($index * 25) }}</td> <!-- Número global -->
+                                        <td class="cell-num">{{ $loop->iteration + ($index * 25) }}</td>
                                         <td class="cell-alumno">{{ strtoupper($alumno->apellido_paterno) }} {{ strtoupper($alumno->apellido_materno) }} {{ strtoupper($alumno->nombres) }}</td>
                                         
                                         @foreach($criterios as $criterio)
@@ -313,12 +303,31 @@
                                         @endforeach
                                     </tr>
                                     @endforeach
+
+                                    <!-- NUEVA FILA: Promedios por Criterio (solo en la última página) -->
+                                    @if($loop->last && $index == count($alumnosChunked) - 1)
+                                    <tr class="fila-promedios-criterio">
+                                        <td colspan="2" style="text-align: right; padding-right: 10px;"><strong>ALUMNOS EVALUADOS: </strong>{{ count($alumnos) }}</td>
+                                        @foreach($criterios as $criterio)
+                                            <td>
+                                                @php
+                                                    $promedioCriterio = $promediosPorCriterio[$criterio['id']] ?? null;
+                                                @endphp
+                                                
+                                                @if(is_numeric($promedioCriterio))
+                                                    {{ number_format($promedioCriterio, 1) }}
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                        @endforeach
+                                    </tr>
+                                    @endif
                                 </tbody>
                                 
                             </table>
                         </td>
                         
-                        <!-- Celda de la barra lateral (3%) -->
                         <td class="barra-lateral">
                             <div class="text-vertical">{{ strtoupper($periodo->nombre ?? '1er. TRIMESTRE') }}</div>
                         </td>
@@ -326,24 +335,7 @@
                 </tbody>
             </table>
 
-            <!-- Resumen de Alumnos y Promedio (solo en la última página) -->
             @if($loop->last)
-                <table class="resumen-promedio">
-                    <tr>
-                        <td style="width: 30%; text-align: right;" class="label">TOTAL ALUMNOS EVALUADOS</td>
-                        <td style="width: 6%; text-align: center;" class="value-box">
-                            {{ count($alumnos) }}
-                        </td>
-                        <td style="width: 30%; text-align: center;"></td>
-                        <td style="width: 10%; text-align: right;" class="label">PROMEDIO</td>
-                        <td style="width: 6%; text-align: center;" class="promedio-box">
-                            {{ number_format($promedioGrupo ?? 0, 1) }}
-                        </td>
-                        <td style="width: 18%;"></td>
-                    </tr>
-                </table>
-
-                <!-- Firmas (solo en la última página) -->
                 <div class="footer-firmas">
                     <table>
                         <tr>
@@ -366,7 +358,6 @@
 
         </div>
 
-        <!-- Salto de página entre chunks (excepto después del último) -->
         @if(!$loop->last)
             <div style="page-break-after: always;"></div>
         @endif
