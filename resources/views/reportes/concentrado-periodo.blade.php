@@ -276,7 +276,7 @@
                                         <th class="cell-num">#</th>
                                         <th class="cell-alumno">ALUMNO</th>
                                         @foreach($criterios as $criterio)
-                                            <th>{{ strtoupper($criterio['nombre']) }}</th>
+                                            <th>{{ mb_strtoupper($criterio['nombre']) }}</th>
                                         @endforeach
                                     </tr>
                                 </thead>
@@ -284,7 +284,7 @@
                                     @foreach($chunk as $alumno)
                                     <tr>
                                         <td class="cell-num">{{ $loop->iteration + ($index * 25) }}</td>
-                                        <td class="cell-alumno">{{ strtoupper($alumno->apellido_paterno) }} {{ strtoupper($alumno->apellido_materno) }} {{ strtoupper($alumno->nombres) }}</td>
+                                        <td class="cell-alumno">{{ mb_strtoupper($alumno->apellido_paterno) }} {{ mb_strtoupper($alumno->apellido_materno) }} {{ mb_strtoupper($alumno->nombres) }}</td>
                                         
                                         @foreach($criterios as $criterio)
                                             <td>
@@ -329,7 +329,7 @@
                         </td>
                         
                         <td class="barra-lateral">
-                            <div class="text-vertical">{{ strtoupper($periodo->nombre ?? '1er. TRIMESTRE') }}</div>
+                            <div class="text-vertical">{{ mb_strtoupper($periodo->nombre ?? '1er. TRIMESTRE') }}</div>
                         </td>
                     </tr>
                 </tbody>
