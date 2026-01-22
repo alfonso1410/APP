@@ -43,7 +43,6 @@ class BoletaController extends Controller
         'Habits'
     ];
 
-    // AQUÍ FUE EL CAMBIO: Se agregaron las nuevas materias para mapearlas al bloque interno correcto
     private const BLOQUES_CRITERIOS_MAPA = [
         'Programa de Lectura' => 'PROGRAMA DE LECTURA', 
         'Programa Académico PK2' => 'PROGRAMA ACADEMICO',
@@ -82,7 +81,10 @@ class BoletaController extends Controller
     private function getLetraCalificacion($valor)
     {
         if (!is_numeric($valor)) return '';
-        $val = round($valor);
+        
+        // CAMBIO SOLICITADO: Usar floor para no redondear, tomar el entero tal cual.
+        $val = floor($valor);
+        
         if ($val == 10) return 'E';
         if ($val == 9)  return 'MB';
         if ($val == 8)  return 'B';
@@ -256,7 +258,7 @@ class BoletaController extends Controller
         }
 
         // ==================================================================================
-        //  PROCESAR BLOQUE ENGLISH
+        //  PROCESAR BLOQUE ENGLISH
         // ==================================================================================
         $datosEnglish = null;
         if ($estructuraEnglish->isNotEmpty()) {
@@ -395,13 +397,17 @@ class BoletaController extends Controller
         }
 
         foreach ($periodos as $p) {
-            $promediosGeneralesSEP[$p->periodo_id] = ($contadoresSEP[$p->periodo_id] > 0) 
+            $val = ($contadoresSEP[$p->periodo_id] > 0) 
                 ? round($sumasSEP[$p->periodo_id] / $contadoresSEP[$p->periodo_id], 1) 
                 : null;
+            // CAMBIO: Formato a 1 decimal
+            $promediosGeneralesSEP[$p->periodo_id] = is_numeric($val) ? number_format($val, 1) : null;
         }
-        $promediosGeneralesSEP['final'] = ($contadorFinalSEP > 0) 
+        $valFinal = ($contadorFinalSEP > 0) 
             ? round($sumaFinalSEP / $contadorFinalSEP, 1) 
             : null;
+        // CAMBIO: Formato a 1 decimal
+        $promediosGeneralesSEP['final'] = is_numeric($valFinal) ? number_format($valFinal, 1) : null;
 
         // 7. PROCESAR PRINCETON (Ya incluye Extracurriculares)
         $boletaDataPrinceton = $this->procesarCamposSEP(
@@ -441,7 +447,7 @@ class BoletaController extends Controller
             $titulo = self::BLOQUES_CRITERIOS_MAPA[$key] ?? $key;
             
             if (isset($datosBloquesCriterios[$titulo])) {
-                   continue;
+                    continue;
             }
             
             $datosBloquesCriterios[$titulo] = $this->procesarBloqueCriterios(
@@ -470,7 +476,8 @@ class BoletaController extends Controller
                     $notaNum = is_numeric($nota) ? $nota : null;
                 } else {
                     $notaRedondeada = is_numeric($nota) ? round($nota, 1) : null;
-                    $notaMostrada = $notaRedondeada;
+                    // CAMBIO: Formato a 1 decimal
+                    $notaMostrada = is_numeric($notaRedondeada) ? number_format($notaRedondeada, 1) : null;
                     $notaNum = $notaRedondeada;
                 }
                 $rowEscuelaPadres['calificaciones'][$periodo->periodo_id] = $notaMostrada;
@@ -482,7 +489,7 @@ class BoletaController extends Controller
             $promedioEPNum = ($countEP > 0) ? round($sumaEP / $countEP, 1) : null;
             $rowEscuelaPadres['promedio'] = $esPreescolar 
                 ? $this->getLetraCalificacion($promedioEPNum) 
-                : $promedioEPNum;
+                : (is_numeric($promedioEPNum) ? number_format($promedioEPNum, 1) : null); // CAMBIO: Formato a 1 decimal
             
             $dataEscuelaPadres = $rowEscuelaPadres;
         }
@@ -510,7 +517,7 @@ class BoletaController extends Controller
 
         $promediosCombinadosHabits = $this->calcularPromediosCombinados(
             $periodos,
-            [
+            $componentesAcademicosACombinar = [
                 $datosBloquesCriterios['READING PROGRAM'] ?? null,
                 $datosBloquesCriterios['HABITS'] ?? null, 
             ],
@@ -599,9 +606,10 @@ class BoletaController extends Controller
             $count = $promedios[$p->periodo_id]['contador'];
             $promedioPeriodoNum = ($count > 0) ? round($suma / $count, 1) : null;
             
+            // CAMBIO: Formato a 1 decimal
             $filaPromedios[$p->periodo_id] = $esPreescolar 
                 ? $this->getLetraCalificacion($promedioPeriodoNum)
-                : $promedioPeriodoNum;
+                : (is_numeric($promedioPeriodoNum) ? number_format($promedioPeriodoNum, 1) : null);
             
             if (is_numeric($promedioPeriodoNum)) {
                 $sumaFinal += $promedioPeriodoNum;
@@ -611,9 +619,10 @@ class BoletaController extends Controller
         
         $promedioFinalNum = ($conteoFinal > 0) ? round($sumaFinal / $conteoFinal, 1) : null;
 
+        // CAMBIO: Formato a 1 decimal
         $filaPromedios['promedio'] = $esPreescolar 
             ? $this->getLetraCalificacion($promedioFinalNum)
-            : $promedioFinalNum;
+            : (is_numeric($promedioFinalNum) ? number_format($promedioFinalNum, 1) : null);
 
         return $filaPromedios;
     }
@@ -640,7 +649,8 @@ class BoletaController extends Controller
                     $notaNum = is_numeric($nota) ? $nota : null;
                 } else {
                     $notaRedondeada = is_numeric($nota) ? round($nota, 1) : null;
-                    $notaMostrada = $notaRedondeada;
+                    // CAMBIO: Formato a 1 decimal forzado para display
+                    $notaMostrada = is_numeric($notaRedondeada) ? number_format($notaRedondeada, 1) : null;
                     $notaNum = $notaRedondeada;
                 }
                 
@@ -660,9 +670,10 @@ class BoletaController extends Controller
             }
             $promedioMateriaNum = ($countMat > 0) ? round($sumaMat / $countMat, 1) : null;
             
+            // CAMBIO: Formato a 1 decimal
             $promedioMateriaShow = $esPreescolar 
                 ? $this->getLetraCalificacion($promedioMateriaNum)
-                : $promedioMateriaNum;
+                : (is_numeric($promedioMateriaNum) ? number_format($promedioMateriaNum, 1) : null);
 
             $filas[] = [
                 'nombre' => $materia->nombre_materia,
@@ -682,9 +693,10 @@ class BoletaController extends Controller
             
             $promediosBloqueNumericos[$periodo->periodo_id] = $promedioPeriodo;
 
+            // CAMBIO: Formato a 1 decimal
             $filaPromedios[$periodo->periodo_id] = $esPreescolar 
                 ? $this->getLetraCalificacion($promedioPeriodo)
-                : $promedioPeriodo;
+                : (is_numeric($promedioPeriodo) ? number_format($promedioPeriodo, 1) : null);
 
             if (is_numeric($promedioPeriodo)) {
                 $sumaPromedioFinal += $promedioPeriodo;
@@ -693,9 +705,10 @@ class BoletaController extends Controller
         }
         
         $promFinalNum = ($countPromedioFinal > 0) ? round($sumaPromedioFinal / $countPromedioFinal, 1) : null;
+        // CAMBIO: Formato a 1 decimal
         $filaPromedios['promedio'] = $esPreescolar 
             ? $this->getLetraCalificacion($promFinalNum)
-            : $promFinalNum;
+            : (is_numeric($promFinalNum) ? number_format($promFinalNum, 1) : null);
 
         return [
             'titulo' => $tituloBloque,
@@ -747,7 +760,8 @@ class BoletaController extends Controller
                         $califsMateria_PAS_Numerica[$periodo->periodo_id] = is_numeric($notaPAS) ? $notaPAS : null; 
                     } else {
                         $notaRedondeada = is_numeric($notaPAS) ? round($notaPAS, 1) : null;
-                        $califsMateria_PAS[$periodo->periodo_id] = $notaRedondeada; 
+                        // CAMBIO: Formato a 1 decimal para la vista
+                        $califsMateria_PAS[$periodo->periodo_id] = is_numeric($notaRedondeada) ? number_format($notaRedondeada, 1) : null; 
                         $califsMateria_PAS_Numerica[$periodo->periodo_id] = $notaRedondeada; 
                     }
 
@@ -763,9 +777,10 @@ class BoletaController extends Controller
                 }
 
                 $promedioPAS_MateriaNum = ($countMateriaPAS > 0) ? round($sumaMateriaPAS / $countMateriaPAS, 1) : null;
+                // CAMBIO: Formato a 1 decimal
                 $promedioPAS_Mostrado = $esPreescolar 
                     ? $this->getLetraCalificacion($promedioPAS_MateriaNum)
-                    : $promedioPAS_MateriaNum;
+                    : (is_numeric($promedioPAS_MateriaNum) ? number_format($promedioPAS_MateriaNum, 1) : null);
 
                 if (is_numeric($promedioPAS_MateriaNum) && !$esPreescolar) {
                     $promediosSEP_Campo['promedio_pas']['suma'] += $promedioPAS_MateriaNum;
@@ -789,7 +804,8 @@ class BoletaController extends Controller
                     $sumaPond = $promediosSEP_Campo[$periodo->periodo_id]['suma_ponderada'];
 
                     $promedioSEP = ($totalPond > 0) ? round($sumaPond / $totalPond, 1) : null;
-                    $califsMateria_SEP[$periodo->periodo_id] = $promedioSEP; 
+                    // CAMBIO: Formato a 1 decimal
+                    $califsMateria_SEP[$periodo->periodo_id] = is_numeric($promedioSEP) ? number_format($promedioSEP, 1) : null; 
 
                     if (is_numeric($promedioSEP)) {
                         $promediosSEP_Campo['promedio_sep']['suma'] += $promedioSEP;
@@ -817,8 +833,8 @@ class BoletaController extends Controller
                 'nombre' => $nombreCampo,
                 'materias' => $dataMaterias,
                 'calificaciones_sep' => $califsMateria_SEP,
-                'promedio_final_pas' => $promedioFinalPAS,
-                'promedio_final_sep' => $promedioSEP_Materia
+                'promedio_final_pas' => is_numeric($promedioFinalPAS) ? number_format($promedioFinalPAS, 1) : null, // CAMBIO: Formato
+                'promedio_final_sep' => is_numeric($promedioSEP_Materia) ? number_format($promedioSEP_Materia, 1) : null // CAMBIO: Formato
             ];
 
             $califsPorMateriaNumerica[$materia->materia_id] = $califsMateria_PAS_Numerica; 
@@ -833,7 +849,8 @@ class BoletaController extends Controller
                 $sumaPond = $promediosFinales[$periodo->periodo_id]['suma_ponderada'];
 
                 $promedioFinalPond = ($totalPond > 0) ? round($sumaPond / $totalPond, 1) : null;
-                $promediosFinalesCalculados[$periodo->periodo_id] = $promedioFinalPond; 
+                // CAMBIO: Formato a 1 decimal
+                $promediosFinalesCalculados[$periodo->periodo_id] = is_numeric($promedioFinalPond) ? number_format($promedioFinalPond, 1) : null; 
 
                 if (is_numeric($promedioFinalPond)) {
                     $sumaPromedioFinal += $promedioFinalPond;
@@ -841,9 +858,11 @@ class BoletaController extends Controller
                 }
             }
 
-            $promediosFinalesCalculados['promedio_final_sep'] = ($contadorPromedioFinal > 0)
+            $valFinal = ($contadorPromedioFinal > 0)
                 ? round($sumaPromedioFinal / $contadorPromedioFinal, 1)
                 : null;
+            // CAMBIO: Formato a 1 decimal
+            $promediosFinalesCalculados['promedio_final_sep'] = is_numeric($valFinal) ? number_format($valFinal, 1) : null;
         }
 
         return [
@@ -901,7 +920,8 @@ class BoletaController extends Controller
                     $notaNum = is_numeric($nota) ? $nota : null;
                 } else {
                     $notaRedondeada = is_numeric($nota) ? round($nota, 1) : null;
-                    $notaMostrada = $notaRedondeada;
+                    // CAMBIO: Formato a 1 decimal forzado
+                    $notaMostrada = is_numeric($notaRedondeada) ? number_format($notaRedondeada, 1) : null;
                     $notaNum = $notaRedondeada;
                 }
 
@@ -918,9 +938,10 @@ class BoletaController extends Controller
             }
 
             $promedioCriterioNum = ($countCriterio > 0) ? round($sumaCriterio / $countCriterio, 1) : null;
+            // CAMBIO: Formato a 1 decimal
             $promedioCriterioShow = $esPreescolar 
                 ? $this->getLetraCalificacion($promedioCriterioNum)
-                : $promedioCriterioNum;
+                : (is_numeric($promedioCriterioNum) ? number_format($promedioCriterioNum, 1) : null);
             
             $filasCriterios[] = [
                 'nombre' => $criterio->catalogoCriterio->nombre ?? 'Criterio No Encontrado',
@@ -937,9 +958,10 @@ class BoletaController extends Controller
             $count = $promediosBloque[$periodo->periodo_id]['contador'];
             $promedioPeriodo = ($count > 0) ? round($suma / $count, 1) : null;
             
+            // CAMBIO: Formato a 1 decimal
             $filaPromedios[$periodo->periodo_id] = $esPreescolar 
                 ? $this->getLetraCalificacion($promedioPeriodo)
-                : $promedioPeriodo;
+                : (is_numeric($promedioPeriodo) ? number_format($promedioPeriodo, 1) : null);
 
             if (is_numeric($promedioPeriodo)) {
                 $sumaPromedioFinal += $promedioPeriodo;
@@ -948,9 +970,10 @@ class BoletaController extends Controller
         }
         
         $promFinalNum = ($countPromedioFinal > 0) ? round($sumaPromedioFinal / $countPromedioFinal, 1) : null;
+        // CAMBIO: Formato a 1 decimal
         $filaPromedios['promedio'] = $esPreescolar 
             ? $this->getLetraCalificacion($promFinalNum)
-            : $promFinalNum;
+            : (is_numeric($promFinalNum) ? number_format($promFinalNum, 1) : null);
 
         return [
             'titulo' => $tituloBloque,
@@ -1033,9 +1056,10 @@ class BoletaController extends Controller
             
             $promedioNum = ($count > 0) ? round($suma / $count, 1) : null;
             
+            // CAMBIO: Formato a 1 decimal
             $promediosFinales[$periodo->periodo_id] = $esPreescolar
                 ? $this->getLetraCalificacion($promedioNum)
-                : $promedioNum; 
+                : (is_numeric($promedioNum) ? number_format($promedioNum, 1) : null); 
             
             if (is_numeric($promedioNum)) {
                 $sumaTotal += $promedioNum;
@@ -1045,9 +1069,10 @@ class BoletaController extends Controller
         
         $promedioFinalNum = ($countTotal > 0) ? round($sumaTotal / $countTotal, 1) : null;
         
+        // CAMBIO: Formato a 1 decimal
         $promediosFinales['promedio'] = $esPreescolar
             ? $this->getLetraCalificacion($promedioFinalNum)
-            : $promedioFinalNum;
+            : (is_numeric($promedioFinalNum) ? number_format($promedioFinalNum, 1) : null);
             
         return $promediosFinales;
     }

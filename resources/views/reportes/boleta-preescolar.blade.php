@@ -188,6 +188,7 @@
                                             <tr>
                                                 <td class="materia-sep" style="background-color: #FFF;">{{ isset($materia['nombre']) ? $materia['nombre'] : '' }}</td>
                                                 @foreach($periodos as $periodo)
+                                                    {{-- Se eliminó "+ 0" para permitir letras --}}
                                                     <td class="cal-pas">{{ $materia['calificaciones_pas'][$periodo->periodo_id] ?? '' }}</td>
                                                 @endforeach
                                                 <td class="cal-pas cal-total-col">{{ $materia['promedio_pas'] ?? '' }}</td>
@@ -262,8 +263,6 @@
                                                 {{ isset($campo['nombre']) ? $campo['nombre'] : 'PROGRAMA PRINCETON' }}
                                             </th>
                                         </tr>
-                                    </thead>
-                                    <tbody>
                                         <tr class="header-row-periodos">
                                             <th style="width: 40%; text-align: left; padding-left: 5px;">MOMENTOS --></th>
                                             @foreach($periodos as $periodo) 
@@ -360,7 +359,7 @@
                                         @endforeach
                                     @endif
                                     <tr class="promedio-bloque-pas">
-                                        <td style="width: 40%; text-align: left; padding-left: 5px; font-size: 9px;">"PROMEDIO G.H.</td>
+                                        <td style="width: 40%; text-align: left; padding-left: 5px; font-size: 9px;">PROMEDIO G.H.</td>
                                         @foreach($periodos as $periodo) <td class="cal-total-col">{{ $bloque['promedios_bloque'][$periodo->periodo_id] ?? '' }}</td> @endforeach
                                         <td class="cal-total-col">{{ $bloque['promedios_bloque']['promedio'] ?? '' }}</td>
                                     </tr>
@@ -476,17 +475,17 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td rowspan="1" class="label">ASISTENCIAS / ATTENDANCES</td>
+                                        <td class="label">ASISTENCIAS / ATTENDANCES</td>
                                         @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_asistencias'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_asistencias'] ?? 0 }}</td> @endforeach
                                         <td class="cal-total-col">{{ $datosAsistencias['totales']['TOTAL_asistencias'] ?? 0 }}</td>
                                     </tr>
                                     <tr>
-                                        <td rowspan="1" class="label">RETARDOS / DELAYS</td>
+                                        <td class="label">RETARDOS / DELAYS</td>
                                         @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_retardos'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_retardos'] ?? 0 }}</td> @endforeach
                                         <td class="cal-total-col">{{ $datosAsistencias['totales']['TOTAL_retardos'] ?? 0 }}</td>
                                     </tr>
                                     <tr>
-                                        <td rowspan="1" class="label">INASISTENCIAS / ABSENCES</td>
+                                        <td class="label">INASISTENCIAS / ABSENCES</td>
                                         @foreach($periodos as $periodo) <td>{{ $datosAsistencias['periodos'][$periodo->periodo_id]['ESP_inasistencias'] ?? 0 }} / {{ $datosAsistencias['periodos'][$periodo->periodo_id]['ENG_inasistencias'] ?? 0 }}</td> @endforeach
                                         <td class="cal-total-col">{{ $datosAsistencias['totales']['TOTAL_inasistencias'] ?? 0 }}</td>
                                     </tr>
@@ -523,14 +522,14 @@
                         <td style="width: 33%; vertical-align: bottom; padding: 0 10px;">
                             <table class="sig-col-table">
                                 <tr><td class="sig-line-cell">&nbsp;</td></tr>
-                                <tr><td class="sig-name">{{ isset($maestroEspanol) ? $maestroEspanol : 'LIC. [MAESTRO ESPAÑOL]' }}</td></tr>
+                                <tr><td class="sig-name">{{ $maestroEspanol ?? 'LIC. [MAESTRO ESPAÑOL]' }}</td></tr>
                                 <tr><td class="sig-title">NOMBRE Y FIRMA DEL MAESTRO</td></tr>
                             </table>
                         </td>
                         <td style="width: 33%; vertical-align: bottom; padding: 0 10px;">
                             <table class="sig-col-table">
                                 <tr><td class="sig-line-cell">&nbsp;</td></tr>
-                                <tr><td class="sig-name">{{ isset($maestroIngles) ? $maestroIngles : 'LIC. [TEACHER\'S NAME]' }}</td></tr>
+                                <tr><td class="sig-name">{{ $maestroIngles ?? 'LIC. [TEACHER\'S NAME]' }}</td></tr>
                                 <tr><td class="sig-title">TEACHER'S NAME AND SIGNATURE</td></tr>
                             </table>
                         </td>
