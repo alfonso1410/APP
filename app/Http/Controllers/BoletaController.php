@@ -82,8 +82,9 @@ class BoletaController extends Controller
     {
         if (!is_numeric($valor)) return '';
         
-        // CAMBIO SOLICITADO: Usar floor para no redondear, tomar el entero tal cual.
-        $val = floor($valor);
+        // NUEVO CAMBIO: .5 baja al entero actual, .6 sube al siguiente entero.
+        // PHP_ROUND_HALF_DOWN hace exactamente esto: 9.5 -> 9, pero 9.6 -> 10.
+        $val = round($valor, 0, PHP_ROUND_HALF_DOWN);
         
         if ($val == 10) return 'E';
         if ($val == 9)  return 'MB';
