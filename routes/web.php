@@ -29,6 +29,7 @@ use App\Http\Controllers\BoletaController;
 use App\Models\CatalogoCriterio;
 use App\Http\Controllers\PdaController; 
 use App\Http\Controllers\ReporteAsistenciaController;
+use App\Http\Controllers\ReporteGrupoController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -92,7 +93,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/reportes/boleta-alumno/{grupo}/{alumno}', [BoletaController::class, 'generarBoletaAlumno'])->name('reportes.boleta.alumno');
         Route::get('/json/grupo/{grupo}/alumnos', [BoletaController::class, 'getAlumnosPorGrupo'])->name('json.grupo.alumnos');
         
-        
+        //reportes de calificaciones de promedio grupal
+        Route::get('reportes/grupo/seleccion', [ReporteGrupoController::class, 'index'])->name('reportes.resumen.index');
+        Route::get('reportes/grupo/{grupo}/resumen', [ReporteGrupoController::class, 'resumen'])->name('reportes.resumen');
+        Route::get('reportes/grupo/{grupo}/pdf', [ReporteGrupoController::class, 'descargarPdf'])->name('reportes.resumen.pdf');
         // Reporte de asistencia
 Route::prefix('reportes')->name('reportes.')->group(function () {
     Route::get('/asistencia', [ReporteAsistenciaController::class, 'index'])->name('asistencia.index');
