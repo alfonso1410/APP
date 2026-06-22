@@ -41,15 +41,18 @@ class PdaController extends Controller
             if ($cicloActivo) {
                 
                 // ==========================================
-                // 1. BUSCAR ASIGNACIONES COMO TITULAR
+                // 1. BUSCAR ASIGNACIONES COMO TITULAR O AUXILIAR
                 // ==========================================
-                $titularidades = GrupoTitular::where('maestro_titular_id', $user->id)
+                $titularidades = GrupoTitular::where(function($q) use ($user) {
+                        $q->where('maestro_titular_id', $user->id)
+                          ->orWhere('maestro_auxiliar_id', $user->id);
+                    })
                     ->with(['grupo.grado'])
                     ->whereHas('grupo', function($q) use ($cicloActivo) {
                         // Filtro 1: Que sea del ciclo activo
                         $q->where('ciclo_escolar_id', $cicloActivo->ciclo_escolar_id);
                         
-                        // Filtro 2 (NUEVO): Que sea SOLO de Preescolar
+                        // Filtro 2: Que sea SOLO de Preescolar
                         $q->whereHas('grado.nivel', function($qNivel) {
                             $qNivel->where('nombre', 'LIKE', '%Preescolar%');
                         });
@@ -84,7 +87,7 @@ class PdaController extends Controller
                         // Filtro 1: Ciclo activo
                         $q->where('ciclo_escolar_id', $cicloActivo->ciclo_escolar_id);
 
-                        // Filtro 2 (NUEVO): Que sea SOLO de Preescolar
+                        // Filtro 2: Que sea SOLO de Preescolar
                         $q->whereHas('grado.nivel', function($qNivel) {
                             $qNivel->where('nombre', 'LIKE', '%Preescolar%');
                         });
@@ -113,6 +116,11 @@ class PdaController extends Controller
                         $existe = array_filter($gruposData[$gId]['opciones'], fn($op) => $op['val'] === 'educacion_fisica');
                         if (!$existe) {
                             $gruposData[$gId]['opciones'][] = ['val' => 'educacion_fisica', 'label' => 'Educación Física'];
+                        }
+                    } elseif (str_contains($nombreMateria, 'Socioemocional')) {
+                        $existe = array_filter($gruposData[$gId]['opciones'], fn($op) => $op['val'] === 'socioemocional');
+                        if (!$existe) {
+                            $gruposData[$gId]['opciones'][] = ['val' => 'socioemocional', 'label' => 'Socioemocional'];
                         }
                     }
                 }
@@ -174,6 +182,8 @@ class PdaController extends Controller
                 $materias = $grupo->grado->materias()->where('nombre', 'LIKE', '%Artes%')->get();
             } elseif ($tipo === 'educacion_fisica') {
                 $materias = $grupo->grado->materias()->where('nombre', 'LIKE', '%Educación Física%')->get();
+            } elseif ($tipo === 'socioemocional') {
+                $materias = $grupo->grado->materias()->where('nombre', 'LIKE', '%Socioemocional%')->get();
             }
         } else {
             // Lógica Admin
@@ -196,7 +206,8 @@ class PdaController extends Controller
                 ->where(function ($q) {
                     $q->where('nombre', 'LIKE', '%Artes%')
                       ->orWhere('nombre', 'LIKE', '%Educación Física%')
-                      ->orWhere('nombre', 'LIKE', '%Lengua Extranjera%');
+                      ->orWhere('nombre', 'LIKE', '%Lengua Extranjera%')
+                      ->orWhere('nombre', 'LIKE', '%Socioemocional%');
                 })
                 ->get();
         }
