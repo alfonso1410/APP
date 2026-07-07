@@ -583,7 +583,7 @@ $mpdf = $pdf->getMpdf();
         if ($esPreescolar) {
             // Coordenadas para la boleta de PREESCOLAR
             $mpdf->Image(
-                public_path('assets/firma.png'),
+                public_path('Assets/firma.png'),
                 23,   // X para preescolar (ajustar)
                 244,  // Y para preescolar (ajustar)
                 28,   // ancho
@@ -593,7 +593,7 @@ $mpdf = $pdf->getMpdf();
         } else {
             // Coordenadas para la boleta de PRIMARIA
             $mpdf->Image(
-                public_path('assets/firma.png'),
+                public_path('Assets/firma.png'),
                 23,   // X para primaria (ajustar según tu PDF)
                 248,  // Y para primaria (ajustar según tu PDF)
                 28,   // ancho
