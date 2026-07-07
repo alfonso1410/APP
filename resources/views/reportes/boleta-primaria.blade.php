@@ -107,7 +107,12 @@
         .tutor-table th, .tutor-table td { border: 1px solid #000; padding: 2px; height: 25px; }
         .tutor-table th { background-color: #E0E0E0; font-size: 8px; }
 
-        .signatures-bottom-container { width: 100%; margin-top: 60px; page-break-inside: avoid; }
+         .signatures-bottom-container { 
+            position: absolute; /* <-- Cambia fixed por absolute */
+            bottom: 65px; 
+            left: 0;
+            width: 100%; 
+        }
         .sig-col-table { width: 90%; margin: 0 auto; border-collapse: collapse; text-align: center; }
         .sig-line-cell { border-bottom: 1px solid #000; height: 1px; width: 100%; }
         .sig-name { font-weight: bold; font-size: 8px; padding-top: 3px; }
@@ -522,7 +527,11 @@
                 </tr>
             </table>
             
-            {{-- FIRMAS ABAJO --}}
+          
+        </div> 
+    </div> 
+
+      {{-- FIRMAS ABAJO --}}
             <div class="signatures-bottom-container">
                 <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
                     <tr>
@@ -550,7 +559,5 @@
                     </tr>
                 </table>
             </div>
-        </div> 
-    </div> 
 </body>
 </html>

@@ -184,6 +184,7 @@ class BoletaController extends Controller
         //    (Esto incluye su grupo titular Y cualquier grupo extracurricular)
         $gruposDelAlumno = $alumno->grupos()
             ->where('ciclo_escolar_id', $ciclo->ciclo_escolar_id)
+            ->wherePivot('es_actual', 1)
             ->with('materias') // Cargamos las materias asociadas a cada grupo
             ->get();
 
@@ -572,12 +573,35 @@ class BoletaController extends Controller
             ? 'reportes.boleta-preescolar' 
             : 'reportes.boleta-primaria';
 
-        $pdf = PDF::loadView($nombreVista, $data, [
-            'format' => 'Legal', 
-            'orientation' => 'P', 
-            'mode' => 'utf-8'
-        ]);
+      $pdf = PDF::loadView($nombreVista, $data);
 
+$mpdf = $pdf->getMpdf();
+
+
+        
+        // VALIDACIÓN PARA POSICIONAR LA FIRMA SEGÚN EL NIVEL
+        if ($esPreescolar) {
+            // Coordenadas para la boleta de PREESCOLAR
+            $mpdf->Image(
+                public_path('assets/firma.png'),
+                23,   // X para preescolar (ajustar)
+                244,  // Y para preescolar (ajustar)
+                28,   // ancho
+                0,
+                'png'
+            );
+        } else {
+            // Coordenadas para la boleta de PRIMARIA
+            $mpdf->Image(
+                public_path('assets/firma.png'),
+                23,   // X para primaria (ajustar según tu PDF)
+                248,  // Y para primaria (ajustar según tu PDF)
+                28,   // ancho
+                0,
+                'png'
+            );
+        }
+      
         return $pdf->stream($alumno->apellido_paterno . ' ' . $alumno->apellido_materno . ' ' . $alumno->nombres . '.pdf');
     }
 
