@@ -124,7 +124,10 @@
             <td>{{ $grupo->grado->nombre }} - {{ $grupo->nombre_grupo }}</td>
             <td class="label">NIVEL:</td>
             <td>{{ $grupo->grado->nivel->nombre }}</td>
+            <td class="label">PERIODO:</td>
+            <td>{{ $periodoNombre }}</td>
         </tr>
+        
     </table>
 
     <!-- Tabla de Calificaciones (Ordenada por promedio de mayor a menor) -->
@@ -150,6 +153,15 @@
                 <td class="promedio-final">{{ $alumno['promedio_final'] }}</td>
             </tr>
             @endforeach
+            <!-- Fila de promedios finales por columna -->
+            <tr style="background-color: #E0E0E0; font-weight: bold;">
+                <td class="cell-num">PROM.</td>
+                <td class="cell-alumno">PROMEDIO FINAL POR CAMPO</td>
+                @foreach($camposSep as $campo)
+                    <td>{{ $promediosPorCampo[$campo] }}</td>
+                @endforeach
+                <td class="promedio-final">{{ $promedioGeneral }}</td>
+            </tr>
         </tbody>
     </table>
 

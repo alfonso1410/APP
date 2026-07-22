@@ -145,10 +145,28 @@ public function index()
             ];
         });
 
-        return [
+            $promediosPorCampo = [];
+        foreach (self::CAMPOS_FORMATIVOS_SEP as $campo) {
+            $sumaCampo = $resumenAlumnos->sum(function($alumno) use ($campo) {
+                return $alumno['campos'][$campo]['num'] ?? 0;
+            });
+            $totalAlumnos = $resumenAlumnos->count();
+            $promedioCampo = $totalAlumnos > 0 ? $sumaCampo / $totalAlumnos : 0;
+            $promedioTruncado = floor($promedioCampo * 1000) / 1000;
+            $promediosPorCampo[$campo] = number_format($promedioTruncado, 3);
+        }
+
+        // Calcular promedio general de todos los promedios finales
+        $sumaPromediosFinales = $resumenAlumnos->sum('promedio_final_num');
+        $totalAlumnos = $resumenAlumnos->count();
+        $promedioGeneral = $totalAlumnos > 0 ? $sumaPromediosFinales / $totalAlumnos : 0;
+        $promedioGeneralTruncado = floor($promedioGeneral * 1000) / 1000;
+         return [
             'grupo' => $grupo,
             'camposSep' => self::CAMPOS_FORMATIVOS_SEP,
-            'alumnos' => $resumenAlumnos->sortByDesc('promedio_final_num')->values()
+            'alumnos' => $resumenAlumnos->sortByDesc('promedio_final_num')->values(),
+            'promediosPorCampo' => $promediosPorCampo,
+            'promedioGeneral' => number_format($promedioGeneralTruncado, 3)
         ];
     }
     // Busca la nota de una materia individual (Criterio "Promedio")[cite: 1]
@@ -177,9 +195,15 @@ public function index()
 
     public function descargarPdf(Request $request, Grupo $grupo) {
         $periodoId = $request->input('periodo_id');
+        
+
+        if (!$periodoId) {
+        $periodoId = Periodo::where('ciclo_escolar_id', $grupo->ciclo_escolar_id)
+            ->orderBy('fecha_inicio')
+            ->value('periodo_id');
+    }
         $data = $this->prepararDatosResumen($grupo, $periodoId);
         $data['periodoNombre'] = Periodo::find($periodoId)->nombre ?? '';
-
         $pdf = PDF::loadView('admin.reportes.pdf-resumen-grupal', $data, [], [
             'format' => 'A4', 'orientation' => 'L', 'mode' => 'utf-8',
         ]);

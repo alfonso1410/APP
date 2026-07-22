@@ -19,7 +19,7 @@
                 <a href="{{ route('admin.reportes.resumen.pdf', ['grupo' => $grupo->grupo_id, 'periodo_id' => $periodo_id]) }}" 
                    target="_blank"
                    class="bg-princeton text-white px-4 py-2 rounded-lg text-xs font-bold uppercase">
-                    Descargar PDF ({{ $periodos->firstWhere('periodo_id', $periodo_id)->nombre }})
+                    Descargar PDF ({{ $periodos->firstWhere('periodo_id', $periodo_id)->nombre ?? 'Periodo no encontrado' }})
                 </a>
             </div>
         </div>
