@@ -12,7 +12,7 @@
                 <select x-model="selectedCiclo" @change="cambioCiclo()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                     <option value="">Seleccione Ciclo</option>
                     @foreach($ciclos as $ciclo)
-                        <option value="{{ $ciclo->id }}">{{ $ciclo->nombre }}</option>
+                        <option value="{{ $ciclo->ciclo_escolar_id }}">{{ $ciclo->nombre }}</option>
                     @endforeach
                 </select>
             </div>
@@ -159,7 +159,7 @@
     <script>
     function pdaManager() {
         return {
-            selectedCiclo: '{{ $cicloActivo->id ?? "" }}',
+            selectedCiclo: '{{ $cicloActivo->ciclo_escolar_id ?? "" }}',
             selectedNivel: '',
             selectedGrado: '',
             selectedGrupo: '',
@@ -190,6 +190,8 @@
             cambioCiclo() {
                 this.selectedGrupo = '';
                 this.selectedPeriodo = '';
+                this.selectedGrado = ''; // Limpiamos grado para forzar selección correcta del nuevo ciclo
+                this.grados = [];
                 this.grupos = [];
                 this.loaded = false;
 
@@ -202,8 +204,6 @@
                     .then(res => res.json())
                     .then(data => { this.periodos = data; })
                     .catch(err => console.error(err));
-
-                if(this.selectedGrado) this.loadGrupos();
             },
 
             loadGrados() {
@@ -226,9 +226,10 @@
                 this.grupos = [];
                 this.loaded = false;
 
-                if(!this.selectedGrado) return;
+                if(!this.selectedGrado || !this.selectedCiclo) return;
 
-                fetch(`{{ url('/admin/json/grados') }}/${this.selectedGrado}/grupos?ciclo_id=${this.selectedCiclo}`)
+                // CAMBIO CLAVE: Usar 'ciclo_escolar_id' en lugar de 'ciclo_id' para que coincida con el backend
+                fetch(`{{ url('/admin/json/grados') }}/${this.selectedGrado}/grupos?ciclo_escolar_id=${this.selectedCiclo}`)
                     .then(res => res.json())
                     .then(data => { this.grupos = data; })
                     .catch(err => console.error(err));

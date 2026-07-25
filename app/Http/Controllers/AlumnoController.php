@@ -15,48 +15,57 @@ class AlumnoController extends Controller
      * Muestra la lista de alumnos, filtros y maneja los modales.
      */
     public function index(Request $request): View
-    {
-        $nivel_id = $request->input('nivel', 0);
-        $search = $request->input('search');
-        $query = Alumno::query();
+{
+    $nivel_id = $request->input('nivel', 0);
+    $search = $request->input('search');
+    $query = Alumno::query();
 
-        // --- Lógica de filtrado (sin cambios) ---
-        if ($nivel_id == 0) {
-            $query->whereDoesntHave('grupos', function ($q) {
-                $q->where('tipo_grupo', 'REGULAR')
-                  ->where('asignacion_grupal.es_actual', 1);
-            });
-        } else {
-            $query->whereHas('grupos', function ($q) use ($nivel_id) {
-                $q->where('tipo_grupo', 'REGULAR')
-                  ->where('asignacion_grupal.es_actual', 1)
-                  ->whereHas('grado', function ($subQ) use ($nivel_id) {
-                      $subQ->where('nivel_id', $nivel_id);
-                  });
-            });
-        }
-        $query->when($search, function ($q, $s) {
-            $q->where(function ($subQ) use ($s) {
-                $subQ->where('nombres', 'like', "%{$s}%")
-                     ->orWhere('apellido_paterno', 'like', "%{$s}%")
-                     ->orWhere('apellido_materno', 'like', "%{$s}%")
-                     ->orWhere('curp', 'like', "%{$s}%");
-            });
+    // --- Filtro por nivel/estado ---
+    if ($nivel_id === 'egresados') {
+        // Egresados: alumnos con estado EGRESADO
+        $query->where('estado_alumno', 'EGRESADO');
+
+    } elseif ($nivel_id == 0) {
+        // Sin asignar: solo ACTIVOS que no tienen grupo regular vigente
+        $query->where('estado_alumno', 'ACTIVO')
+              ->whereDoesntHave('grupos', function ($q) {
+                  $q->where('tipo_grupo', 'REGULAR')
+                    ->where('asignacion_grupal.es_actual', 1);
+              });
+
+    } else {
+        // Por nivel: alumnos con grupo regular activo en ese nivel
+        $query->whereHas('grupos', function ($q) use ($nivel_id) {
+            $q->where('tipo_grupo', 'REGULAR')
+              ->where('asignacion_grupal.es_actual', 1)
+              ->whereHas('grado', function ($subQ) use ($nivel_id) {
+                  $subQ->where('nivel_id', $nivel_id);
+              });
         });
-        // --- Fin lógica de filtrado ---
-
-        $alumnos = $query->with([
-                            'grupos' => function ($q) { // Cargamos solo el grupo activo
-                                $q->where('asignacion_grupal.es_actual', 1)->with('grado');
-                            }
-                        ])
-                        ->orderBy('apellido_paterno')
-                        ->paginate(15);
-
-        // Pasamos solo los datos necesarios para la vista y los modales (si aplica)
-        return view('alumnos.index', compact('alumnos', 'nivel_id', 'search'));
     }
 
+    // Búsqueda
+    $query->when($search, function ($q, $s) {
+        $q->where(function ($subQ) use ($s) {
+            $subQ->where('nombres', 'like', "%{$s}%")
+                 ->orWhere('apellido_paterno', 'like', "%{$s}%")
+                 ->orWhere('apellido_materno', 'like', "%{$s}%")
+                 ->orWhere('curp', 'like', "%{$s}%");
+        });
+    });
+
+    $alumnos = $query->with([
+                'grupos' => function ($q) {
+                    $q->where('asignacion_grupal.es_actual', 1)
+                      ->where('grupos.estado', 'ACTIVO')
+                      ->with('grado');
+                }
+            ])
+            ->orderByRaw("apellido_paterno COLLATE utf8mb4_unicode_ci ASC")
+            ->paginate(15);
+
+    return view('alumnos.index', compact('alumnos', 'nivel_id', 'search'));
+}
     /**
      * Guarda un nuevo alumno desde el modal.
      */
@@ -69,7 +78,7 @@ class AlumnoController extends Controller
             'apellido_materno' => 'required|string|max:255',
             'fecha_nacimiento' => 'required|date',
             'curp'             => 'required|string|unique:alumnos,curp|size:18',
-            'estado_alumno'    => 'required|string|in:ACTIVO,INACTIVO',
+            'estado_alumno' => 'required|string|in:ACTIVO,INACTIVO,EGRESADO',
         ]);
 
         Alumno::create($validatedData);
@@ -93,7 +102,7 @@ class AlumnoController extends Controller
                 'required', 'string', 'size:18',
                 Rule::unique('alumnos')->ignore($alumno->alumno_id, 'alumno_id'),
             ],
-            'estado_alumno'    => 'required|string|in:ACTIVO,INACTIVO'
+            'estado_alumno' => 'required|string|in:ACTIVO,INACTIVO,EGRESADO',
         ]);
 
         $alumno->update($validatedData);

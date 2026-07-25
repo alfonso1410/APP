@@ -23,7 +23,12 @@ class GradoController extends Controller
         if ($view_mode === 'extracurricular') {
             // MODO EXTRACURRICULAR
             $grados = Grado::where('tipo_grado', 'EXTRA')
-                ->with(['grupos', 'gradosRegularesMapeados']) 
+                ->with([
+            'grupos' => function ($query) {
+                $query->where('estado', 'ACTIVO');
+            },
+            'gradosRegularesMapeados'
+        ])
                 ->when($search, fn($q, $s) => $q->where('nombre', 'like', "%{$s}%"))
                 ->orderBy('nombre', 'asc')
                 ->get();

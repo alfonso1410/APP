@@ -31,25 +31,22 @@ class CicloEscolarController extends Controller
      */
     // 3. CAMBIA Request por StoreCicloEscolarRequest
     public function store(StoreCicloEscolarRequest $request): RedirectResponse
-    {
-        // 4. La validación YA PASÓ automáticamente.
-        // Si falla, Laravel redirige solo.
-        $validatedData = $request->validated();
+{
+    $validatedData = $request->validated();
 
-        // --- LÓGICA PARA ASEGURAR SOLO UN CICLO ACTIVO ---
-        CicloEscolar::where('estado', 'ACTIVO')->update(['estado' => 'CERRADO']);
-        // --- FIN LÓGICA ---
+    // ELIMINAR esta linea:
+    // CicloEscolar::where('estado', 'ACTIVO')->update(['estado' => 'CERRADO']);
 
-        CicloEscolar::create([
-            'nombre' => $validatedData['nombre'],
-            'fecha_inicio' => $validatedData['fecha_inicio'],
-            'fecha_fin' => $validatedData['fecha_fin'],
-            'estado' => 'ACTIVO', // El nuevo siempre es ACTIVO
-        ]);
+    CicloEscolar::create([
+        'nombre' => $validatedData['nombre'],
+        'fecha_inicio' => $validatedData['fecha_inicio'],
+        'fecha_fin' => $validatedData['fecha_fin'],
+        'estado' => 'CERRADO', // ← Antes era 'ACTIVO'
+    ]);
 
-        return redirect()->route('admin.ciclo-escolar.index')
-                         ->with('success', 'Ciclo Escolar creado exitosamente.');
-    }
+    return redirect()->route('admin.ciclo-escolar.index')
+                     ->with('success', 'Ciclo Escolar creado exitosamente (estado: CERRADO).');
+}
 
 
     /**

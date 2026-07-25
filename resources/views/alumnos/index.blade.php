@@ -42,7 +42,7 @@
             </div>
 
             {{-- Componente de filtro --}}
-            <x-level-filter :route="'admin.alumnos.index'" :selectedNivel="$nivel_id" />
+            <x-level-filter :route="'admin.alumnos.index'" :selectedNivel="$nivel_id" :show-egresados="true" />
 
             <div class="bg-white shadow-sm overflow-hidden sm:rounded-lg mt-4">
                 <div class="overflow-x-auto">
@@ -76,13 +76,15 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {{ $alumno->grupos->where('pivot.es_actual', 1)->where('tipo_grupo', 'EXTRA')->first()?->nombre_grupo ?? 'N/A' }}
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        @if ($alumno->estado_alumno === 'ACTIVO')
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activo</span>
-                                        @else
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Inactivo</span>
-                                        @endif
-                                    </td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+    @if ($alumno->estado_alumno === 'ACTIVO')
+        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Activo</span>
+    @elseif ($alumno->estado_alumno === 'EGRESADO')
+        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Egresado</span>
+    @else
+        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Inactivo</span>
+    @endif
+</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div class="flex items-center justify-center space-x-2">
                                             {{-- Botón Editar --}}

@@ -8,7 +8,7 @@
 
             <x-flash-messages />
 
-            {{-- 1. Botón Flotante para Crear --}}
+            {{-- Botón Flotante para Crear (Mantenido igual) --}}
             <div class="fixed bottom-8 right-8 z-50">
                 <button
                     x-data=""
@@ -20,7 +20,18 @@
                 </button>
             </div>
 
-            {{-- 2. Tabla de Ciclos Escolares --}}
+            {{-- NUEVO: Barra de Acciones Globales (Botón de Transición) --}}
+            <div class="flex justify-end mb-4">
+                <a href="{{ route('admin.ciclo-escolar.transicion.index') }}" 
+                   class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded-lg shadow flex items-center gap-2 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                    </svg>
+                    Iniciar Transición de Ciclo
+                </a>
+            </div>
+
+            {{-- Tabla de Ciclos Escolares --}}
             <div class="bg-white shadow-sm overflow-hidden sm:rounded-lg">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -42,8 +53,8 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
                                               :class="{
-                                                'bg-green-100 text-green-800': '{{ $ciclo->estado }}' === 'ACTIVO',
-                                                'bg-red-100 text-red-800': '{{ $ciclo->estado }}' !== 'ACTIVO'
+                                                  'bg-green-100 text-green-800': '{{ $ciclo->estado }}' === 'ACTIVO',
+                                                  'bg-red-100 text-red-800': '{{ $ciclo->estado }}' !== 'ACTIVO'
                                               }">
                                             {{ $ciclo->estado }}
                                         </span>
@@ -60,17 +71,16 @@
                                                 <svg class="size-4"><use xlink:href="{{ asset('Assets/sprite.svg') }}#icon-edit"></use></svg>
                                             </button>
                                             
-                                            {{-- INICIO: Botón Ver Periodos --}}
-        <a href="{{ route('admin.ciclo-escolar.periodos.index', ['ciclo_escolar' => $ciclo->ciclo_escolar_id]) }}"
-           class="text-green-600 hover:text-green-900 mx-1 p-1 rounded-full hover:bg-green-100"
-           title="Ver Periodos de este Ciclo">
-            <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-            </svg>
-        </a>
+                                            {{-- Botón Ver Periodos --}}
+                                            <a href="{{ route('admin.ciclo-escolar.periodos.index', ['ciclo_escolar' => $ciclo->ciclo_escolar_id]) }}"
+                                               class="text-green-600 hover:text-green-900 mx-1 p-1 rounded-full hover:bg-green-100"
+                                               title="Ver Periodos de este Ciclo">
+                                                <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                                                </svg>
+                                            </a>
 
-                                            {{-- Botón Eliminar/Desactivar (usa un formulario) --}}
-                                            {{-- Usaremos un componente similar al de grados para confirmación --}}
+                                            {{-- Botón Eliminar/Desactivar --}}
                                             <form action="{{ route('admin.ciclo-escolar.destroy', $ciclo) }}" method="POST" onsubmit="return confirm('¿Estás seguro? Si el ciclo tiene grupos o periodos, solo se marcará como CERRADO.')">
                                                 @csrf
                                                 @method('DELETE')
@@ -95,7 +105,8 @@
 
         </div>
     </div>
-    {{-- INICIO MODALES EDITAR --}}
+    
+    {{-- MODALES EDITAR --}}
     @foreach ($ciclos as $ciclo)
         <x-modal
             :name="'editar-ciclo-' . $ciclo->ciclo_escolar_id"
@@ -104,19 +115,15 @@
         >
             <div class="p-6">
                 <h2 class="text-lg font-medium text-gray-900 mb-4">Editar Ciclo: {{ $ciclo->nombre }}</h2>
-                {{-- Llamamos al componente del formulario de edición --}}
                 <x-ciclo-escolar.edit-form :ciclo="$ciclo" />
             </div>
         </x-modal>
     @endforeach
-    {{-- FIN MODALES EDITAR --}}
 
-    {{-- 3. Modal para Crear Ciclo Escolar --}}
-    {{-- :show="false" asegura que no se abra por errores de validación de OTROS modales --}}
+    {{-- Modal para Crear Ciclo Escolar --}}
     <x-modal name="agregar-ciclo" :show="$errors->hasAny() && old('form_type') === 'ciclo_escolar'" focusable>
         <div class="p-6">
             <h2 class="text-lg font-medium text-gray-900 mb-4">Crear Nuevo Ciclo Escolar</h2>
-            {{-- Llamamos al componente del formulario que crearemos a continuación --}}
             <x-ciclo-escolar.create-form />
         </div>
     </x-modal>

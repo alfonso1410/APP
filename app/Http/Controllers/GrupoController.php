@@ -19,18 +19,16 @@ class GrupoController extends Controller
      * Muestra el formulario para crear un nuevo grupo para un grado específico.
      */
     public function create(Request $request): View
-    {
-        // 1. Validamos que el ID del grado venga en la URL.
-        $request->validate(['grado' => 'required|exists:grados,grado_id']);
+{
+    $request->validate(['grado' => 'required|exists:grados,grado_id']);
 
-        // 2. Buscamos el grado para mostrar su nombre en la vista (ej: "Crear grupo para Primero").
-        $grado = Grado::findOrFail($request->query('grado'));
+    $grado = Grado::findOrFail($request->query('grado'));
 
-        $cicloActivo = CicloEscolar::where('estado', 'ACTIVO')->first();
+    // Todos los ciclos, ordenados del mas reciente al mas viejo
+    $ciclos = CicloEscolar::orderBy('fecha_inicio', 'desc')->get();
 
-        // 3. Devolvemos la vista con la información del grado.
-        return view('grupos.create', compact('grado', 'cicloActivo'));
-    }
+    return view('grupos.create', compact('grado', 'ciclos'));
+}
 
     /**
      * Guarda el nuevo grupo en la base de datos.
@@ -160,8 +158,8 @@ public function mostrarAlumnos(Grupo $grupo, Request $request)
         'calificaciones',
         'grupos.materias' // 👈 agregamos esto
     ])
-    ->orderBy('apellido_paterno')
-    ->orderBy('apellido_materno')
+    ->orderByRaw("apellido_paterno COLLATE utf8mb4_unicode_ci ASC")
+->orderByRaw("apellido_materno COLLATE utf8mb4_unicode_ci ASC")
     ->get();
     // 2. Preparamos el nombre de la materia (valor por defecto)
     $materiaExtraNombre = 'N/A'; 

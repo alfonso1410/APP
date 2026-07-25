@@ -15,9 +15,9 @@ class LevelFilter extends Component
      */
     public function __construct(
         public string $route, 
-        public int $selectedNivel,
-        // --- AÑADE ESTA LÍNEA ---
-        public bool $showUnassigned = true // Por defecto, siempre se muestra
+         public int|string $selectedNivel,
+        public bool $showUnassigned = true,// Por defecto, siempre se muestra
+        public bool $showEgresados = false
     ) {
         $this->niveles = Nivel::all();
     }

@@ -50,7 +50,12 @@ class Alumno extends Model
     
   public function getMateriaExtracurricularAttribute()
 {
-    $grupoExtra = $this->grupos->firstWhere('tipo_grupo', 'EXTRA');
+    $grupoExtra = $this->grupos->first(function ($grupo) {
+        return $grupo->tipo_grupo === 'EXTRA'
+            && $grupo->estado === 'ACTIVO'
+            && $grupo->pivot->es_actual == 1;
+    });
+
     $materia = $grupoExtra?->materias?->first();
 
     return $materia?->nombre ?? 'Ninguna';

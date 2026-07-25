@@ -62,11 +62,21 @@ class CalificacionJsonController extends Controller
     /**
      * Devuelve los grupos activos de un grado.
      */
-    public function getGrupos(Grado $grado)
+ public function getGrupos(Request $request, Grado $grado)
     {
-        $grupos = Grupo::where('grado_id', $grado->grado_id)
-                       ->where('estado', 'ACTIVO')
-                       ->orderBy('nombre_grupo')
+        $ciclo_escolar_id = $request->input('ciclo_escolar_id');
+
+        $query = Grupo::where('grado_id', $grado->grado_id);
+
+        if ($ciclo_escolar_id) {
+            // Si la petición especifica un ciclo (ej. para historiales), filtramos por ese ciclo
+            $query->where('ciclo_escolar_id', $ciclo_escolar_id);
+        } else {
+            // Si no se especifica ciclo, mantenemos el comportamiento original (solo activos)
+            $query->where('estado', 'ACTIVO');
+        }
+
+        $grupos = $query->orderBy('nombre_grupo')
                        ->get(['grupo_id as id', 'nombre_grupo']);
         
         $grupos = $grupos->map(function ($grupo) {

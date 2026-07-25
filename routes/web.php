@@ -30,6 +30,7 @@ use App\Models\CatalogoCriterio;
 use App\Http\Controllers\PdaController; 
 use App\Http\Controllers\ReporteAsistenciaController;
 use App\Http\Controllers\ReporteGrupoController;
+use App\Http\Controllers\CycleTransitionController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -78,6 +79,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/grados/{grado}/estructura', [EstructuraCurricularController::class, 'edit'])->name('grados.estructura');
         Route::post('/grados/{grado}/estructura', [EstructuraCurricularController::class, 'update'])->name('grados.estructura.update');
 
+        // Rutas para la transición de ciclo escolar
+        Route::get('/ciclo-escolar/transicion', [CycleTransitionController::class, 'index'])
+        ->name('ciclo-escolar.transicion.index');
+        Route::post('/ciclo-escolar/transicion/ejecutar', [CycleTransitionController::class, 'ejecutarTransicion'])
+        ->name('ciclo-escolar.transicion.ejecutar');
         Route::resource('maestros', MaestroController::class);
         Route::resource('niveles', NivelController::class)->parameters(['niveles' => 'nivel']);
         Route::resource('campos-formativos', CampoFormativoController::class)->except(['create', 'show', 'edit']);

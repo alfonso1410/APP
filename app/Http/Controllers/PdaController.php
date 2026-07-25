@@ -142,22 +142,29 @@ class PdaController extends Controller
     /**
      * Retorna datos JSON filtrados.
      */
-    public function getData(Request $request)
-    {
-        $grupo_id = $request->grupo_id;
-        $periodo_id = $request->periodo_id;
-        $tipo = $request->input('tipo'); 
+  public function getData(Request $request)
+{
+    $grupo_id = $request->grupo_id;
+    $periodo_id = $request->periodo_id;
+    $tipo = $request->input('tipo'); 
 
-        $periodo = Periodo::find($periodo_id);
-        $periodoEstado = $periodo ? $periodo->estado : 'CERRADO';
+    $periodo = Periodo::find($periodo_id);
+    $periodoEstado = $periodo ? $periodo->estado : 'CERRADO';
 
-        // Cargamos el grupo CON EL GRADO
-        $grupo = Grupo::with([
-            'grado', 
-            'alumnos' => function ($q) {
-                $q->where('es_actual', 1);
-            }
-        ])->findOrFail($grupo_id);
+    // Cargar el grupo con su ciclo para saber si es historico
+    $grupo = Grupo::with(['grado', 'cicloEscolar'])->findOrFail($grupo_id);
+
+    // Si el grupo es del ciclo activo, filtrar por es_actual = 1
+    // Si es de un ciclo cerrado (historico), traer todos los asignados
+    $cicloActivo = CicloEscolar::where('estado', 'ACTIVO')->first();
+    $esHistorico = $cicloActivo && $grupo->ciclo_escolar_id !== $cicloActivo->ciclo_escolar_id;
+
+    $grupo->load(['alumnos' => function ($q) use ($esHistorico) {
+        if (!$esHistorico) {
+            $q->where('es_actual', 1);
+        }
+        // Si es historico, no filtrar por es_actual
+    }]);
 
         $campos = collect([]);
         $materias = collect([]);

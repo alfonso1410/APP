@@ -10,8 +10,7 @@
             <div class="bg-white shadow-sm overflow-hidden sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
 
-                    {{-- INICIO MODIFICACIÓN: Verificar si hay ciclo activo --}}
-                    @if($cicloActivo)
+                    @if($ciclos->isNotEmpty())
                         <form 
                             action="{{ route('admin.grupos.store') }}" 
                             method="POST"
@@ -20,25 +19,39 @@
                         >
                             @csrf
 
-                            {{-- Campos ocultos necesarios --}}
                             <input type="hidden" name="grado_id" value="{{ $grado->grado_id }}">
-                            <input type="hidden" name="ciclo_escolar_id" value="{{ $cicloActivo->ciclo_escolar_id }}">
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {{-- Nombre del Grupo (sin cambios) --}}
+                                {{-- Nombre del Grupo --}}
                                 <div>
-                                    <label for="nombre_grupo" class="block font-medium text-sm text-gray-700">Nombre del Grupo (Ej: A, B, C)</label>
-                                    <input id="nombre_grupo" name="nombre_grupo" type="text" value="{{ old('nombre_grupo') }}" required autofocus
+                                    <label for="nombre_grupo" class="block font-medium text-sm text-gray-700">
+                                        Nombre del Grupo (Ej: A, B, C)
+                                    </label>
+                                    <input id="nombre_grupo" name="nombre_grupo" type="text" 
+                                           value="{{ old('nombre_grupo') }}" required autofocus
                                            class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                                     <x-input-error :messages="$errors->get('nombre_grupo')" class="mt-2" />
                                 </div>
 
-                                {{-- Ciclo Escolar (Ahora solo muestra info) --}}
+                                {{-- Selector de Ciclo Escolar --}}
                                 <div>
-                                    <label for="ciclo_escolar_display" class="block font-medium text-sm text-gray-700">Ciclo Escolar (Activo)</label>
-                                    <input id="ciclo_escolar_display" type="text" value="{{ $cicloActivo->nombre }}" readonly disabled
-                                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-500">
-                                    <p class="text-xs text-gray-500 mt-1">El grupo se creará en el ciclo escolar activo.</p>
+                                    <label for="ciclo_escolar_id" class="block font-medium text-sm text-gray-700">
+                                        Ciclo Escolar
+                                    </label>
+                                    <select id="ciclo_escolar_id" name="ciclo_escolar_id" required
+                                            class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                        <option value="">-- Selecciona un ciclo --</option>
+                                        @foreach($ciclos as $ciclo)
+                                            <option value="{{ $ciclo->ciclo_escolar_id }}" 
+                                                    {{ old('ciclo_escolar_id') == $ciclo->ciclo_escolar_id ? 'selected' : '' }}>
+                                                {{ $ciclo->nombre }} ({{ $ciclo->estado }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <x-input-error :messages="$errors->get('ciclo_escolar_id')" class="mt-2" />
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        Puedes crear grupos en cualquier ciclo, independientemente de su estado.
+                                    </p>
                                 </div>
                             </div>
 
@@ -57,18 +70,16 @@
                             </div>
                         </form>
                     @else
-                        {{-- Mensaje si NO hay ciclo activo --}}
                         <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg" role="alert">
-                            <p class="font-bold">Error: No hay Ciclo Escolar Activo</p>
-                            <p>No se pueden crear nuevos grupos porque no hay un ciclo escolar marcado como ACTIVO. Por favor, crea o activa un ciclo escolar primero.</p>
+                            <p class="font-bold">No hay Ciclos Escolares</p>
+                            <p>Debes crear al menos un ciclo escolar antes de poder crear grupos.</p>
                         </div>
                         <div class="mt-4 text-right">
-                             <a href="{{ route('admin.grados.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">
+                            <a href="{{ route('admin.grados.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">
                                 Volver
                             </a>
                         </div>
                     @endif
-                    {{-- FIN MODIFICACIÓN --}}
 
                 </div>
             </div>

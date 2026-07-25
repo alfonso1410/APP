@@ -13,58 +13,61 @@ class AsignacionGrupalController extends Controller
      * Mostrar formulario de asignación para un grupo.
      */
     public function create(Grupo $grupo)
-    {
-        // IDs de los alumnos actualmente activos en ESTE grupo
-        $idsAlumnosAsignados = $grupo->alumnosActuales->pluck('alumno_id')->toArray();
+{
+    $idsAlumnosAsignados = $grupo->alumnosActuales->pluck('alumno_id')->toArray();
 
-        $query = Alumno::where('estado_alumno', 'ACTIVO');
+    $query = Alumno::where('estado_alumno', 'ACTIVO');
 
-        // --- LÓGICA CONDICIONAL ---
-        if ($grupo->tipo_grupo === 'REGULAR') {
-            // Mostrar solo alumnos que NO tengan un grupo regular activo.
-            $query->whereDoesntHave('grupos', function ($q) {
-                $q->where('tipo_grupo', 'REGULAR')->where('asignacion_grupal.es_actual', 1);
+    if ($grupo->tipo_grupo === 'REGULAR') {
+        $query->whereDoesntHave('grupos', function ($q) {
+            $q->where('tipo_grupo', 'REGULAR')->where('asignacion_grupal.es_actual', 1);
+        });
+    } else {
+        $idsGradosPermitidos = $grupo->grado->gradosRegularesMapeados()->pluck('grados.grado_id');
+
+        if ($idsGradosPermitidos->isEmpty()) {
+            $query->whereRaw('1 = 0');
+        } else {
+            $query->whereHas('grupos', function ($q) use ($idsGradosPermitidos) {
+                $q->where('tipo_grupo', 'REGULAR')
+                  ->where('asignacion_grupal.es_actual', 1)
+                  ->whereIn('grupos.grado_id', $idsGradosPermitidos);
             });
 
-        } else { // tipo_grupo es 'EXTRA'
-
-            // 1. Obtenemos los IDs de los grados regulares PERMITIDOS según el mapeo.
-            $idsGradosPermitidos = $grupo->grado->gradosRegularesMapeados()->pluck('grados.grado_id');
-
-            // 2. Si no hay grados mapeados, nadie es elegible.
-            if ($idsGradosPermitidos->isEmpty()) {
-                $query->whereRaw('1 = 0'); // No devolver nada.
-            } else {
-                // Debe tener grupo regular activo cuyo grado esté en la lista permitida
-                $query->whereHas('grupos', function ($q) use ($idsGradosPermitidos) {
-                    $q->where('tipo_grupo', 'REGULAR')
-                      ->where('asignacion_grupal.es_actual', 1)
-                      ->whereIn('grupos.grado_id', $idsGradosPermitidos);
-                });
-
-                // No debe tener otro grupo extracurricular activo
-                $query->whereDoesntHave('grupos', function ($q) {
-                    $q->where('tipo_grupo', 'EXTRA')->where('asignacion_grupal.es_actual', 1);
-                });
-            }
+            $query->whereDoesntHave('grupos', function ($q) {
+                $q->where('tipo_grupo', 'EXTRA')->where('asignacion_grupal.es_actual', 1);
+            });
         }
-
-        // Obtén elegibles y también los que ya están en este grupo para mostrarlos marcados
-        $alumnosElegibles = $query->with('grupos.materias')
-                             ->orderBy('apellido_paterno')
-                             ->get();
-
-        $alumnosYaAsignados = Alumno::whereIn('alumno_id', $idsAlumnosAsignados)
-                                    ->with('grupos.materias')
-                                    ->get();
-
-        $alumnosDisponibles = $alumnosElegibles
-                                ->merge($alumnosYaAsignados)
-                                ->unique('alumno_id')
-                                ->sortBy('apellido_paterno');
-
-        return view('grupos.alumnos', compact('grupo', 'alumnosDisponibles', 'idsAlumnosAsignados'));
     }
+
+    // Cargar solo grupos ACTIVOS con asignacion vigente
+    $alumnosElegibles = $query->with(['grupos' => function ($q) {
+            $q->where('asignacion_grupal.es_actual', 1)
+              ->where('grupos.estado', 'ACTIVO');
+        }, 'grupos.materias'])
+        ->orderByRaw("apellido_paterno COLLATE utf8mb4_unicode_ci ASC")
+        ->orderByRaw("apellido_materno COLLATE utf8mb4_unicode_ci ASC")
+        ->get();
+
+    $alumnosYaAsignados = Alumno::whereIn('alumno_id', $idsAlumnosAsignados)
+        ->with(['grupos' => function ($q) {
+            $q->where('asignacion_grupal.es_actual', 1)
+              ->where('grupos.estado', 'ACTIVO');
+        }, 'grupos.materias'])
+        ->get();
+
+    // Ordenamiento de Collection que maneja acentos
+    $alumnosDisponibles = $alumnosElegibles
+        ->merge($alumnosYaAsignados)
+        ->unique('alumno_id')
+        ->sortBy(function ($alumno) {
+            return \Illuminate\Support\Str::ascii($alumno->apellido_paterno) 
+                 . ' ' . \Illuminate\Support\Str::ascii($alumno->apellido_materno);
+        })
+        ->values();
+
+    return view('grupos.alumnos', compact('grupo', 'alumnosDisponibles', 'idsAlumnosAsignados'));
+}
 
     /**
      * Procesa y guarda las asignaciones de alumnos.
