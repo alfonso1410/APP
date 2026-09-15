@@ -25,7 +25,7 @@ class Grupo extends Model
         'tipo_grupo',
     ];
 
-    // --- INICIO CORRECCIÓN ---
+    
     /**
      * Atributos visibles en JSON para el modal de campos formativos.
      */
@@ -35,9 +35,9 @@ class Grupo extends Model
         'grado', // <-- La relación clave
         'grado_id'
     ];
-    // --- FIN CORRECCIÓN ---
+   
 
-    // 1. Relación con Grado (M-a-1)
+    //  Relación con Grado (M-a-1)
     public function grado(): BelongsTo
     {
         return $this->belongsTo(Grado::class, 'grado_id', 'grado_id');
@@ -47,7 +47,7 @@ class Grupo extends Model
     public function materias()
     {
         return $this->belongsToMany(Materia::class, 'grupo_materia_maestro', 'grupo_id', 'materia_id')
-                    ->withPivot('maestro_id'); // <-- AÑADE ESTA LÍNEA
+                    ->withPivot('maestro_id'); // 
     }
 
     public function alumnos(): BelongsToMany

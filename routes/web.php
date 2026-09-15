@@ -31,6 +31,7 @@ use App\Http\Controllers\PdaController;
 use App\Http\Controllers\ReporteAsistenciaController;
 use App\Http\Controllers\ReporteGrupoController;
 use App\Http\Controllers\CycleTransitionController;
+use App\Http\Controllers\ActividadController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -107,8 +108,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::prefix('reportes')->name('reportes.')->group(function () {
     Route::get('/asistencia', [ReporteAsistenciaController::class, 'index'])->name('asistencia.index');
     Route::get('/asistencia/generar', [ReporteAsistenciaController::class, 'generar'])->name('asistencia.generar');
-});
    
+});
+    Route::prefix('actividades-diarias')->name('actividades.')->group(function () {
+        Route::get('/', [ActividadController::class, 'index'])->name('index'); // Panel de Supervisión
+        Route::get('/captura', [ActividadController::class, 'captura'])->name('captura'); // Sábana Admin
+        Route::get('/json/resumen', [ActividadController::class, 'getResumen'])->name('json.resumen');
+        Route::get('/json/detalles-pendientes', [ActividadController::class, 'getDetallesPendientes'])->name('json.detalles.pendientes');
+    });
 // <-- Fin de la ZONA DE ADMINISTRACIÓN
 
     });
@@ -132,6 +139,19 @@ Route::prefix('reportes')->name('reportes.')->group(function () {
         Route::get('/json/grados/{grado}/materias', [CalificacionJsonController::class, 'getMaterias'])->name('json.grados.materias');
         Route::get('/json/tabla-calificaciones', [CalificacionJsonController::class, 'getTablaCalificaciones'])->name('json.tabla.calificaciones');
     
+
+        // rutas actividades diarias
+        Route::prefix('actividades-diarias')->name('actividades.')->group(function () {
+        Route::get('/json/tabla', [ActividadController::class, 'getDatosTabla'])->name('json.tabla');
+        Route::get('/json/maestro/materias-resumen', [ActividadController::class, 'getMateriasResumenMaestro'])->name('json.maestro.materiasResumen');
+        Route::post('/crear', [ActividadController::class, 'store'])->name('store');
+        Route::post('/guardar-calificacion', [ActividadController::class, 'guardarCalificacion'])->name('guardarCalificacion');
+        Route::post('/sincronizar', [ActividadController::class, 'sincronizar'])->name('sincronizar');
+        Route::get('/json/grupos-replicables', [ActividadController::class, 'getGruposReplicables'])->name('json.gruposReplicables');
+        Route::put('/actividades/{id}', [ActividadController::class, 'update'])->name('update');
+        Route::delete('/actividades/{id}', [ActividadController::class, 'destroy'])->name('destroy');
+    });
+
         // ==========================================================
         // == RUTAS PDA (PREESCOLAR)
         // ==========================================================
@@ -159,5 +179,7 @@ Route::prefix('reportes')->name('reportes.')->group(function () {
         Route::get('/asistencias', [AsistenciaController::class, 'gruposIndex'])->name('asistencias.index');
         Route::get('/asistencias/tomar/{grupo}', [AsistenciaController::class, 'tomarAsistencia'])->name('asistencias.tomar');
         Route::post('/asistencias/guardar/{grupo}', [AsistenciaController::class, 'guardarAsistencia'])->name('asistencias.guardar');
+        Route::get('/actividades', [ActividadController::class, 'capturaMaestro'])
+        ->name('actividades.index');
     });
 });

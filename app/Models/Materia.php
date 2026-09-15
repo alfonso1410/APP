@@ -29,8 +29,7 @@ class Materia extends Model
         'nombre',
         'tipo',
         'asignacionesGrupo',
-        // ❌ ELIMINADA: 'primeraEstructura', 
-        'grados', // ✅ AGREGADA para mostrar todos los grados.
+        'grados', //  AGREGADA para mostrar todos los grados.
     ];
     
     // --- Relaciones con Estructura Curricular ---
@@ -40,14 +39,9 @@ class Materia extends Model
         return $this->hasMany(EstructuraCurricular::class, 'materia_id', 'materia_id');
     }
 
-    // ❌ RELACIÓN ELIMINADA:
-    // public function primeraEstructura(): HasOne
-    // {
-    //     return $this->hasOne(EstructuraCurricular::class, 'materia_id', 'materia_id');
-    // }
-
+    
     /**
-     * ✅ NUEVA RELACIÓN: Obtiene todos los Grados a los que esta materia está asignada.
+     * NUEVA RELACIÓN: Obtiene todos los Grados a los que esta materia está asignada.
      * Utiliza la tabla pivote 'estructura_curricular'.
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */

@@ -15,11 +15,10 @@ class MateriaCriterio extends Model
     protected $primaryKey = 'materia_criterio_id';
 
     /**
-     * ✅ CORRECCIÓN: 'grado_id' ELIMINADO para coincidir con la estructura de la tabla.
+     *  CORRECCIÓN: 'grado_id' ELIMINADO para coincidir con la estructura de la tabla.
      */
     protected $fillable = [
         'materia_id',
-        // 'grado_id', // ¡Eliminado!
         'catalogo_criterio_id',
         'ponderacion',
         'incluido_en_promedio',

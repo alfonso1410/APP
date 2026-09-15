@@ -38,7 +38,7 @@ class CalificacionController extends Controller
                               ->get(['periodo_id as id', 'nombre', 'estado']);
         } else {
             // Si no hay ciclo activo, no se puede hacer nada.
-            // (Podrías redirigir con un error si lo prefieres)
+            
         }
 
         // --- LÓGICA DE ROLES ---

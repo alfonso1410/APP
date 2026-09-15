@@ -15,10 +15,20 @@ use App\Models\CatalogoCriterio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use App\Services\CalificacionService;
 use PDF;
 
 class BoletaController extends Controller
 {
+
+protected CalificacionService $calificacionService;
+
+    public function __construct(CalificacionService $calificacionService)
+    {
+        $this->calificacionService = $calificacionService;
+    }
+
+
     private const ORDEN_CAMPOS_PREESCOLAR = [
         'Lenguajes',
         'Saberes y Pensamiento Científico',
@@ -78,21 +88,7 @@ class BoletaController extends Controller
         }
     }
 
-    private function getLetraCalificacion($valor)
-    {
-        if (!is_numeric($valor)) return '';
-        
-        // NUEVO CAMBIO: .5 baja al entero actual, .6 sube al siguiente entero.
-        // PHP_ROUND_HALF_DOWN hace exactamente esto: 9.5 -> 9, pero 9.6 -> 10.
-        $val = round($valor, 0, PHP_ROUND_HALF_DOWN);
-        
-        if ($val == 10) return 'E';
-        if ($val == 9)  return 'MB';
-        if ($val == 8)  return 'B';
-        if ($val >= 6 && $val <= 7) return 'R';
-        if ($val < 6)   return 'NA'; 
-        return 'NP'; 
-    }
+ 
 
     public function index()
     {
@@ -172,54 +168,39 @@ class BoletaController extends Controller
         $estructuraBloquesCriterios = $estructuraCompleta->whereIn('nombre_materia', $nombresMateriasBloqueCrit);
 
 
-        // ==================================================================================
-        // 3.5. DETECCIÓN DE EXTRACURRICULARES (REVISIÓN GLOBAL DE GRUPOS DEL ALUMNO)
-        // Se inyectan en Princeton
-        // ==================================================================================
         
-        // A. Obtenemos IDs de las materias OFICIALES del grado
-        $idsMateriasOficiales = $estructuraCompleta->pluck('materia_id')->toArray();
+      $gruposExtrasDelAlumno = $alumno->grupos()
+    ->where('ciclo_escolar_id', $ciclo->ciclo_escolar_id)
+    ->wherePivot('es_actual', 1)
+    ->where('tipo_grupo', 'EXTRA') 
+    ->get();
 
-        // B. Buscamos TODOS los grupos donde el alumno está inscrito en este ciclo
-        //    (Esto incluye su grupo titular Y cualquier grupo extracurricular)
-        $gruposDelAlumno = $alumno->grupos()
-            ->where('ciclo_escolar_id', $ciclo->ciclo_escolar_id)
-            ->wherePivot('es_actual', 1)
-            ->with('materias') // Cargamos las materias asociadas a cada grupo
-            ->get();
+// Extraemos las materias de esos grupos extracurriculares
+$materiasExtras = $gruposExtrasDelAlumno->pluck('materias')
+    ->flatten()
+    ->unique('materia_id');
 
-        // C. Extraemos TODOS los IDs de materias que el alumno tiene asignadas (en cualquier grupo)
-        $idsMateriasTotalesAlumno = $gruposDelAlumno->pluck('materias')
-            ->flatten()
-            ->pluck('materia_id')
-            ->unique()
-            ->toArray();
+if ($materiasExtras->isNotEmpty()) {
+    $idsMateriasEnglish = $estructuraEnglish->pluck('materia_id')->toArray();
 
-        // D. La diferencia son las EXTRACURRICULARES (Tiene la materia, pero NO es oficial del grado)
-        $idsExtras = array_diff($idsMateriasTotalesAlumno, $idsMateriasOficiales);
-
-        if (!empty($idsExtras)) {
-            $materiasExtras = Materia::whereIn('materia_id', $idsExtras)->get();
-            $idsMateriasEnglish = $estructuraEnglish->pluck('materia_id')->toArray();
-
-            foreach ($materiasExtras as $extra) {
-                // Filtros de seguridad: que no esté ya agregada, que no sea de Inglés, que no esté excluida
-                if ($estructuraPrinceton->contains('materia_id', $extra->materia_id) || 
-                    in_array($extra->materia_id, $idsMateriasEnglish) ||
-                    in_array($extra->nombre, self::MATERIAS_PRINCETON_EXCLUIDAS_PK)) { 
-                        continue;
-                }
-
-                $nodoExtra = (object) [
-                    'campo_id' => 0, 
-                    'nombre_campo' => 'Programa Princeton',
-                    'materia_id' => $extra->materia_id,
-                    'nombre_materia' => $extra->nombre, 
-                    'ponderacion_materia' => 0
-                ];
-                $estructuraPrinceton->push($nodoExtra);
-            }
+    foreach ($materiasExtras as $extra) {
+        // Filtros de seguridad
+        if ($estructuraPrinceton->contains('materia_id', $extra->materia_id) || 
+            in_array($extra->materia_id, $idsMateriasEnglish) ||
+            in_array($extra->nombre, self::MATERIAS_PRINCETON_EXCLUIDAS_PK)) { 
+                continue;
         }
+
+        $nodoExtra = (object) [
+            'campo_id' => 0, 
+            'nombre_campo' => 'Programa Princeton',
+            'materia_id' => $extra->materia_id,
+            'nombre_materia' => $extra->nombre, 
+            'ponderacion_materia' => 0
+        ];
+        $estructuraPrinceton->push($nodoExtra);
+    }
+}
         // ==================================================================================
 
 
@@ -320,7 +301,7 @@ class BoletaController extends Controller
             });
         }
 
-        $boletaDataSEP = $this->procesarCamposSEP(
+        $boletaDataSEP = $this->calificacionService->procesarCamposSEP(
             $camposFormativosSEP_Agrupados,
             $periodos,
             $mapaCalificacionesPAS,
@@ -412,7 +393,7 @@ class BoletaController extends Controller
         $promediosGeneralesSEP['final'] = is_numeric($valFinal) ? number_format($valFinal, 1) : null;
 
         // 7. PROCESAR PRINCETON (Ya incluye Extracurriculares)
-        $boletaDataPrinceton = $this->procesarCamposSEP(
+        $boletaDataPrinceton = $this->calificacionService->procesarCamposSEP(
             $estructuraPrinceton->groupBy('nombre_campo'),
             $periodos,
             $mapaCalificacionesPAS,
@@ -474,7 +455,7 @@ class BoletaController extends Controller
                 $nota = $mapaCalificacionesPAS[$llave] ?? null;
 
                 if ($esPreescolar) {
-                    $notaMostrada = $this->getLetraCalificacion($nota);
+                    $notaMostrada = $this->calificacionService->getLetraCalificacion($nota);
                     $notaNum = is_numeric($nota) ? $nota : null;
                 } else {
                     $notaRedondeada = is_numeric($nota) ? round($nota, 1) : null;
@@ -490,7 +471,7 @@ class BoletaController extends Controller
             }
             $promedioEPNum = ($countEP > 0) ? round($sumaEP / $countEP, 1) : null;
             $rowEscuelaPadres['promedio'] = $esPreescolar 
-                ? $this->getLetraCalificacion($promedioEPNum) 
+                ? $this->calificacionService->getLetraCalificacion($promedioEPNum) 
                 : (is_numeric($promedioEPNum) ? number_format($promedioEPNum, 1) : null); // CAMBIO: Formato a 1 decimal
             
             $dataEscuelaPadres = $rowEscuelaPadres;
@@ -633,7 +614,7 @@ $mpdf = $pdf->getMpdf();
             
             // CAMBIO: Formato a 1 decimal
             $filaPromedios[$p->periodo_id] = $esPreescolar 
-                ? $this->getLetraCalificacion($promedioPeriodoNum)
+                ? $this->calificacionService->getLetraCalificacion($promedioPeriodoNum)
                 : (is_numeric($promedioPeriodoNum) ? number_format($promedioPeriodoNum, 1) : null);
             
             if (is_numeric($promedioPeriodoNum)) {
@@ -646,7 +627,7 @@ $mpdf = $pdf->getMpdf();
 
         // CAMBIO: Formato a 1 decimal
         $filaPromedios['promedio'] = $esPreescolar 
-            ? $this->getLetraCalificacion($promedioFinalNum)
+            ? $this->calificacionService->getLetraCalificacion($promedioFinalNum)
             : (is_numeric($promedioFinalNum) ? number_format($promedioFinalNum, 1) : null);
 
         return $filaPromedios;
@@ -670,7 +651,7 @@ $mpdf = $pdf->getMpdf();
                 $nota = $mapaCalificacionesPAS[$llave] ?? null;
                 
                 if ($esPreescolar) {
-                    $notaMostrada = $this->getLetraCalificacion($nota);
+                    $notaMostrada = $this->calificacionService->getLetraCalificacion($nota);
                     $notaNum = is_numeric($nota) ? $nota : null;
                 } else {
                     $notaRedondeada = is_numeric($nota) ? round($nota, 1) : null;
@@ -697,7 +678,7 @@ $mpdf = $pdf->getMpdf();
             
             // CAMBIO: Formato a 1 decimal
             $promedioMateriaShow = $esPreescolar 
-                ? $this->getLetraCalificacion($promedioMateriaNum)
+                ? $this->calificacionService->getLetraCalificacion($promedioMateriaNum)
                 : (is_numeric($promedioMateriaNum) ? number_format($promedioMateriaNum, 1) : null);
 
             $filas[] = [
@@ -720,7 +701,7 @@ $mpdf = $pdf->getMpdf();
 
             // CAMBIO: Formato a 1 decimal
             $filaPromedios[$periodo->periodo_id] = $esPreescolar 
-                ? $this->getLetraCalificacion($promedioPeriodo)
+                ? $this->calificacionService->getLetraCalificacion($promedioPeriodo)
                 : (is_numeric($promedioPeriodo) ? number_format($promedioPeriodo, 1) : null);
 
             if (is_numeric($promedioPeriodo)) {
@@ -732,7 +713,7 @@ $mpdf = $pdf->getMpdf();
         $promFinalNum = ($countPromedioFinal > 0) ? round($sumaPromedioFinal / $countPromedioFinal, 1) : null;
         // CAMBIO: Formato a 1 decimal
         $filaPromedios['promedio'] = $esPreescolar 
-            ? $this->getLetraCalificacion($promFinalNum)
+            ? $this->calificacionService->getLetraCalificacion($promFinalNum)
             : (is_numeric($promFinalNum) ? number_format($promFinalNum, 1) : null);
 
         return [
@@ -741,159 +722,6 @@ $mpdf = $pdf->getMpdf();
             'promedios_bloque' => $filaPromedios,
             'promedios_bloque_numericos' => $promediosBloqueNumericos,
             'califs_para_promedio_final' => [] 
-        ];
-    }
-
-    private function procesarCamposSEP($camposFormativos, $periodos, $mapaCalificacionesPAS, $ponderacionesCampos, $esPreescolar = false)
-    {
-        $dataCampos = [];
-        $promediosFinales = [];
-        $promediosFinalesCalculados = [];
-        $califsPorMateriaNumerica = []; 
-
-        foreach ($periodos as $periodo) {
-            $promediosFinales[$periodo->periodo_id] = ['suma_ponderada' => 0, 'total_ponderacion' => 0];
-            $promediosFinalesCalculados[$periodo->periodo_id] = null; 
-        }
-
-        foreach ($camposFormativos as $nombreCampo => $materias) {
-            if ($materias->isEmpty()) continue;
-
-            $campoId = $materias->first()->campo_id;
-            $ponderacionCampo = $ponderacionesCampos->get($campoId, 0) / 100.0;
-            $dataMaterias = [];
-            $promediosSEP_Campo = [];
-
-            foreach ($periodos as $periodo) {
-                $promediosSEP_Campo[$periodo->periodo_id] = ['suma_ponderada' => 0, 'total_ponderacion' => 0];
-            }
-            $promediosSEP_Campo['promedio_pas'] = ['suma' => 0, 'contador' => 0];
-            $promediosSEP_Campo['promedio_sep'] = ['suma' => 0, 'contador' => 0];
-
-            foreach ($materias as $materia) {
-                $califsMateria_PAS = []; 
-                $califsMateria_PAS_Numerica = []; 
-                $sumaMateriaPAS = 0; $countMateriaPAS = 0;
-                $ponderacionMateria = $materia->ponderacion_materia / 100.0;
-
-                foreach ($periodos as $periodo) {
-                    $llave = $materia->materia_id . '_' . $periodo->periodo_id;
-                    $notaPAS = $mapaCalificacionesPAS[$llave] ?? null;
-                    
-                    if ($esPreescolar) {
-                        $califsMateria_PAS[$periodo->periodo_id] = $this->getLetraCalificacion($notaPAS);
-                        $califsMateria_PAS_Numerica[$periodo->periodo_id] = is_numeric($notaPAS) ? $notaPAS : null; 
-                    } else {
-                        $notaRedondeada = is_numeric($notaPAS) ? round($notaPAS, 1) : null;
-                        // CAMBIO: Formato a 1 decimal para la vista
-                        $califsMateria_PAS[$periodo->periodo_id] = is_numeric($notaRedondeada) ? number_format($notaRedondeada, 1) : null; 
-                        $califsMateria_PAS_Numerica[$periodo->periodo_id] = $notaRedondeada; 
-                    }
-
-                    if (is_numeric($notaPAS)) {
-                        $sumaMateriaPAS += $notaPAS;
-                        $countMateriaPAS++;
-                        
-                        if (!$esPreescolar) {
-                            $promediosSEP_Campo[$periodo->periodo_id]['suma_ponderada'] += ($notaPAS * $ponderacionMateria);
-                            $promediosSEP_Campo[$periodo->periodo_id]['total_ponderacion'] += $ponderacionMateria;
-                        }
-                    }
-                }
-
-                $promedioPAS_MateriaNum = ($countMateriaPAS > 0) ? round($sumaMateriaPAS / $countMateriaPAS, 1) : null;
-                // CAMBIO: Formato a 1 decimal
-                $promedioPAS_Mostrado = $esPreescolar 
-                    ? $this->getLetraCalificacion($promedioPAS_MateriaNum)
-                    : (is_numeric($promedioPAS_MateriaNum) ? number_format($promedioPAS_MateriaNum, 1) : null);
-
-                if (is_numeric($promedioPAS_MateriaNum) && !$esPreescolar) {
-                    $promediosSEP_Campo['promedio_pas']['suma'] += $promedioPAS_MateriaNum;
-                    $promediosSEP_Campo['promedio_pas']['contador']++;
-                }
-
-                $dataMaterias[] = [
-                    'nombre' => $materia->nombre_materia,
-                    'calificaciones_pas' => $califsMateria_PAS,
-                    'calificaciones_pas_numerica' => $califsMateria_PAS_Numerica,
-                    'promedio_pas' => $promedioPAS_Mostrado
-                ];
-
-                $califsPorMateriaNumerica[$materia->materia_id] = $califsMateria_PAS_Numerica; 
-            }
-
-            $califsMateria_SEP = []; 
-            if (!$esPreescolar) {
-                foreach ($periodos as $periodo) {
-                    $totalPond = $promediosSEP_Campo[$periodo->periodo_id]['total_ponderacion'];
-                    $sumaPond = $promediosSEP_Campo[$periodo->periodo_id]['suma_ponderada'];
-
-                    $promedioSEP = ($totalPond > 0) ? round($sumaPond / $totalPond, 1) : null;
-                    // CAMBIO: Formato a 1 decimal
-                    $califsMateria_SEP[$periodo->periodo_id] = is_numeric($promedioSEP) ? number_format($promedioSEP, 1) : null; 
-
-                    if (is_numeric($promedioSEP)) {
-                        $promediosSEP_Campo['promedio_sep']['suma'] += $promedioSEP;
-                        $promediosSEP_Campo['promedio_sep']['contador']++;
-                        $promedioSinRedondear = ($totalPond > 0) ? $sumaPond / $totalPond : null;
-                        if (is_numeric($promedioSinRedondear)) {
-                             $promediosFinales[$periodo->periodo_id]['suma_ponderada'] += ($promedioSinRedondear * $ponderacionCampo);
-                             $promediosFinales[$periodo->periodo_id]['total_ponderacion'] += $ponderacionCampo;
-                        }
-                    }
-                }
-            }
-            
-            $promedioSEP_Materia = null;
-            if (!$esPreescolar && $promediosSEP_Campo['promedio_sep']['contador'] > 0) {
-                $promedioSEP_Materia = round($promediosSEP_Campo['promedio_sep']['suma'] / $promediosSEP_Campo['promedio_sep']['contador'], 1);
-            }
-
-            $promedioFinalPAS = null;
-            if (!$esPreescolar && $promediosSEP_Campo['promedio_pas']['contador'] > 0) {
-                $promedioFinalPAS = round($promediosSEP_Campo['promedio_pas']['suma'] / $promediosSEP_Campo['promedio_pas']['contador'], 1);
-            }
-
-            $dataCampos[] = [
-                'nombre' => $nombreCampo,
-                'materias' => $dataMaterias,
-                'calificaciones_sep' => $califsMateria_SEP,
-                'promedio_final_pas' => is_numeric($promedioFinalPAS) ? number_format($promedioFinalPAS, 1) : null, // CAMBIO: Formato
-                'promedio_final_sep' => is_numeric($promedioSEP_Materia) ? number_format($promedioSEP_Materia, 1) : null // CAMBIO: Formato
-            ];
-
-            $califsPorMateriaNumerica[$materia->materia_id] = $califsMateria_PAS_Numerica; 
-        }
-
-        if (!$esPreescolar) {
-            $sumaPromedioFinal = 0;
-            $contadorPromedioFinal = 0;
-
-            foreach ($periodos as $periodo) {
-                $totalPond = $promediosFinales[$periodo->periodo_id]['total_ponderacion'];
-                $sumaPond = $promediosFinales[$periodo->periodo_id]['suma_ponderada'];
-
-                $promedioFinalPond = ($totalPond > 0) ? round($sumaPond / $totalPond, 1) : null;
-                // CAMBIO: Formato a 1 decimal
-                $promediosFinalesCalculados[$periodo->periodo_id] = is_numeric($promedioFinalPond) ? number_format($promedioFinalPond, 1) : null; 
-
-                if (is_numeric($promedioFinalPond)) {
-                    $sumaPromedioFinal += $promedioFinalPond;
-                    $contadorPromedioFinal++;
-                }
-            }
-
-            $valFinal = ($contadorPromedioFinal > 0)
-                ? round($sumaPromedioFinal / $contadorPromedioFinal, 1)
-                : null;
-            // CAMBIO: Formato a 1 decimal
-            $promediosFinalesCalculados['promedio_final_sep'] = is_numeric($valFinal) ? number_format($valFinal, 1) : null;
-        }
-
-        return [
-            'campos' => $dataCampos,
-            'promediosFinales' => $promediosFinalesCalculados,
-            'califs_por_materia_numerica' => $califsPorMateriaNumerica 
         ];
     }
 
@@ -941,7 +769,7 @@ $mpdf = $pdf->getMpdf();
                 $nota = $mapaCalificaciones[$llave] ?? null;
                 
                 if ($esPreescolar) {
-                    $notaMostrada = $this->getLetraCalificacion($nota);
+                    $notaMostrada = $this->calificacionService->getLetraCalificacion($nota);
                     $notaNum = is_numeric($nota) ? $nota : null;
                 } else {
                     $notaRedondeada = is_numeric($nota) ? round($nota, 1) : null;
@@ -965,7 +793,7 @@ $mpdf = $pdf->getMpdf();
             $promedioCriterioNum = ($countCriterio > 0) ? round($sumaCriterio / $countCriterio, 1) : null;
             // CAMBIO: Formato a 1 decimal
             $promedioCriterioShow = $esPreescolar 
-                ? $this->getLetraCalificacion($promedioCriterioNum)
+                ? $this->calificacionService->getLetraCalificacion($promedioCriterioNum)
                 : (is_numeric($promedioCriterioNum) ? number_format($promedioCriterioNum, 1) : null);
             
             $filasCriterios[] = [
@@ -985,7 +813,7 @@ $mpdf = $pdf->getMpdf();
             
             // CAMBIO: Formato a 1 decimal
             $filaPromedios[$periodo->periodo_id] = $esPreescolar 
-                ? $this->getLetraCalificacion($promedioPeriodo)
+                ? $this->calificacionService->getLetraCalificacion($promedioPeriodo)
                 : (is_numeric($promedioPeriodo) ? number_format($promedioPeriodo, 1) : null);
 
             if (is_numeric($promedioPeriodo)) {
@@ -997,7 +825,7 @@ $mpdf = $pdf->getMpdf();
         $promFinalNum = ($countPromedioFinal > 0) ? round($sumaPromedioFinal / $countPromedioFinal, 1) : null;
         // CAMBIO: Formato a 1 decimal
         $filaPromedios['promedio'] = $esPreescolar 
-            ? $this->getLetraCalificacion($promFinalNum)
+            ? $this->calificacionService->getLetraCalificacion($promFinalNum)
             : (is_numeric($promFinalNum) ? number_format($promFinalNum, 1) : null);
 
         return [
@@ -1035,7 +863,7 @@ $mpdf = $pdf->getMpdf();
             
             $promedioPeriodoNum = ($count > 0) ? round($suma / $count, 1) : null;
             
-            $promediosGeneral[$p->periodo_id] = $this->getLetraCalificacion($promedioPeriodoNum);
+            $promediosGeneral[$p->periodo_id] = $this->calificacionService->getLetraCalificacion($promedioPeriodoNum);
             
             if (is_numeric($promedioPeriodoNum)) {
                 $sumaFinal += $promedioPeriodoNum;
@@ -1044,7 +872,7 @@ $mpdf = $pdf->getMpdf();
         }
 
         $promedioFinalNum = ($conteoFinal > 0) ? round($sumaFinal / $conteoFinal, 1) : null;
-        $promediosGeneral['promedio'] = $this->getLetraCalificacion($promedioFinalNum);
+        $promediosGeneral['promedio'] = $this->calificacionService->getLetraCalificacion($promedioFinalNum);
 
         return $promediosGeneral;
     }
@@ -1083,7 +911,7 @@ $mpdf = $pdf->getMpdf();
             
             // CAMBIO: Formato a 1 decimal
             $promediosFinales[$periodo->periodo_id] = $esPreescolar
-                ? $this->getLetraCalificacion($promedioNum)
+                ? $this->calificacionService->getLetraCalificacion($promedioNum)
                 : (is_numeric($promedioNum) ? number_format($promedioNum, 1) : null); 
             
             if (is_numeric($promedioNum)) {
@@ -1096,7 +924,7 @@ $mpdf = $pdf->getMpdf();
         
         // CAMBIO: Formato a 1 decimal
         $promediosFinales['promedio'] = $esPreescolar
-            ? $this->getLetraCalificacion($promedioFinalNum)
+            ? $this->calificacionService->getLetraCalificacion($promedioFinalNum)
             : (is_numeric($promedioFinalNum) ? number_format($promedioFinalNum, 1) : null);
             
         return $promediosFinales;

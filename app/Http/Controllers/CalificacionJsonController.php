@@ -13,6 +13,7 @@ use App\Models\Alumno;
 use App\Models\Calificacion;
 use App\Models\Periodo; 
 use App\Models\RegistroAsistencia; 
+use App\Models\ActividadMateria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
@@ -89,10 +90,7 @@ class CalificacionJsonController extends Controller
         return response()->json($grupos);
     }
     
-    // ====================================================================
-    // 🔥 FUNCIÓN CLAVE CORREGIDA: Obtiene materias filtradas por GRUPO 🔥
-    // (Reemplaza la lógica anterior de getMaterias(Grado $grado) para el frontend)
-    // ====================================================================
+
     /**
      * Devuelve solo las materias que están ASIGNADAS al grupo.
      * Esto asegura que solo 'Yoga 1' aparezca para el grupo 'Yoga 1'.
@@ -313,187 +311,215 @@ class CalificacionJsonController extends Controller
      * Devuelve la tabla de alumnos y criterios para la captura.
      */
     public function getTablaCalificaciones(Request $request)
-    {
-        $request->validate([
-            'grupo_id' => 'required|integer|exists:grupos,grupo_id', 
-            'materia_id' => 'required|integer|exists:materias,materia_id',
-            'periodo_id' => 'required|integer|exists:periodos,periodo_id',
-        ]);
+{
+    $request->validate([
+        'grupo_id'   => 'required|integer|exists:grupos,grupo_id', 
+        'materia_id' => 'required|integer|exists:materias,materia_id',
+        'periodo_id' => 'required|integer|exists:periodos,periodo_id',
+    ]);
 
-        $periodo = Periodo::find($request->periodo_id);
-        if (!$periodo) {
-            return response()->json(['error' => 'Periodo no encontrado'], 404);
-        }
-
-        $grupo = Grupo::find($request->grupo_id);
-        if (!$grupo) {
-            return response()->json(['error' => 'Grupo no encontrado'], 404);
-        }
-
-        $materia = Materia::find($request->materia_id);
-        
-        $nombreMaestro = 'Sin asignar'; 
-        $idiomaDeLaMateria = null;
-        
-        $asignacion = DB::table('grupo_materia_maestro')
-            ->where('grupo_id', $request->grupo_id)
-            ->where('materia_id', $request->materia_id)
-            ->first();
-
-        if ($asignacion && isset($asignacion->maestro_id)) {
-            $maestro = User::find($asignacion->maestro_id);
-
-            if ($maestro) {
-                $nombreMaestro = $maestro->name . ' ' . $maestro->apellido_paterno . ' ' . $maestro->apellido_materno;
-
-                try {
-                    $pivote = $maestro->gruposTitulares()->find($grupo->grupo_id);
-                    
-                    if ($pivote && isset($pivote->pivot->idioma)) {
-                        $idiomaDeLaMateria = $pivote->pivot->idioma;
-                    }
-                    else {
-                        $esComplementario = $grupo->maestrosComplementarios()
-                            ->where('users.id', $maestro->id)
-                            ->exists();
-
-                        if ($esComplementario) {
-                           $idiomaDeLaMateria = strtoupper($materia->nombre);
-                        }
-                    }
-                } catch (\Exception $e) {
-                    \Log::error("Error al buscar idioma del maestro: " . $e->getMessage());
-                }
-            }
-        }
-
-        // --- MANEJO DE MATERIAS META ---
-        if ($materia && $materia->nombre === 'Lengua Extranjera') {
-            return $this->buildMetaMateriaTabla($request, $materia, $periodo, $grupo, $nombreMaestro);
-        }
-        // --- FIN DE MANEJO DE MATERIAS META ---
-
-        $alumnos = $grupo->alumnosActuales() 
-            ->where('estado_alumno', 'ACTIVO') 
-            ->orderBy('apellido_paterno')
-            ->orderBy('apellido_materno')
-            ->orderBy('nombres')
-            ->get(['alumnos.alumno_id as id', 'nombres', 'apellido_paterno', 'apellido_materno']);
-        
-        
-        $materiaCriterios = MateriaCriterio::where('materia_id', $request->materia_id)
-            ->with('catalogoCriterio') 
-            ->orderBy('materia_criterio_id')
-            ->get();
-
-        $criterioPromedioId = null;
-        $criterioFaltasId = null;
-        $criteriosParaPromediar = []; 
-        
-        $criterios = $materiaCriterios->map(function ($mc) use (&$criterioPromedioId, &$criterioFaltasId, &$criteriosParaPromediar) {
-            
-            $nombreCriterio = $mc->catalogoCriterio->nombre ?? 'Criterio s/n';
-            $esPromedio = (strcasecmp($nombreCriterio, 'Promedio') == 0);
-            $esFaltas = (strcasecmp($nombreCriterio, 'Faltas') == 0);
-
-            if ($mc->incluido_en_promedio) {
-                $criteriosParaPromediar[$mc->materia_criterio_id] = $mc->ponderacion > 0 ? $mc->ponderacion : 1;
-            }
-            
-            if ($esPromedio) {
-                $criterioPromedioId = $mc->materia_criterio_id;
-            }
-            
-            if ($esFaltas) {
-                $criterioFaltasId = $mc->materia_criterio_id;
-            }
-
-            return [
-                'id' => $mc->materia_criterio_id, 
-                'nombre_criterio' => $nombreCriterio,
-                'es_promedio' => $esPromedio,
-                'es_faltas' => $esFaltas,
-                'es_calculado' => ($esPromedio || $esFaltas)
-            ];
-        });
-
-        list($faltas, $criteriosSinFaltas) = $criterios->partition(fn ($c) => $c['es_faltas']);
-        list($promedios, $otrosCriterios) = $criteriosSinFaltas->partition(fn ($c) => $c['es_promedio']);
-
-        $criteriosOrdenados = $otrosCriterios->merge($faltas)->merge($promedios)->values();
-        
-        $idsACalcular = [];
-        if ($criterioPromedioId) $idsACalcular[] = $criterioPromedioId;
-        if ($criterioFaltasId) $idsACalcular[] = $criterioFaltasId;
-
-        $calificacionesExistentes = Calificacion::where('periodo_id', $request->periodo_id)
-            ->whereIn('alumno_id', $alumnos->pluck('id'))
-            ->whereIn('materia_criterio_id', $materiaCriterios->pluck('materia_criterio_id'))
-            ->when(!empty($idsACalcular), function ($query) use ($idsACalcular) {
-                    return $query->whereNotIn('materia_criterio_id', $idsACalcular);
-            })
-            ->get();
-            
-        $mapaCalificaciones = [];
-        $califsPorAlumno = $calificacionesExistentes->groupBy('alumno_id');
-        $promediosIndividuales = [];
-
-        foreach ($alumnos as $alumno) {
-            $mapaCalificaciones[$alumno->id] = []; 
-            $sumaPonderada = 0;
-            $sumaPonderaciones = 0;
-            
-            // --- CÁLCULO DE FALTAS ---
-            if ($criterioFaltasId) {
-                $totalFaltas = 0;
-                if ($idiomaDeLaMateria) { 
-                    
-                    $totalFaltas = RegistroAsistencia::where('alumno_id', $alumno->id)
-                        ->where('periodo_id', $periodo->periodo_id) 
-                        ->where('tipo_asistencia', 'FALTA')
-                        ->where('idioma', $idiomaDeLaMateria) 
-                        ->count();
-                }
-                $mapaCalificaciones[$alumno->id][$criterioFaltasId] = $totalFaltas;
-            }
-
-            // --- PROCESO DE CALIFICACIONES GUARDADAS Y PONDERACIÓN ---
-            if ($califsPorAlumno->has($alumno->id)) {
-                foreach ($califsPorAlumno[$alumno->id] as $cal) {
-                    $criterioId = $cal->materia_criterio_id;
-                    $mapaCalificaciones[$alumno->id][$criterioId] = $cal->calificacion_obtenida;
-
-                    if (isset($criteriosParaPromediar[$criterioId]) && $criterioId != $criterioFaltasId) {
-                        $ponderacion = $criteriosParaPromediar[$criterioId];
-                        $sumaPonderada += $cal->calificacion_obtenida * $ponderacion;
-                        $sumaPonderaciones += $ponderacion;
-                    }
-                }
-            }
-
-            // --- CÁLCULO Y ASIGNACIÓN DEL PROMEDIO ---
-            if ($criterioPromedioId) {
-                $promedioCalculado = 0;
-                if ($sumaPonderaciones > 0) {
-                    $promedioCalculado = $sumaPonderada / $sumaPonderaciones;
-                }
-                $mapaCalificaciones[$alumno->id][$criterioPromedioId] = round($promedioCalculado, 2);
-                $promediosIndividuales[] = $promedioCalculado;
-            }
-        }
-        
-        $promedioGrupo = 0;
-        if (count($promediosIndividuales) > 0) {
-            $promedioGrupo = array_sum($promediosIndividuales) / count($promediosIndividuales);
-        }
-
-        return response()->json([
-            'alumnos' => $alumnos,
-            'criterios' => $criteriosOrdenados,
-            'calificaciones' => $mapaCalificaciones,
-            'promedioGrupo' => round($promedioGrupo, 2),
-            'nombreMaestro' => trim($nombreMaestro),
-            'periodo_estado' => $periodo->estado
-        ]);
+    $periodo = Periodo::find($request->periodo_id);
+    if (!$periodo) {
+        return response()->json(['error' => 'Periodo no encontrado'], 404);
     }
+
+    $grupo = Grupo::find($request->grupo_id);
+    if (!$grupo) {
+        return response()->json(['error' => 'Grupo no encontrado'], 404);
+    }
+
+    $materia = Materia::find($request->materia_id);
+    
+    $nombreMaestro = 'Sin asignar'; 
+    $idiomaDeLaMateria = null;
+    
+    $asignacion = DB::table('grupo_materia_maestro')
+        ->where('grupo_id', $request->grupo_id)
+        ->where('materia_id', $request->materia_id)
+        ->first();
+
+    if ($asignacion && isset($asignacion->maestro_id)) {
+        $maestro = User::find($asignacion->maestro_id);
+
+        if ($maestro) {
+            $nombreMaestro = $maestro->name . ' ' . $maestro->apellido_paterno . ' ' . $maestro->apellido_materno;
+
+            try {
+                $pivote = $maestro->gruposTitulares()->find($grupo->grupo_id);
+                
+                if ($pivote && isset($pivote->pivot->idioma)) {
+                    $idiomaDeLaMateria = $pivote->pivot->idioma;
+                } else {
+                    $esComplementario = $grupo->maestrosComplementarios()
+                        ->where('users.id', $maestro->id)
+                        ->exists();
+
+                    if ($esComplementario) {
+                        $idiomaDeLaMateria = strtoupper($materia->nombre);
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::error("Error al buscar idioma del maestro: " . $e->getMessage());
+            }
+        }
+    }
+
+    // --- MANEJO DE MATERIAS META ---
+    if ($materia && $materia->nombre === 'Lengua Extranjera') {
+        return $this->buildMetaMateriaTabla($request, $materia, $periodo, $grupo, $nombreMaestro);
+    }
+    // --- FIN DE MANEJO DE MATERIAS META ---
+
+    $alumnos = $grupo->alumnosActuales() 
+        ->where('estado_alumno', 'ACTIVO') 
+        ->orderBy('apellido_paterno')
+        ->orderBy('apellido_materno')
+        ->orderBy('nombres')
+        ->get(['alumnos.alumno_id as id', 'nombres', 'apellido_paterno', 'apellido_materno']);
+    
+    $materiaCriterios = MateriaCriterio::where('materia_id', $request->materia_id)
+        ->with('catalogoCriterio') 
+        ->orderBy('materia_criterio_id')
+        ->get();
+
+    // Obtener actividades registradas del periodo para detectar criterios calculados
+    $actividadesPeriodo = ActividadMateria::where('grupo_id', $request->grupo_id)
+        ->where('materia_id', $request->materia_id)
+        ->where('periodo_id', $request->periodo_id)
+        ->with('calculadoPor')
+        ->get();
+
+    $criterioPromedioId = null;
+    $criterioFaltasId = null;
+    $criteriosParaPromediar = []; 
+    
+    //  Mapeo único de criterios con banderas de cálculo y auditoría
+    $criterios = $materiaCriterios->map(function ($mc) use (&$criterioPromedioId, &$criterioFaltasId, &$criteriosParaPromediar, $actividadesPeriodo) {
+        $nombreCriterio = $mc->catalogoCriterio->nombre ?? 'Criterio s/n';
+        $esPromedio = (strcasecmp($nombreCriterio, 'Promedio') == 0);
+        $esFaltas = (strcasecmp($nombreCriterio, 'Faltas') == 0);
+
+        if ($mc->incluido_en_promedio) {
+            $criteriosParaPromediar[$mc->materia_criterio_id] = $mc->ponderacion > 0 ? $mc->ponderacion : 1;
+        }
+        
+        if ($esPromedio) {
+            $criterioPromedioId = $mc->materia_criterio_id;
+        }
+        
+        if ($esFaltas) {
+            $criterioFaltasId = $mc->materia_criterio_id;
+        }
+
+        // Detección de actividades asociadas al criterio
+        $actsDelCriterio = $actividadesPeriodo->where('materia_criterio_id', $mc->materia_criterio_id);
+        $totalActividades = $actsDelCriterio->count();
+        $tieneActividades = $totalActividades > 0;
+        
+        $desincronizado = false;
+        $calculadoEn = null;
+        $maestroNombre = null;
+
+        if ($tieneActividades) {
+            $desincronizado = $actsDelCriterio->contains(fn($act) => $act->esta_desincronizada);
+            $ultimaActividad = $actsDelCriterio->sortByDesc('calculado_en')->first();
+            
+            if ($ultimaActividad && $ultimaActividad->calculado_en) {
+                $calculadoEn = $ultimaActividad->calculado_en->format('d/M h:i A');
+                $maestroNombre = $ultimaActividad->calculadoPor ? $ultimaActividad->calculadoPor->name : 'Sistema';
+            }
+        }
+
+        return [
+            'id'               => $mc->materia_criterio_id, 
+            'nombre_criterio'  => $nombreCriterio,
+            'es_promedio'      => $esPromedio,
+            'es_faltas'        => $esFaltas,
+            // Se considera calculado si es el Promedio general, Faltas o si proviene del módulo de actividades
+            'es_calculado'     => ($esPromedio || $esFaltas || $tieneActividades),
+            'desincronizado'   => $desincronizado,
+            'total_acts'       => $totalActividades,
+            'calculado_en'     => $calculadoEn,
+            'maestro_nombre'   => $maestroNombre,
+        ];
+    });
+
+    list($faltas, $criteriosSinFaltas) = $criterios->partition(fn ($c) => $c['es_faltas']);
+    list($promedios, $otrosCriterios) = $criteriosSinFaltas->partition(fn ($c) => $c['es_promedio']);
+
+    $criteriosOrdenados = $otrosCriterios->merge($faltas)->merge($promedios)->values();
+    
+    $idsACalcular = [];
+    if ($criterioPromedioId) $idsACalcular[] = $criterioPromedioId;
+    if ($criterioFaltasId) $idsACalcular[] = $criterioFaltasId;
+
+    $calificacionesExistentes = Calificacion::where('periodo_id', $request->periodo_id)
+        ->whereIn('alumno_id', $alumnos->pluck('id'))
+        ->whereIn('materia_criterio_id', $materiaCriterios->pluck('materia_criterio_id'))
+        ->when(!empty($idsACalcular), function ($query) use ($idsACalcular) {
+            return $query->whereNotIn('materia_criterio_id', $idsACalcular);
+        })
+        ->get();
+        
+    $mapaCalificaciones = [];
+    $califsPorAlumno = $calificacionesExistentes->groupBy('alumno_id');
+    $promediosIndividuales = [];
+
+    foreach ($alumnos as $alumno) {
+        $mapaCalificaciones[$alumno->id] = []; 
+        $sumaPonderada = 0;
+        $sumaPonderaciones = 0;
+        
+        // --- CÁLCULO DE FALTAS ---
+        if ($criterioFaltasId) {
+            $totalFaltas = 0;
+            if ($idiomaDeLaMateria) { 
+                $totalFaltas = RegistroAsistencia::where('alumno_id', $alumno->id)
+                    ->where('periodo_id', $periodo->periodo_id) 
+                    ->where('tipo_asistencia', 'FALTA')
+                    ->where('idioma', $idiomaDeLaMateria) 
+                    ->count();
+            }
+            $mapaCalificaciones[$alumno->id][$criterioFaltasId] = $totalFaltas;
+        }
+
+        // --- PROCESO DE CALIFICACIONES GUARDADAS Y PONDERACIÓN ---
+        if ($califsPorAlumno->has($alumno->id)) {
+            foreach ($califsPorAlumno[$alumno->id] as $cal) {
+                $criterioId = $cal->materia_criterio_id;
+                $mapaCalificaciones[$alumno->id][$criterioId] = $cal->calificacion_obtenida;
+
+                if (isset($criteriosParaPromediar[$criterioId]) && $criterioId != $criterioFaltasId) {
+                    $ponderacion = $criteriosParaPromediar[$criterioId];
+                    $sumaPonderada += $cal->calificacion_obtenida * $ponderacion;
+                    $sumaPonderaciones += $ponderacion;
+                }
+            }
+        }
+
+        // --- CÁLCULO Y ASIGNACIÓN DEL PROMEDIO ---
+        if ($criterioPromedioId) {
+            $promedioCalculado = 0;
+            if ($sumaPonderaciones > 0) {
+                $promedioCalculado = $sumaPonderada / $sumaPonderaciones;
+            }
+            $mapaCalificaciones[$alumno->id][$criterioPromedioId] = round($promedioCalculado, 2);
+            $promediosIndividuales[] = $promedioCalculado;
+        }
+    }
+    
+    $promedioGrupo = 0;
+    if (count($promediosIndividuales) > 0) {
+        $promedioGrupo = array_sum($promediosIndividuales) / count($promediosIndividuales);
+    }
+
+    return response()->json([
+        'alumnos'        => $alumnos,
+        'criterios'      => $criteriosOrdenados,
+        'calificaciones' => $mapaCalificaciones,
+        'promedioGrupo'  => round($promedioGrupo, 2),
+        'nombreMaestro'  => trim($nombreMaestro),
+        'periodo_estado' => $periodo->estado
+    ]);
+}
 }
